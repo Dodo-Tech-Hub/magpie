@@ -1,50 +1,106 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# YouTube Subscriptions Migrator Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Simple, Low-Effort UX
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+The app MUST let a user finish a migration with as few screens, transitions, and taps as possible.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+- Option sets of 5 or fewer items MUST use inline choices (segmented control, chips, or radio list).
+- Option sets of more than 5 items MUST use a combo box (dropdown, searchable when the list can grow).
+- Every new screen MUST be justified in the plan. Prefer showing the next step in place on the same
+  screen over navigating to a new one.
+- Confirmation dialogs MUST only appear for destructive or irreversible actions.
+- Every category and action button MUST show an icon. Add a short text label unless the icon alone
+  is obvious and easy to understand (for example, close or back). If unsure, ask the project owner.
+- All user-facing text MUST use simple, everyday words, as if talking to a child: short sentences,
+  one idea per sentence, no technical terms (for example, say "Sign in" not "Authenticate", and
+  "Daily limit reached" not "Quota exceeded").
+- Every interactive element MUST have an accessibility label.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+Rationale: the app does one job. Fewer screens and plain words make that job fast and hard to get
+wrong.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### II. Relevant Tests for Every Change
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+Every feature and every bug fix MUST include tests that cover its behavior.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+- Unit and component tests use Jest with the `jest-expo` preset and React Native Testing Library.
+- Business logic (subscription export, diffing, batching, resume after failure, quota handling) MUST
+  have unit tests.
+- User flows changed by a feature MUST have component tests that check what the user sees and taps.
+- Every bug fix MUST add a test that fails without the fix.
+- Tests MUST NOT call real Google APIs or use real accounts. Mock network and auth at the boundary.
+- All tests MUST pass before a change is merged.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+Rationale: tests are the proof that a feature works and stays working. Relevance matters more than a
+coverage number.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### III. Security Baseline (NON-NEGOTIABLE)
+
+Every feature MUST comply with this baseline. A plan or change that breaks a rule MUST NOT be merged
+until the rule is met or the constitution is amended.
+
+1. **Least privilege scopes**: request `https://www.googleapis.com/auth/youtube.readonly` for the
+   source account and `https://www.googleapis.com/auth/youtube` only for the target account. Request
+   no other scopes.
+2. **Secure sign-in**: use OAuth 2.0 Authorization Code with PKCE through the system browser or the
+   native Google Sign-In SDK. Never collect Google passwords and never sign in through an embedded
+   WebView. Validate the OAuth `state` and redirect URI.
+3. **Token storage**: store tokens only in `expo-secure-store` (iOS Keychain, Android Keystore).
+   Never store tokens in AsyncStorage, files, or app state that is persisted elsewhere. Revoke tokens
+   and delete them on sign-out.
+4. **No secrets in the app**: the app is a public OAuth client. Never ship client secrets, API keys
+   with write access, or private credentials. Everything in `app.json`, `app.config.*`, and
+   `EXPO_PUBLIC_*` variables is public. Never commit `.env` files with secrets.
+5. **Network**: HTTPS only. Keep iOS App Transport Security on and Android cleartext traffic off.
+   The app talks only to Google endpoints (`accounts.google.com`, `oauth2.googleapis.com`,
+   `www.googleapis.com`). No own backend, analytics, ads, or crash-reporting SDKs without a
+   constitution amendment.
+6. **Data minimization**: keep only the data the migration needs (channel IDs, titles, thumbnails,
+   progress). User data never leaves the device except to Google APIs. The user MUST be able to
+   delete all local data from inside the app.
+7. **Logging**: never log tokens, authorization codes, email addresses, or subscription lists.
+   Production builds MUST NOT include debug logging of API payloads.
+8. **Untrusted input**: treat API responses and deep link parameters as untrusted. Validate their
+   shape before use and handle only expected deep link routes.
+9. **Device permissions**: request no device permissions unless a spec requires one and explains why.
+10. **Backups**: set Android `allowBackup` to `false` so app data and tokens are not copied to cloud
+    backups.
+11. **Dependencies**: prefer Expo SDK modules. Add a third-party package only if it is maintained and
+    widely used. Commit the lockfile. `npm audit` MUST report no high or critical issues before a
+    release.
+12. **Over-the-air updates**: if EAS Update is used, updates MUST be code-signed.
+
+Rationale: the app holds access to two Google accounts. One leaked token or over-broad scope can
+harm the user, and failing Google's OAuth verification blocks public release.
+
+## Platform & Technology Constraints
+
+- Stack: Expo (React Native) with TypeScript in strict mode. Builds use EAS Build.
+- Specs MUST cover both Android and iOS. Android ships first. Any platform-specific behavior MUST be
+  called out in the spec.
+- Data source: YouTube Data API v3. Designs MUST respect the API quota (for example,
+  `subscriptions.insert` costs 50 units against a shared daily project quota): batch work, save
+  progress, resume after interruption, and tell the user clearly when the daily limit is reached.
+
+## Development Workflow & Quality Gates
+
+- Features follow the Spec Kit flow: specify, clarify (optional), plan, tasks, implement.
+- Every plan MUST include a Constitution Check that confirms compliance with Principles I to III.
+- A change is ready to merge only when: tests pass, TypeScript and lint report no errors, and the
+  security baseline is met.
+- Git, commit, and approval rules are defined in `AGENTS.md` and apply to all contributors and agents.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+- This constitution overrides other project practices. Runtime guidance for agents lives in
+  `AGENTS.md`.
+- Amendments are made through a pull request that updates this file, explains the change, and bumps
+  the version.
+- Versioning: MAJOR for removing or redefining a principle, MINOR for adding a principle or section
+  or materially expanding guidance, PATCH for wording fixes.
+- Reviews of every spec, plan, and pull request MUST check compliance. Any exception MUST be written
+  in the plan with its reason and approved by the project owner.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2026-11-08 | **Last Amended**: 2026-11-08
