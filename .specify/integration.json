@@ -2,10 +2,30 @@
   "version": "1.3.0",
   "integration_state_schema": 1,
   "installed_integrations": [
-    "claude"
+    "claude",
+    "opencode",
+    "codex",
+    "gemini",
+    "cursor-agent"
   ],
   "integration_settings": {
     "claude": {
+      "script": "sh",
+      "invoke_separator": "-"
+    },
+    "opencode": {
+      "script": "sh",
+      "invoke_separator": "."
+    },
+    "codex": {
+      "script": "sh",
+      "invoke_separator": "-"
+    },
+    "gemini": {
+      "script": "sh",
+      "invoke_separator": "."
+    },
+    "cursor-agent": {
       "script": "sh",
       "invoke_separator": "-"
     }
