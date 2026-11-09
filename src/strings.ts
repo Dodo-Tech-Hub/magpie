@@ -37,6 +37,12 @@ export const strings = {
   reminderBody: 'You can move the rest of your channels now.',
   yes: 'Yes',
   no: 'No',
+  settings: 'Settings',
+  back: 'Back',
+  look: 'Look',
+  light: 'Light',
+  dark: 'Dark',
+  auto: 'Auto',
 } as const;
 
 export const signInTo = (email: string) => `Sign in to ${email} to keep going.`;

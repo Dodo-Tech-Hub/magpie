@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { AccountInfo } from '@/store/progressStore';
 import { strings } from '@/strings';
+import { useTheme, type Colors } from '@/theme/theme';
 
 type Props = {
   title: string;
@@ -13,6 +14,8 @@ type Props = {
 };
 
 export function AccountCard({ title, hint, account, onSignIn, disabled }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   if (account) {
     return (
       <View style={styles.card}>
@@ -20,7 +23,7 @@ export function AccountCard({ title, hint, account, onSignIn, disabled }: Props)
           <Image source={{ uri: account.photoUrl }} style={styles.avatar} />
         ) : (
           <View style={[styles.avatar, styles.fallback]}>
-            <Text>{account.email[0].toUpperCase()}</Text>
+            <Text style={styles.text}>{account.email[0].toUpperCase()}</Text>
           </View>
         )}
         <View style={styles.flex}>
@@ -35,7 +38,7 @@ export function AccountCard({ title, hint, account, onSignIn, disabled }: Props)
           disabled={disabled}
           onPress={onSignIn}
         >
-          <Ionicons name="swap-horizontal" size={18} />
+          <Ionicons name="swap-horizontal" size={18} color={colors.text} />
           <Text style={styles.buttonText}>{strings.switchAccount}</Text>
         </Pressable>
       </View>
@@ -53,7 +56,7 @@ export function AccountCard({ title, hint, account, onSignIn, disabled }: Props)
           disabled={disabled}
           onPress={onSignIn}
         >
-          <Ionicons name="logo-google" size={18} color="#fff" />
+          <Ionicons name="logo-google" size={18} color={colors.onPrimary} />
           <Text style={styles.signInText}>{strings.signIn}</Text>
         </Pressable>
       </View>
@@ -61,16 +64,18 @@ export function AccountCard({ title, hint, account, onSignIn, disabled }: Props)
   );
 }
 
-const styles = StyleSheet.create({
-  card: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14 },
-  flex: { flex: 1 },
-  title: { fontSize: 15, fontWeight: '500' },
-  hint: { fontSize: 13, color: '#555', marginTop: 2 },
-  avatar: { width: 36, height: 36, borderRadius: 18 },
-  fallback: { backgroundColor: '#e6f1fb', alignItems: 'center', justifyContent: 'center' },
-  button: { flexDirection: 'row', alignItems: 'center', gap: 4, padding: 8, borderWidth: 1, borderColor: '#bbb', borderRadius: 8 },
-  buttonText: { fontSize: 13 },
-  signIn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 10, height: 44, borderRadius: 8, backgroundColor: '#1a56db' },
-  signInText: { color: '#fff', fontSize: 15 },
-  off: { opacity: 0.4 },
-});
+const makeStyles = (c: Colors) =>
+  StyleSheet.create({
+    card: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14 },
+    flex: { flex: 1 },
+    text: { color: c.text },
+    title: { fontSize: 15, fontWeight: '500', color: c.text },
+    hint: { fontSize: 13, color: c.muted, marginTop: 2 },
+    avatar: { width: 36, height: 36, borderRadius: 18 },
+    fallback: { backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
+    button: { flexDirection: 'row', alignItems: 'center', gap: 4, padding: 8, borderWidth: 1, borderColor: c.border, borderRadius: 8 },
+    buttonText: { fontSize: 13, color: c.text },
+    signIn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 10, height: 44, borderRadius: 8, backgroundColor: c.primary },
+    signInText: { color: c.onPrimary, fontSize: 15 },
+    off: { opacity: 0.4 },
+  });

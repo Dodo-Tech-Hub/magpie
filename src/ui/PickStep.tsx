@@ -1,14 +1,17 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '@/state/AppState';
 import { isMovable, startMove, togglePick } from '@/state/flows';
 import { moveButton, pickedCounter, strings, summary } from '@/strings';
+import { useTheme, type Colors } from '@/theme/theme';
 import { ChannelRow, ROW_HEIGHT } from '@/ui/ChannelRow';
 
 export function PickStep() {
   const { state, dispatch } = useApp();
   const { channels, moveState } = state;
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [query, setQuery] = useState('');
 
   const onToggle = useCallback(
@@ -36,7 +39,7 @@ export function PickStep() {
   if (!state.oldAccount) {
     return (
       <View style={styles.locked}>
-        <Ionicons name="lock-closed-outline" size={28} color="#555" />
+        <Ionicons name="lock-closed-outline" size={28} color={colors.muted} />
         <Text style={styles.empty}>{strings.pickLocked}</Text>
       </View>
     );
@@ -46,12 +49,13 @@ export function PickStep() {
     <View style={styles.flex}>
       <View style={styles.tools}>
         <View style={styles.search}>
-          <Ionicons name="search" size={18} color="#555" />
+          <Ionicons name="search" size={18} color={colors.muted} />
           <TextInput
             style={styles.input}
             value={query}
             onChangeText={setQuery}
             placeholder={strings.searchPlaceholder}
+            placeholderTextColor={colors.muted}
             accessibilityLabel={strings.searchPlaceholder}
           />
         </View>
@@ -65,8 +69,8 @@ export function PickStep() {
               void togglePick(state, dispatch, shownPickable.map((c) => c.channelId), !allPicked)
             }
           >
-            <Ionicons name={allPicked ? 'checkbox' : 'square-outline'} size={24} color="#1a56db" />
-            <Text>{strings.all}</Text>
+            <Ionicons name={allPicked ? 'checkbox' : 'square-outline'} size={24} color={colors.primary} />
+            <Text style={styles.text}>{strings.all}</Text>
           </Pressable>
           <Text style={styles.counter}>
             {pickedCounter(pickable.filter((c) => c.picked).length, pickable.length)}
@@ -92,7 +96,7 @@ export function PickStep() {
             disabled={moving}
             onPress={() => void startMove(state, dispatch)}
           >
-            <Ionicons name="arrow-forward" size={18} color="#fff" />
+            <Ionicons name="arrow-forward" size={18} color={colors.onPrimary} />
             <Text style={styles.moveText}>
               {moving ? strings.moving : resume ? strings.continueMove : moveButton(movable)}
             </Text>
@@ -103,21 +107,23 @@ export function PickStep() {
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  tools: { padding: 12, gap: 8 },
-  search: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 10, height: 40, borderWidth: 1, borderColor: '#ccc', borderRadius: 8 },
-  input: { flex: 1, fontSize: 15 },
-  allRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  all: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  counter: { fontSize: 13, color: '#555' },
-  locked: { alignItems: 'center', padding: 32, gap: 8 },
-  empty: { padding: 24, textAlign: 'center', color: '#555' },
-  bar: { padding: 12, borderTopWidth: StyleSheet.hairlineWidth, borderColor: '#ccc' },
-  summary: { fontSize: 14, marginBottom: 8, color: '#1b7f3b' },
-  note: { fontSize: 13, color: '#a35b00', marginBottom: 8 },
-  error: { fontSize: 13, color: '#b3261e', marginBottom: 8 },
-  move: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 44, borderRadius: 8, backgroundColor: '#1a56db' },
-  moveText: { color: '#fff', fontSize: 15 },
-  off: { opacity: 0.5 },
-});
+const makeStyles = (c: Colors) =>
+  StyleSheet.create({
+    flex: { flex: 1 },
+    text: { color: c.text },
+    tools: { padding: 12, gap: 8 },
+    search: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 10, height: 40, borderWidth: 1, borderColor: c.border, borderRadius: 8 },
+    input: { flex: 1, fontSize: 15, color: c.text },
+    allRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    all: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    counter: { fontSize: 13, color: c.muted },
+    locked: { alignItems: 'center', padding: 32, gap: 8 },
+    empty: { padding: 24, textAlign: 'center', color: c.muted },
+    bar: { padding: 12, borderTopWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    summary: { fontSize: 14, marginBottom: 8, color: c.success },
+    note: { fontSize: 13, color: c.warning, marginBottom: 8 },
+    error: { fontSize: 13, color: c.danger, marginBottom: 8 },
+    move: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 44, borderRadius: 8, backgroundColor: c.primary },
+    moveText: { color: c.onPrimary, fontSize: 15 },
+    off: { opacity: 0.5 },
+  });

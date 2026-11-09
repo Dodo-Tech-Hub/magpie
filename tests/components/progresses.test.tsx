@@ -114,6 +114,7 @@ describe('saved progresses', () => {
     answerAlert(jest.spyOn(Alert, 'alert'), 'Delete');
     await render(<App />);
     await screen.findByLabelText('old.me → new.me · 2 left');
+    await fireEvent.press(screen.getByLabelText('Settings'));
     await fireEvent.press(screen.getByLabelText('Delete all my data'));
     await act(async () => undefined);
     expect(await listUnfinished()).toEqual([]);
@@ -121,5 +122,20 @@ describe('saved progresses', () => {
     expect(GoogleSignin.revokeAccess).toHaveBeenCalled();
     expect(subMock).not.toHaveBeenCalled();
     expect(await getChannels('x')).toEqual([]);
+    // Settings closes, From shows signed out, and the look is back to Auto.
+    expect(screen.queryByText('Look')).toBeNull();
+    await fireEvent.press(screen.getByLabelText('Settings'));
+    expect(screen.getByRole('radio', { name: 'Auto' }).props.accessibilityState.checked).toBe(true);
+  });
+
+  it('delete all asks first and keeps everything when cancelled', async () => {
+    await seed();
+    answerAlert(jest.spyOn(Alert, 'alert'), 'Cancel');
+    await render(<App />);
+    await screen.findByLabelText('old.me → new.me · 2 left');
+    await fireEvent.press(screen.getByLabelText('Settings'));
+    await fireEvent.press(screen.getByLabelText('Delete all my data'));
+    await act(async () => undefined);
+    expect((await listUnfinished()).length).toBe(1);
   });
 });

@@ -1,21 +1,18 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { signOut } from '@/auth/google';
 import { cancelReminder } from '@/reminders/reminder';
 import { useApp } from '@/state/AppState';
 import { openProgress, signInOld } from '@/state/flows';
-import {
-  deleteAll,
-  deleteProgress,
-  listUnfinished,
-  type UnfinishedProgress,
-} from '@/store/progressStore';
+import { deleteProgress, listUnfinished, type UnfinishedProgress } from '@/store/progressStore';
 import { channelsLeft, strings } from '@/strings';
+import { useTheme, type Colors } from '@/theme/theme';
 import { AccountCard } from '@/ui/AccountCard';
 
 export function FromStep() {
   const { state, dispatch } = useApp();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [items, setItems] = useState<UnfinishedProgress[]>([]);
   const [version, setVersion] = useState(0);
   const refresh = useCallback(() => setVersion((v) => v + 1), []);
@@ -34,22 +31,6 @@ export function FromStep() {
     if (state.progressId === id) dispatch({ type: 'reset' });
     refresh();
   };
-
-  const removeAll = () =>
-    Alert.alert(strings.deleteAll, strings.deleteAllAsk, [
-      { text: strings.cancel, style: 'cancel' },
-      {
-        text: strings.deleteProgress,
-        style: 'destructive',
-        onPress: async () => {
-          for (const p of await listUnfinished()) await cancelReminder(p.id);
-          await deleteAll();
-          await signOut();
-          dispatch({ type: 'reset' });
-          refresh();
-        },
-      },
-    ]);
 
   const busy = state.moveState === 'moving';
   return (
@@ -76,7 +57,7 @@ export function FromStep() {
                   disabled={busy}
                   onPress={() => void openProgress(dispatch, p.id)}
                 >
-                  <Ionicons name="time-outline" size={20} color="#555" />
+                  <Ionicons name="time-outline" size={20} color={colors.muted} />
                   <Text style={styles.label}>{label}</Text>
                 </Pressable>
                 <Pressable
@@ -85,33 +66,23 @@ export function FromStep() {
                   disabled={busy}
                   onPress={() => void remove(p.id)}
                 >
-                  <Ionicons name="trash-outline" size={22} color="#b3261e" />
+                  <Ionicons name="trash-outline" size={22} color={colors.danger} />
                 </Pressable>
               </View>
             );
           })}
         </View>
       )}
-      <Pressable
-        style={styles.deleteAll}
-        accessibilityRole="button"
-        accessibilityLabel={strings.deleteAll}
-        onPress={removeAll}
-      >
-        <Ionicons name="trash-outline" size={18} color="#b3261e" />
-        <Text style={styles.deleteText}>{strings.deleteAll}</Text>
-      </Pressable>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  error: { color: '#b3261e', paddingHorizontal: 14 },
-  heading: { fontSize: 13, color: '#555', paddingHorizontal: 14, marginTop: 12 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, height: 48, borderTopWidth: StyleSheet.hairlineWidth, borderColor: '#ddd' },
-  open: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  label: { fontSize: 15 },
-  deleteAll: { flexDirection: 'row', alignItems: 'center', gap: 6, margin: 14, marginTop: 'auto' },
-  deleteText: { color: '#b3261e', fontSize: 14 },
-});
+const makeStyles = (c: Colors) =>
+  StyleSheet.create({
+    flex: { flex: 1 },
+    error: { color: c.danger, paddingHorizontal: 14 },
+    heading: { fontSize: 13, color: c.muted, paddingHorizontal: 14, marginTop: 12 },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, height: 48, borderTopWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    open: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
+    label: { fontSize: 15, color: c.text },
+  });

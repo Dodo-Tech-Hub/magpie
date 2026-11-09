@@ -6,6 +6,7 @@ export type MoveState = 'idle' | 'moving' | 'limit' | 'done' | 'offline' | 'auth
 
 export type State = {
   step: Step;
+  settingsOpen: boolean;
   oldAccount: AccountInfo | null;
   newAccount: AccountInfo | null;
   channels: StoredChannel[];
@@ -18,6 +19,8 @@ export type State = {
 
 export type Action =
   | { type: 'setStep'; step: Step }
+  | { type: 'openSettings' }
+  | { type: 'closeSettings' }
   | { type: 'setOld'; account: AccountInfo | null; channels: StoredChannel[] }
   | { type: 'setNew'; account: AccountInfo | null }
   | { type: 'setProgress'; progressId: string | null; channels: StoredChannel[] }
@@ -29,6 +32,7 @@ export type Action =
 
 export const initialState: State = {
   step: 'from',
+  settingsOpen: false,
   oldAccount: null,
   newAccount: null,
   channels: [],
@@ -41,7 +45,11 @@ export const initialState: State = {
 export function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'setStep':
-      return { ...state, step: action.step, notice: null };
+      return { ...state, step: action.step, settingsOpen: false, notice: null };
+    case 'openSettings':
+      return { ...state, settingsOpen: true };
+    case 'closeSettings':
+      return { ...state, settingsOpen: false };
     case 'setOld':
       // A different old account means a different list and no active progress.
       return {

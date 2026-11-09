@@ -4,7 +4,7 @@ Phase 0 decisions for [plan.md](plan.md). Each entry lists the decision, why, an
 
 ## R1. How the app knows the phone's look, and how to force Light or Dark
 
-- **Decision**: Keep the saved choice in a small theme provider. When the choice is Light or Dark, call React Native's `Appearance.setColorScheme('light' | 'dark')`. When it is Auto, call `Appearance.setColorScheme(null)`. The provider then reads the resulting look from `useColorScheme()` in every case (falling back to Light if the phone reports nothing).
+- **Decision**: Keep the saved choice in a small theme provider. When the choice is Light or Dark, call React Native's `Appearance.setColorScheme('light' | 'dark')`. When it is Auto, call `Appearance.setColorScheme('auto')`. The provider then reads the resulting look from `useColorScheme()` in every case (falling back to Light if the phone reports nothing).
 - **Rationale**: One source of truth. `useColorScheme()` already re-renders the app when the phone changes mode (FR-005), and forcing the scheme also makes native pieces follow the choice: the Delete all dialog, the status bar with `style="auto"`, and keyboard. No custom listener code.
 - **Requirement**: `userInterfaceStyle` in `app.config.ts` is already `automatic`, which both platforms need for this to work.
 - **Alternatives considered**: read the phone's look once and pass the chosen look by hand; rejected because native dialogs and the status bar would not follow a forced choice. A theme library; rejected as too much for two palettes (constitution III.11).

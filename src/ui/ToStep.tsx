@@ -3,10 +3,12 @@ import { Text, View } from 'react-native';
 import { signInNew } from '@/state/flows';
 import { useApp } from '@/state/AppState';
 import { strings } from '@/strings';
+import { useTheme } from '@/theme/theme';
 import { AccountCard } from '@/ui/AccountCard';
 
 export function ToStep() {
   const { state, dispatch } = useApp();
+  const { colors } = useTheme();
   return (
     <View>
       <AccountCard
@@ -16,7 +18,7 @@ export function ToStep() {
         disabled={state.moveState === 'moving'}
         onSignIn={() => void signInNew(state, dispatch)}
       />
-      {state.notice && <Text style={{ color: '#b3261e', paddingHorizontal: 14 }}>{state.notice}</Text>}
+      {state.notice && <Text style={{ color: colors.danger, paddingHorizontal: 14 }}>{state.notice}</Text>}
     </View>
   );
 }
