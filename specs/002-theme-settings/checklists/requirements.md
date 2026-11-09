@@ -33,5 +33,5 @@
 
 ## Notes
 
-- Validated in one pass on 2026-11-10. No open questions: defaults were chosen and written in Assumptions (default Phone setting, Delete all moves to Settings, only theme and delete in Settings).
+- Validated in one pass on 2026-11-10. No open questions: defaults were chosen and written in Assumptions (default Auto, Delete all moves to Settings, only theme and delete in Settings).
 - Constitution check for the plan: Settings is a new view and must be justified (Principle I). Theme choice is 3 options, so it must be an inline choice.
