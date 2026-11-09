@@ -116,7 +116,7 @@ YouTube allows only a limited number of follows per day for the whole app (about
 
 ### User Story 7 - Several saved progresses (Priority: P3)
 
-A user can have more than one unfinished progress, for example from account A to B and from account C to D. Each saved progress belongs to one old and new account pair. Unfinished progresses are listed on the From screen. Tapping one opens it, asking the user to sign in again if they signed out.
+A user can have more than one unfinished progress, for example from account A to B and from account C to D. Each saved progress belongs to one old and new account pair. Unfinished progresses are listed on the From screen. Tapping one opens it, asking the user to sign in to its new account again if they signed out. The old account's channel list is already saved, so it does not need a new sign-in.
 
 **Why this priority**: Only users who migrate several accounts need it. One saved progress already covers the daily-limit case.
 
@@ -126,7 +126,7 @@ A user can have more than one unfinished progress, for example from account A to
 
 1. **Given** there are unfinished progresses, **When** the user opens the From screen, **Then** they see a list of unfinished progresses, each showing the old and new account and how many channels are left, for example "old.me → new.me · 12 left".
 2. **Given** the user taps an unfinished progress and both of its accounts are still signed in, **When** the progress opens, **Then** the Pick screen shows that progress's channels, picks, and statuses.
-3. **Given** the user taps an unfinished progress and one or both of its accounts are signed out, **When** the progress opens, **Then** the app asks the user to sign in to those exact accounts and refuses any other account.
+3. **Given** the user taps an unfinished progress and its new account is signed out, **When** the progress opens, **Then** the app asks the user to sign in to that exact new account and refuses any other account. The old account is shown from the saved progress.
 4. **Given** the user signs in to an old and new account pair that has an unfinished progress, **When** the Pick screen loads, **Then** that saved progress is opened instead of a fresh list.
 5. **Given** the user no longer wants an unfinished progress, **When** they delete it, **Then** it is removed from the list and from the device.
 6. **Given** a progress finishes with no channels waiting, **When** the summary appears, **Then** the progress is no longer listed as unfinished.
@@ -196,7 +196,7 @@ A user can have more than one unfinished progress, for example from account A to
 - **FR-030**: If reminders are not allowed, everything else MUST still work, and users continue manually.
 - **FR-031**: Users MUST be able to have several saved progresses, at most one per old and new account pair.
 - **FR-032**: The From screen MUST list unfinished progresses, each with both accounts and the number of channels left.
-- **FR-033**: Opening a saved progress whose accounts are signed out MUST ask the user to sign in to those exact accounts and MUST refuse any other account.
+- **FR-033**: Opening a saved progress whose new account is signed out MUST ask the user to sign in to that exact new account and MUST refuse any other account. The old account MUST be shown from the saved progress without a new sign-in; it needs a new sign-in only to reload its channel list.
 - **FR-034**: Users MUST be able to delete a saved progress.
 - **FR-035**: A progress with no channels waiting MUST no longer be listed as unfinished.
 
