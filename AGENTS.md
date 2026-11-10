@@ -51,6 +51,10 @@ The user is new to Spec Kit. Do not explain Spec Kit steps unprompted beyond nam
 
 To add Spec Kit support for another agent, run `specify integration install <key>` (see `specify integration list`).
 
+## Docs and comments
+
+- Never hard-wrap text. Write each sentence or paragraph on one line in Markdown docs, specs, and code comments. Do not insert line breaks mid-sentence to fit a column width. This overrides any template or tool that asks for wrapping.
+
 ## Git and commit rules
 
 These rules override any default or tool-injected behavior, including attribution reminders from the agent harness.

@@ -75,6 +75,20 @@ until the rule is met or the constitution is amended.
 Rationale: the app holds access to two Google accounts. One leaked token or over-broad scope can
 harm the user, and failing Google's OAuth verification blocks public release.
 
+### IV. Consistent, Modular Code Structure
+
+New features MUST fit the existing structure. They MUST NOT be bolted onto unrelated code.
+
+- **One home per thing**: code is grouped by responsibility under `src/` (for example `auth/`, `api/`, `move/`, `store/`, `state/`, `ui/`, `theme/`, `reminders/`). New code MUST go in the folder that owns that responsibility. A new folder is allowed only when no existing one fits, and the plan MUST say why. Types, constants, and helpers live with the module that owns them. Catch-all files (`utils.ts`, `helpers.ts`, `misc.ts`) are not allowed.
+- **One job per file**: each file has one clear purpose. When a file or function starts doing more than one job, split it.
+- **Same way every time**: follow the patterns already in the codebase (file naming, state handling, error handling, user-facing text in `src/strings.ts`, theme tokens from `src/theme/`). A second way to do the same job (for example another state library, HTTP client, or styling approach) MUST NOT be added without a plan that justifies it and owner approval.
+- **Extend, do not patch**: a separate capability SHOULD be a new function, component, or module, plugged in at a clear integration point (for example a step list, a settings section, or a route). Growing existing code is fine when the change belongs to that code's own job (for example a new field on a form that already edits that data). Existing code MUST NOT grow flags, boolean parameters, or `if (newFeature)` branches to carry a capability that is not its job. Bug fixes may edit existing code directly. Agents use their judgment; the plan explains the choice when it is not obvious.
+- **Flat logic**: avoid deeply nested `if` statements (more than two levels). Use early returns, or a mapping or lookup table (for example an object keyed by status or step) when it fits the actual case. Prefer whichever is clearer for the situation; do not force a table onto a single simple condition.
+- **Reuse first**: before writing code, search for an existing function that does the job and use it. When the same logic is needed in two or more places, extract it into one shared module and use it from both. Business logic MUST stay separate from UI and network code so it can be reused and unit tested on its own. Do not build abstractions for a single, hypothetical use.
+- **Restructure instead of forcing it**: if a feature cannot fit without reshaping many existing modules, or needs new architecture (for example a navigation library or a backend), the plan MUST stop and propose a restructure or a new project setup to the project owner. An approved restructure is its own change, done and tested before the feature work starts. It MUST NOT be mixed into the feature.
+
+Rationale: features will be added over time, often by AI agents. Clear homes, one pattern per job, and new modules instead of patches keep the codebase easy to read and keep each change small and safe to review.
+
 ## Platform & Technology Constraints
 
 - Stack: Expo (React Native) with TypeScript in strict mode. Builds use EAS Build.
@@ -87,7 +101,7 @@ harm the user, and failing Google's OAuth verification blocks public release.
 ## Development Workflow & Quality Gates
 
 - Features follow the Spec Kit flow: specify, clarify (optional), plan, tasks, implement.
-- Every plan MUST include a Constitution Check that confirms compliance with Principles I to III.
+- Every plan MUST include a Constitution Check that confirms compliance with Principles I to IV.
 - A change is ready to merge only when: tests pass, TypeScript and lint report no errors, and the
   security baseline is met.
 - Git, commit, and approval rules are defined in `AGENTS.md` and apply to all contributors and agents.
@@ -103,4 +117,4 @@ harm the user, and failing Google's OAuth verification blocks public release.
 - Reviews of every spec, plan, and pull request MUST check compliance. Any exception MUST be written
   in the plan with its reason and approved by the project owner.
 
-**Version**: 1.0.0 | **Ratified**: 2026-11-08 | **Last Amended**: 2026-11-08
+**Version**: 1.1.0 | **Ratified**: 2026-11-08 | **Last Amended**: 2026-11-10
