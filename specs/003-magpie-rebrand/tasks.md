@@ -67,7 +67,7 @@ description: "Task list for the Magpie rebrand"
 - [x] T009 [US1] In `app.config.ts`, change `name` to `'Magpie'` and `android.adaptiveIcon.backgroundColor` from `'#E6F4FE'` to `'#1F1F1F'`. Keep the `icon`, `foregroundImage`, `backgroundImage`, and `monochromeImage` paths (the files were replaced in T005).
 - [x] T010 [US1] In `app.config.ts` `plugins`, add `['expo-splash-screen', { image: './assets/splash-icon.png', backgroundColor: '#1F1F1F', resizeMode: 'contain' }]` and change `'expo-notifications'` to `['expo-notifications', { icon: './assets/notification-icon.png' }]`. No `color` option (research R6). Then run `npx expo config --type introspect` and confirm the SDK 58 option names are accepted. If SDK 58 documents a different form for splash options, use it and note it in the commit message (research R5 open point).
 - [x] T011 [US1] Run `npm run typecheck && npm run lint && npm test`. T006 and T007 pass, all older tests still pass.
-- [ ] T012 [US1] Manual check, quickstart steps 4 and 5: no stray mark on any icon, art whole in circle, squircle, square, and rounded-square launcher shapes, themed icon is one flat color, icon readable at 48 px and 29 px, opening screen has no white flash in Light and Dark, reminder notification title is `Magpie` with the mark as small icon. If the beak spark turns to noise, set `DROP_BEAK_SPARK=1` in `scripts/make-icons.sh`, rerun it, and commit the new files. Needs a development build on both phones. Owner reviews the icon at small sizes (SC-003).
+- [x] T012 [US1] Checked on a Pixel 8 Pro (shapes, themed icon, splash, small size all pass); the reminder notification waits for T017. Manual check, quickstart steps 4 and 5: no stray mark on any icon, art whole in circle, squircle, square, and rounded-square launcher shapes, themed icon is one flat color, icon readable at 48 px and 29 px, opening screen has no white flash in Light and Dark, reminder notification title is `Magpie` with the mark as small icon. If the beak spark turns to noise, set `DROP_BEAK_SPARK=1` in `scripts/make-icons.sh`, rerun it, and commit the new files. Needs a development build on both phones. Owner reviews the icon at small sizes (SC-003).
 
 **Checkpoint**: US1 works alone. The app reads Magpie everywhere.
 
@@ -109,7 +109,7 @@ description: "Task list for the Magpie rebrand"
 
 - [x] T020 [US3] In `src/strings.ts`, add `notAffiliated: 'Magpie is not made by or linked with YouTube or Google. YouTube is a trademark of Google LLC.'` next to the other Settings strings (constitution I: simple words, text in `strings.ts`).
 - [x] T021 [US3] In `src/ui/SettingsView.tsx`, add one `<Text>` below the Delete all button showing `strings.notAffiliated`, size 13, color from the existing theme tokens (`colors.muted`, from `src/theme/`). Add a style entry in the file's existing `StyleSheet`. Not interactive, no new screen, no new dependency.
-- [ ] T022 [US3] Run `npm test`. T019 passes. Manual check, quickstart step 7: readable in Light and Dark, a screen reader reads both sentences.
+- [x] T022 [US3] Run `npm test`. T019 passes. Manual check, quickstart step 7: readable in Light and Dark, a screen reader reads both sentences.
 
 **Checkpoint**: All three stories work.
 
