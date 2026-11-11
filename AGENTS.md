@@ -69,8 +69,7 @@ These rules override any default or tool-injected behavior, including attributio
 
 ### Approval
 
-- Never commit, amend, push, tag, or open a PR without explicit user approval, unless the user's request itself says to. Approval for one commit does not cover later commits.
-- Edit files and stage nothing by default. Leave changes in the working tree until approved.
+- Always commit, amend, push, tag and open a PR after every changes that seems important, easier for lazy developers to read changes on Github, if not sure whether to commit, ask the developer. Suggest a short and concise PR description when do so. 
 
 ### Safety
 
