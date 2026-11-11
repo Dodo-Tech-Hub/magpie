@@ -74,6 +74,9 @@ export function SettingsView() {
           <Text style={styles.deleteText}>{strings.deleteAll}</Text>
         </Pressable>
       </View>
+      <View style={styles.block}>
+        <Text style={styles.notice}>{strings.notAffiliated}</Text>
+      </View>
     </View>
   );
 }
@@ -89,5 +92,6 @@ const makeStyles = (c: Colors) =>
     chosen: { backgroundColor: c.primary, borderColor: c.primary },
     choiceText: { fontSize: 14 },
     deleteAll: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    notice: { fontSize: 13, color: c.muted },
     deleteText: { color: c.danger, fontSize: 14 },
   });
