@@ -156,3 +156,19 @@ describe('Settings keeps the user place', () => {
     expect(screen.getByLabelText('Sign in with Google: New account')).toBeTruthy();
   });
 });
+
+describe('Not-affiliated notice', () => {
+  const notice =
+    'Magpie is not made by or linked with YouTube or Google. YouTube is a trademark of Google LLC.';
+
+  it('shows in Settings in Light and in Dark', async () => {
+    await render(<App />);
+    await ready();
+    await openSettings();
+    expect(screen.getByText(notice)).toBeTruthy();
+    await choose('Dark');
+    expect(screen.getByText(notice)).toBeTruthy();
+    await choose('Light');
+    expect(screen.getByText(notice)).toBeTruthy();
+  });
+});

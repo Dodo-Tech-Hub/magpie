@@ -8,21 +8,21 @@ const iosUrlScheme = iosClientId
   : undefined;
 
 const config: ExpoConfig = {
-  name: 'Subs Migrator',
-  slug: 'youtube-subs-migrator',
+  name: 'Magpie',
+  slug: 'magpie',
   version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/icon.png',
   userInterfaceStyle: 'automatic',
   ios: {
     supportsTablet: false,
-    bundleIdentifier: 'com.dodotechhub.subsmigrator',
+    bundleIdentifier: 'com.dodotechhub.magpie',
   },
   android: {
-    package: 'com.dodotechhub.subsmigrator',
+    package: 'com.dodotechhub.magpie',
     allowBackup: false,
     adaptiveIcon: {
-      backgroundColor: '#E6F4FE',
+      backgroundColor: '#1F1F1F',
       foregroundImage: './assets/android-icon-foreground.png',
       backgroundImage: './assets/android-icon-background.png',
       monochromeImage: './assets/android-icon-monochrome.png',
@@ -33,7 +33,8 @@ const config: ExpoConfig = {
       ? ['@react-native-google-signin/google-signin', { iosUrlScheme }]
       : '@react-native-google-signin/google-signin',
     'expo-sqlite',
-    'expo-notifications',
+    ['expo-splash-screen', { image: './assets/splash-icon.png', backgroundColor: '#1F1F1F', resizeMode: 'contain' }],
+    ['expo-notifications', { icon: './assets/notification-icon.png' }],
   ],
 };
 

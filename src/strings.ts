@@ -33,7 +33,7 @@ export const strings = {
   deleteAllAsk: 'This removes everything the app saved on this phone. It cannot be undone.',
   cancel: 'Cancel',
   reminderAsk: 'Can we remind you when you can move the rest?',
-  reminderTitle: 'Subs Migrator',
+  reminderTitle: 'Magpie',
   reminderBody: 'You can move the rest of your channels now.',
   yes: 'Yes',
   no: 'No',
@@ -43,6 +43,7 @@ export const strings = {
   light: 'Light',
   dark: 'Dark',
   auto: 'Auto',
+  notAffiliated: 'Magpie is not made by or linked with YouTube or Google. YouTube is a trademark of Google LLC.',
 } as const;
 
 export const signInTo = (email: string) => `Sign in to ${email} to keep going.`;

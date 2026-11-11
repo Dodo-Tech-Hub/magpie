@@ -121,7 +121,7 @@ A user opens Settings and sees a short plain line: Magpie is not made by or link
 - The notice wording is simple: for example, "Magpie is not made by or linked with YouTube or Google. YouTube is a trademark of Google LLC." The exact words are set in planning.
 - Out of scope here, and best done by the owner or in later specs. This is the rest of the branding list:
   - Check "Magpie" for store-name and trademark conflicts before submitting.
-  - Write a privacy policy and host it at a public link. Google's sign-in review and both stores ask for one. The policy should say that the app has no server, keeps data on the device only, and talks only to Google.
+  - Write a privacy policy and host it at a public link. Google's sign-in review and both stores ask for one. The policy should say that the app has no server, keeps data on the device only, and names each platform it talks to. The policy is written in its own change (`feature/privacy-policy`), not here.
   - Fill in the Google sign-in consent screen: app name "Magpie", logo (the new icon), support email, privacy policy link, and a home page link.
   - Check Google's current rules for apps that use YouTube data, including its branding rules and required links to its terms and privacy policy, before the sign-in review.
   - Write the store listing: a short description that says what the app does ("Move your YouTube subscriptions to another account"), screenshots, and a feature graphic. The listing text may name YouTube to describe the job, but the app name must not.
