@@ -4,7 +4,7 @@ Instructions for every coding agent working in this repository (Claude Code, ope
 
 ## Project
 
-YouTube Subscriptions Migrator: a mobile app that migrates subscribed YouTube channels from one Google account to another.
+Magpie: a mobile app that migrates subscribed YouTube channels from one Google account to another.
 
 - The first release ships on Android. The repository is named `youtube-subs-migrator-android` for that reason.
 - Specifications cover both Android and iOS. Do not write Android-only requirements into specs, and flag any platform-specific behavior explicitly.

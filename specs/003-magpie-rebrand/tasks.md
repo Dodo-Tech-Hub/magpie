@@ -58,15 +58,15 @@ description: "Task list for the Magpie rebrand"
 
 ### Tests for User Story 1 (write first, they must fail)
 
-- [ ] T006 [P] [US1] In `tests/components/dailyLimit.test.tsx`, add a test: after the daily limit is hit and a reminder is scheduled, `scheduleNotificationAsync` (mock from `tests/mocks/expoNotifications.ts`) is called with `content.title` equal to `Magpie`. Reuse the existing `scheduled` mock and setup in that file. Fails now because the title is `Subs Migrator`.
-- [ ] T007 [P] [US1] Create `tests/unit/identity.test.ts` with a test that imports the default export of `app.config.ts` and asserts `name` is `Magpie`. (The identifier asserts are added in US2, T013.) Fails now.
+- [x] T006 [P] [US1] In `tests/components/dailyLimit.test.tsx`, add a test: after the daily limit is hit and a reminder is scheduled, `scheduleNotificationAsync` (mock from `tests/mocks/expoNotifications.ts`) is called with `content.title` equal to `Magpie`. Reuse the existing `scheduled` mock and setup in that file. Fails now because the title is `Subs Migrator`.
+- [x] T007 [P] [US1] Create `tests/unit/identity.test.ts` with a test that imports the default export of `app.config.ts` and asserts `name` is `Magpie`. (The identifier asserts are added in US2, T013.) Fails now.
 
 ### Implementation for User Story 1
 
-- [ ] T008 [US1] In `src/strings.ts` line 36, change `reminderTitle: 'Subs Migrator'` to `reminderTitle: 'Magpie'`. One string covers the notification and the permission question (research R6).
-- [ ] T009 [US1] In `app.config.ts`, change `name` to `'Magpie'` and `android.adaptiveIcon.backgroundColor` from `'#E6F4FE'` to `'#1F1F1F'`. Keep the `icon`, `foregroundImage`, `backgroundImage`, and `monochromeImage` paths (the files were replaced in T005).
-- [ ] T010 [US1] In `app.config.ts` `plugins`, add `['expo-splash-screen', { image: './assets/splash-icon.png', backgroundColor: '#1F1F1F', resizeMode: 'contain' }]` and change `'expo-notifications'` to `['expo-notifications', { icon: './assets/notification-icon.png' }]`. No `color` option (research R6). Then run `npx expo config --type introspect` and confirm the SDK 58 option names are accepted. If SDK 58 documents a different form for splash options, use it and note it in the commit message (research R5 open point).
-- [ ] T011 [US1] Run `npm run typecheck && npm run lint && npm test`. T006 and T007 pass, all older tests still pass.
+- [x] T008 [US1] In `src/strings.ts` line 36, change `reminderTitle: 'Subs Migrator'` to `reminderTitle: 'Magpie'`. One string covers the notification and the permission question (research R6).
+- [x] T009 [US1] In `app.config.ts`, change `name` to `'Magpie'` and `android.adaptiveIcon.backgroundColor` from `'#E6F4FE'` to `'#1F1F1F'`. Keep the `icon`, `foregroundImage`, `backgroundImage`, and `monochromeImage` paths (the files were replaced in T005).
+- [x] T010 [US1] In `app.config.ts` `plugins`, add `['expo-splash-screen', { image: './assets/splash-icon.png', backgroundColor: '#1F1F1F', resizeMode: 'contain' }]` and change `'expo-notifications'` to `['expo-notifications', { icon: './assets/notification-icon.png' }]`. No `color` option (research R6). Then run `npx expo config --type introspect` and confirm the SDK 58 option names are accepted. If SDK 58 documents a different form for splash options, use it and note it in the commit message (research R5 open point).
+- [x] T011 [US1] Run `npm run typecheck && npm run lint && npm test`. T006 and T007 pass, all older tests still pass.
 - [ ] T012 [US1] Manual check, quickstart steps 4 and 5: no stray mark on any icon, art whole in circle, squircle, square, and rounded-square launcher shapes, themed icon is one flat color, icon readable at 48 px and 29 px, opening screen has no white flash in Light and Dark, reminder notification title is `Magpie` with the mark as small icon. If the beak spark turns to noise, set `DROP_BEAK_SPARK=1` in `scripts/make-icons.sh`, rerun it, and commit the new files. Needs a development build on both phones. Owner reviews the icon at small sizes (SC-003).
 
 **Checkpoint**: US1 works alone. The app reads Magpie everywhere.
@@ -81,13 +81,13 @@ description: "Task list for the Magpie rebrand"
 
 ### Tests for User Story 2 (write first, they must fail)
 
-- [ ] T013 [US2] Extend `tests/unit/identity.test.ts` (same file as T007, so after it): import `package.json` and the config, then assert (a) `slug` and package `name` equal `magpie`, (b) `ios.bundleIdentifier` and `android.package` equal `com.dodotechhub.magpie`, (c) none of those five values contain `youtube` (case-insensitive). Fails now.
+- [x] T013 [US2] Extend `tests/unit/identity.test.ts` (same file as T007, so after it): import `package.json` and the config, then assert (a) `slug` and package `name` equal `magpie`, (b) `ios.bundleIdentifier` and `android.package` equal `com.dodotechhub.magpie`, (c) none of those five values contain `youtube` (case-insensitive). Fails now.
 
 ### Implementation for User Story 2
 
-- [ ] T014 [US2] In `app.config.ts`, change `slug` to `'magpie'`, `ios.bundleIdentifier` and `android.package` to `'com.dodotechhub.magpie'`. Do not touch Google scope names or API code (FR-011).
-- [ ] T015 [US2] In `package.json`, change `"name"` to `"magpie"`. Run `npm install --package-lock-only` so `package-lock.json` `name` fields follow. Check the diff of the lockfile is only the name lines.
-- [ ] T016 [US2] Run `grep -rniE "youtube" app.config.ts package.json eas.json` and confirm no match in an identifier (SC-004). Run `npm run typecheck && npm run lint && npm test`. Everything passes (SC-007).
+- [x] T014 [US2] In `app.config.ts`, change `slug` to `'magpie'`, `ios.bundleIdentifier` and `android.package` to `'com.dodotechhub.magpie'`. Do not touch Google scope names or API code (FR-011).
+- [x] T015 [US2] In `package.json`, change `"name"` to `"magpie"`. Run `npm install --package-lock-only` so `package-lock.json` `name` fields follow. Check the diff of the lockfile is only the name lines.
+- [x] T016 [US2] Run `grep -rniE "youtube" app.config.ts package.json eas.json` and confirm no match in an identifier (SC-004). Run `npm run typecheck && npm run lint && npm test`. Everything passes (SC-007).
 - [ ] T017 [US2] Owner action (cannot be done by an agent): in Google Cloud, create an Android OAuth client for `com.dodotechhub.magpie` with the signing SHA-1, create an iOS OAuth client for the same bundle, set the new iOS client ID in `.env` as `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`, and rename the consent screen app to "Magpie" (research R11). Never commit `.env`.
 - [ ] T018 [US2] Manual check, quickstart step 6 on Android and iOS: sign in with two test accounts, move one channel, same result as before. With an older build installed, the new build installs as a separate app. Needs T017 done.
 
@@ -103,12 +103,12 @@ description: "Task list for the Magpie rebrand"
 
 ### Tests for User Story 3 (write first, it must fail)
 
-- [ ] T019 [US3] In `tests/components/settings.test.tsx`, add a test: open Settings, find the text `Magpie is not made by or linked with YouTube or Google. YouTube is a trademark of Google LLC.` (`getByText`). Repeat with the theme set to Light and to Dark using the helper this file already uses for theme. Fails now.
+- [x] T019 [US3] In `tests/components/settings.test.tsx`, add a test: open Settings, find the text `Magpie is not made by or linked with YouTube or Google. YouTube is a trademark of Google LLC.` (`getByText`). Repeat with the theme set to Light and to Dark using the helper this file already uses for theme. Fails now.
 
 ### Implementation for User Story 3
 
-- [ ] T020 [US3] In `src/strings.ts`, add `notAffiliated: 'Magpie is not made by or linked with YouTube or Google. YouTube is a trademark of Google LLC.'` next to the other Settings strings (constitution I: simple words, text in `strings.ts`).
-- [ ] T021 [US3] In `src/ui/SettingsView.tsx`, add one `<Text>` below the Delete all button showing `strings.notAffiliated`, size 13, color from the existing theme tokens (`colors.muted`, from `src/theme/`). Add a style entry in the file's existing `StyleSheet`. Not interactive, no new screen, no new dependency.
+- [x] T020 [US3] In `src/strings.ts`, add `notAffiliated: 'Magpie is not made by or linked with YouTube or Google. YouTube is a trademark of Google LLC.'` next to the other Settings strings (constitution I: simple words, text in `strings.ts`).
+- [x] T021 [US3] In `src/ui/SettingsView.tsx`, add one `<Text>` below the Delete all button showing `strings.notAffiliated`, size 13, color from the existing theme tokens (`colors.muted`, from `src/theme/`). Add a style entry in the file's existing `StyleSheet`. Not interactive, no new screen, no new dependency.
 - [ ] T022 [US3] Run `npm test`. T019 passes. Manual check, quickstart step 7: readable in Light and Dark, a screen reader reads both sentences.
 
 **Checkpoint**: All three stories work.
@@ -117,9 +117,9 @@ description: "Task list for the Magpie rebrand"
 
 ## Phase 6: Polish & Documents
 
-- [ ] T023 [P] In `AGENTS.md` line 7, change "YouTube Subscriptions Migrator:" to "Magpie:" and keep the rest of the sentence. Leave line 9 (repository name `youtube-subs-migrator-android`) until the owner renames the GitHub repository (research R9).
-- [ ] T024 [P] In `specs/003-magpie-rebrand/spec.md` assumptions, reword the privacy policy bullet: drop "talks only to Google" and point to the separate privacy policy PR (`feature/privacy-policy`). Keep the rest.
-- [ ] T025 [P] In `specs/001-subscription-migration/` and `specs/002-theme-settings/`, change the product name "YouTube Subscriptions Migrator" or "Subs Migrator" to "Magpie" only where it names the product, not the YouTube service (FR-014). Do not rewrite task history lines that quote old config values such as `specs/001-subscription-migration/tasks.md` T006. Report any line you are unsure about.
+- [x] T023 [P] In `AGENTS.md` line 7, change "YouTube Subscriptions Migrator:" to "Magpie:" and keep the rest of the sentence. Leave line 9 (repository name `youtube-subs-migrator-android`) until the owner renames the GitHub repository (research R9).
+- [x] T024 [P] In `specs/003-magpie-rebrand/spec.md` assumptions, reword the privacy policy bullet: drop "talks only to Google" and point to the separate privacy policy PR (`feature/privacy-policy`). Keep the rest.
+- [x] T025 [P] In `specs/001-subscription-migration/` and `specs/002-theme-settings/`, change the product name "YouTube Subscriptions Migrator" or "Subs Migrator" to "Magpie" only where it names the product, not the YouTube service (FR-014). Do not rewrite task history lines that quote old config values such as `specs/001-subscription-migration/tasks.md` T006. Report any line you are unsure about.
 - [ ] T026 Run the full quickstart (`specs/003-magpie-rebrand/quickstart.md` steps 1 to 7) and tick "Done when".
 - [ ] T027 Owner actions outside the repo, listed for tracking (spec Assumptions, out of scope): rename the GitHub repository to `magpie` and then update `AGENTS.md` line 9, check "Magpie" for store-name and trademark conflicts, fill in the consent screen (logo, support email, privacy policy link), update the constitution title with the constitution step.
 
