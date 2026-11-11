@@ -1,5 +1,5 @@
 {
-  "name": "youtube-subs-migrator",
+  "name": "magpie",
   "version": "1.0.0",
   "main": "index.ts",
   "dependencies": {

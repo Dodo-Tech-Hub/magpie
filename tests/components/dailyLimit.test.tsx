@@ -66,6 +66,11 @@ describe('daily limit', () => {
     expect(arg.trigger.date.getTime()).toBeGreaterThan(Date.now());
   });
 
+  it('titles the reminder Magpie', async () => {
+    await hitLimitAfterOne();
+    expect(scheduled.mock.calls[0][0].content.title).toBe('Magpie');
+  });
+
   it('does not schedule a reminder when the user says no, and Continue still works', async () => {
     answer('No');
     await hitLimitAfterOne();
