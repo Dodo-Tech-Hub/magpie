@@ -23,9 +23,9 @@ description: "Task list for the Magpie rebrand"
 
 **Purpose**: Tools and a clean start
 
-- [ ] T001 Check ImageMagick is installed (`magick -version`). If not, run `brew install imagemagick`. It is a dev tool only, not a project dependency.
-- [ ] T002 Install the splash module with `npx expo install expo-splash-screen`. Commit the changes to `package.json` and `package-lock.json`. Do not edit the `name` field in this task.
-- [ ] T003 Confirm `assets/magpie-icon-master.png` is 1024 x 1024 with background `#1F1F1F` (`magick identify assets/magpie-icon-master.png`). Leave `assets/magpie-icon-large.png` untracked and unused (research R2).
+- [x] T001 Check ImageMagick is installed (`magick -version`). If not, run `brew install imagemagick`. It is a dev tool only, not a project dependency.
+- [x] T002 Install the splash module with `npx expo install expo-splash-screen`. Commit the changes to `package.json` and `package-lock.json`. Do not edit the `name` field in this task.
+- [x] T003 Confirm `assets/magpie-icon-master.png` is 1024 x 1024 with background `#1F1F1F` (`magick identify assets/magpie-icon-master.png`). Leave `assets/magpie-icon-large.png` untracked and unused (research R2).
 
 ---
 
@@ -35,7 +35,7 @@ description: "Task list for the Magpie rebrand"
 
 **CRITICAL**: US1 icon and splash tasks need this script first.
 
-- [ ] T004 Create `scripts/make-icons.sh` (bash, `set -euo pipefail`, ImageMagick `magick`). Input `assets/magpie-icon-master.png`. One variable `DROP_BEAK_SPARK=0` at the top as the switch from research R2 (when `1`, paint the spark area with `#1F1F1F` before every output). Outputs listed in data-model.md "Icon Set":
+- [x] T004 Create `scripts/make-icons.sh` (bash, `set -euo pipefail`, ImageMagick `magick`). Input `assets/magpie-icon-master.png`. One variable `DROP_BEAK_SPARK=0` at the top as the switch from research R2 (when `1`, paint the spark area with `#1F1F1F` before every output). Outputs listed in data-model.md "Icon Set":
   - `assets/icon.png`: master flattened onto `#1F1F1F`, 1024 x 1024, `-alpha off`, colorspace sRGB (RGB, no alpha, FR-005).
   - `assets/android-icon-background.png`: flat `#1F1F1F`, 432 x 432.
   - `assets/android-icon-foreground.png`: art only on transparent (turn `#1F1F1F` to transparent with fuzz, keep `#F3F3E7`), scaled to 72% (about 313 px), centered on a 432 x 432 transparent canvas so every art pixel is inside the 66 dp safe circle (FR-004, research R3).
@@ -44,7 +44,7 @@ description: "Task list for the Magpie rebrand"
   - `assets/notification-icon.png`: white mark on transparent, 96 x 96, mark filling about 80% (research R6).
   - `assets/favicon.png`: 48 x 48 downscale of `assets/icon.png`.
   Write comments on one line each, no hard wrap.
-- [ ] T005 Run `bash scripts/make-icons.sh`. Verify with `magick identify` that sizes match T004 and `magick identify -format '%[channels]' assets/icon.png` prints `srgb` (no alpha). Verify no art pixel of `android-icon-foreground.png` sits farther than 30.6% of 432 px (about 132 px) from the center, for example with `magick assets/android-icon-foreground.png -alpha extract -threshold 0 -trim -format '%wx%h' info:` (must be at most 264 x 264).
+- [x] T005 Run `bash scripts/make-icons.sh`. Verify with `magick identify` that sizes match T004 and `magick identify -format '%[channels]' assets/icon.png` prints `srgb` (no alpha). Verify no art pixel of `android-icon-foreground.png` sits farther than 30.6% of 432 px (about 132 px) from the center, for example with `magick assets/android-icon-foreground.png -alpha extract -threshold 0 -trim -format '%wx%h' info:` (must be at most 264 x 264).
 
 **Checkpoint**: Icon files exist and pass the numeric checks.
 
