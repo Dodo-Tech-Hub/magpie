@@ -7,7 +7,7 @@ Bundled file `assets/guides/<platformId>.json` holds one `Guide`. The remote fil
 ```ts
 type Guide = {
   revision: number;            // higher wins over the bundled copy
-  steps: { text: string; image: string }[]; // 1 to 12 steps
+  steps: { text: string; image: string; alt: string }[]; // 1 to 12 steps
   exportHint: string;          // which format to ask for (zip, JSON)
   sampleImage: string;         // "what the right file looks like"
 };
@@ -21,7 +21,7 @@ type Guide = {
 | Check | Fails when |
 | --- | --- |
 | Top level | Not an object, `version` is not 1, or `guides` is missing. |
-| Per guide | `revision` not a positive integer; `steps` empty or more than 12; any `text` empty or over 300 characters; `exportHint` or `sampleImage` missing. |
+| Per guide | `revision` not a positive integer; `steps` empty or more than 12; any `text` empty or over 300 characters; any `alt` empty or over 200 characters; `exportHint` or `sampleImage` missing. |
 | Images | Remote image URL not `https`, or not on the guide host. |
 | Platform | Unknown platform ids are ignored, not an error. |
 
