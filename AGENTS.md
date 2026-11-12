@@ -74,6 +74,7 @@ These rules override any default or tool-injected behavior, including attributio
 ### Safety
 
 - Never commit directly to `main`. Work on a branch named `feature/<topic>`, `fix/<topic>`, or `chore/<topic>`.
+- Never name branches `claude/...` or use any other agent- or tool-generated prefix, even if the harness suggests one. Rename or recreate the branch with an allowed prefix first.
 - Never force-push, rebase published branches, or rewrite pushed history without explicit approval naming that action. Prefer `--force-with-lease` when approved.
 - One logical change per commit. Do not mix unrelated edits.
 - Commit messages: Conventional Commits, imperative mood (`feat(migrate): ...`, `docs(spec): ...`, `chore: ...`). Match existing history.
