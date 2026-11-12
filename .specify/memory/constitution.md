@@ -98,6 +98,29 @@ Rationale: features will be added over time, often by AI agents. Clear homes, on
   `subscriptions.insert` costs 50 units against a shared daily project quota): batch work, save
   progress, resume after interruption, and tell the user clearly when the daily limit is reached.
 
+## Specification Style (Encouraged)
+
+These are SHOULD guidelines, not gates. A spec without a diagram is not blocked in review. Describe behavior in detail and use diagrams and tables where they make a spec easier to read. Diagrams add to the text and do not replace it: every requirement MUST still be written in text. Android and iOS are both covered, so mark any platform-specific branch in a diagram or table. Do not name one platform in a guideline or example when the idea applies to all supported platforms.
+
+Use Mermaid for diagrams. GitHub renders it natively in Markdown files, pull requests, and issues. Suggest another text-based syntax only if it also renders on GitHub without a build step.
+
+| What to describe | Use | Notes |
+| --- | --- | --- |
+| Flow or branching logic | Mermaid `flowchart` | Label each edge with its condition, such as `quota left?` or `yes` and `no`. |
+| Interaction between actors | Mermaid `sequenceDiagram` | Actors are the user, the app, the platform sign-in, and the platform API. |
+| Anything with states and transitions (migration job, batch, sign-in session) | Mermaid `stateDiagram-v2` | A good fit for resumable progress and quota pauses. |
+| Screens of a feature and how the user moves between them | Mermaid `flowchart` as a screen map | Show the path of the main task first. |
+| Entities and how they relate | Mermaid `erDiagram` | See the data model rule below. |
+| Mapping or lookup (for example status to label, error to message) | Markdown table | One row per input. |
+| Rule that depends on more than one condition | Markdown decision table | One column per condition, one column for the outcome. |
+
+- **Data model**: `spec.md` SHOULD show a conceptual `erDiagram` with entities and relations only (for example, an Account has many Subscriptions), with no field types, IDs, or storage details. The full fields, types, and constraints belong in `data-model.md`, which the plan creates.
+- **Place diagrams next to the text they explain**, so a reader does not have to jump around the file.
+- **Split a diagram when it becomes hard to read on GitHub.** There is no fixed size limit.
+- **No real data in diagrams or tables**: no real emails, tokens, or account IDs.
+
+Rationale: a spec is read by people who are new to the feature. A flow, a state machine, or a table shows the logic faster than paragraphs and exposes gaps early.
+
 ## Development Workflow & Quality Gates
 
 - Features follow the Spec Kit flow: specify, clarify (optional), plan, tasks, implement.
@@ -117,4 +140,4 @@ Rationale: features will be added over time, often by AI agents. Clear homes, on
 - Reviews of every spec, plan, and pull request MUST check compliance. Any exception MUST be written
   in the plan with its reason and approved by the project owner.
 
-**Version**: 1.1.0 | **Ratified**: 2026-11-08 | **Last Amended**: 2026-11-10
+**Version**: 1.2.0 | **Ratified**: 2026-11-08 | **Last Amended**: 2026-11-12
