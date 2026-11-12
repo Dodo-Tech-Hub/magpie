@@ -1,4 +1,4 @@
-# YouTube Subscriptions Migrator Constitution
+# Magpie Constitution
 
 ## Core Principles
 
