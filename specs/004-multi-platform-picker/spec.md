@@ -164,7 +164,7 @@ Platforms change their screens often. The app keeps a built-in copy of every gui
 - The export is empty or has zero accounts: the app says so in plain words and offers to pick another file.
 - The export is a zip file, or the platform offers more than one format: the data steps tell the user which format to ask for.
 - The user opens a profile, follows, then leaves the app for a long time: saved progress is kept and nothing expires.
-- The other app is not installed: Open uses the browser.
+- The other app is not installed: tapping the name opens the browser.
 - The phone has low storage: the app tells the user in plain words that it cannot save progress, and does not lose the ticks already shown on screen.
 - The platform changes its export format after release: the app shows the not-the-right-file message and the guide host can carry the fix for the steps.
 - A guided platform later gets an official follow API: it can move from Guided to Automatic without changing the picker.
