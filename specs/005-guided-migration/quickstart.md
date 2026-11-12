@@ -6,7 +6,7 @@
 - `npm install` after the new Expo modules and `fflate` are added.
 - Dev builds on Android and iOS.
 - For each platform being checked: a real export from a test account, kept outside the repo. Never commit real exports; tests use made-up fixtures.
-- For Twitch: the III.2 exception approved, `EXPO_PUBLIC_TWITCH_CLIENT_ID` set to a public-client app id, and a test Twitch account that follows a few channels.
+- For Twitch: constitution v1.4.0 merged, `EXPO_PUBLIC_TWITCH_CLIENT_ID` set to a public-client app id, and a test Twitch account that follows a few channels.
 - Optional: `EXPO_PUBLIC_GUIDE_HOST` set, for remote guide checks.
 
 ## Automated checks

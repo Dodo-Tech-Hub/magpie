@@ -14,7 +14,7 @@ Technical approach:
 - **Flow screen**: `src/ui/GuidedFlow.tsx` holds the current part (intro, data, checklist, finished) in local state. It opens on the checklist when saved progress exists (R1).
 - **Export files**: `expo-document-picker` to choose, `expo-file-system` to read, `fflate` to unzip only the needed entry. The cached copy is deleted after reading (R3, R4).
 - **Parsers**: one file per platform in `src/guided/parsers/`, each turning the export into follow items. Shared code dedupes and sorts newest first. Each platform's format is verified with a real export before that platform's `ready` flag turns on (R5).
-- **Twitch**: Device Code Grant Flow, the only Twitch flow for a public app without a secret. The app opens Twitch's activate page in the system browser, waits for approval, reads followed channels, revokes the token, and forgets it. This needs a recorded exception to constitution III.2 (R2).
+- **Twitch**: Device Code Grant Flow, the only Twitch flow for a public app without a secret. The app opens Twitch's activate page in the system browser, waits for approval, reads followed channels, revokes the token, and forgets it. This is the flow constitution III.2 (v1.4.0) allows when a platform offers no SDK or PKCE (R2).
 - **Profiles**: `Linking.openURL` with an `https` profile link built from a validated handle. The phone opens the other app when installed, else the browser. No app list to declare (R7).
 - **Saved progress**: new `src/store/guidedStore.ts` with two tables in the existing database. `deleteAll()` clears them (R8).
 - **Guides**: bundled JSON and images in `assets/guides/`. Remote refresh from the guide host is P3 and waits for the owner to set the host (R9).
@@ -43,7 +43,7 @@ Technical approach:
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-Checked against `.specify/memory/constitution.md` v1.3.0.
+Checked against `.specify/memory/constitution.md` v1.4.0 (III.2 generalized on branch `chore/constitution-signin`; merge that first).
 
 | Principle / rule | How the plan complies | Status |
 |------------------|-----------------------|--------|
@@ -52,7 +52,7 @@ Checked against `.specify/memory/constitution.md` v1.3.0.
 | I. Icons, labels, simple words | Every button and row action has an icon, a label, and an accessibility label (FR-024). Text drafts in the contract. | Pass |
 | II. Tests | Listed above. Parsers tested on fixtures, Twitch with mocked network. | Pass |
 | III.1 Least privilege | Twitch scope `user:read:follows` only. No other platform sign-in. | Pass |
-| III.2 Secure sign-in | Twitch offers no Authorization Code with PKCE for public clients. The plan uses Device Code Grant Flow in the system browser: no embedded WebView, no password, no secret. This is not the flow III.2 names. | **Exception, needs owner approval** |
+| III.2 Secure sign-in | Twitch offers no native SDK and no Authorization Code with PKCE for public clients, so the plan uses the next flow in III.2's list: device code flow, approved in the system browser. No WebView, no password, no secret. The device code response is validated before use. | Pass |
 | III.3 Token storage | Twitch token kept in memory only for the single read, then revoked and dropped. Never stored. | Pass |
 | III.4 No secrets | Twitch client ID is public (`EXPO_PUBLIC_TWITCH_CLIENT_ID`). DCF needs no secret. | Pass |
 | III.5 Network | New hosts listed: `id.twitch.tv`, `api.twitch.tv`, guide host. Guide request carries no user data or identifiers. | Pass |
@@ -65,9 +65,8 @@ Checked against `.specify/memory/constitution.md` v1.3.0.
 | IV. Structure | New folder `src/guided/` because no existing folder owns guided-flow logic (parsers, guides, checklist rules). Store code in `src/store/`, Twitch in `src/auth/` and `src/api/`, screens in `src/ui/`. Platforms plug in through two lists, not `if` chains. | Pass |
 | V. No UI automation | The app only opens a link. No taps, hidden browser, screen reading, or accessibility service (FR-012). | Pass |
 
-**Gate result (pre-research)**: Pass with one exception. **Gate result (post-design)**: Pass with the same exception.
+**Gate result (pre-research)**: Pass. **Gate result (post-design)**: Pass. No exception to record.
 
-**Exception to approve (III.2, Twitch only)**: Twitch's docs list Device Code Grant Flow as the flow for public clients and do not offer PKCE; the code flow needs a client secret, which the app cannot hold. DCF keeps every other III.2 goal: sign-in happens in the system browser, the app never sees the password, and there is no secret. Owner options: approve the exception and amend III.2 to allow DCF where a platform offers no PKCE, or drop Twitch from the guided platforms. Twitch tasks stay blocked until one is chosen; other platforms are not affected.
 
 ## Project Structure
 
@@ -126,7 +125,7 @@ tests/
 
 1. Shared flow, store, checklist, finished, bundled guide loading, with one fixture platform used only in tests.
 2. One task group per platform, each ending with `ready: true` only after its real export format is checked (spec assumption). Order is the owner's choice.
-3. Twitch group, after the III.2 exception is decided.
+3. Twitch group, after `chore/constitution-signin` (constitution v1.4.0) is merged.
 4. Remote guide refresh (US4, P3), after the owner sets the guide host.
 
 ## Spec follow-ups (for `/speckit-analyze`)
@@ -137,6 +136,4 @@ tests/
 
 ## Complexity Tracking
 
-| Violation | Why needed | Simpler alternative rejected because |
-|-----------|------------|--------------------------------------|
-| III.2: Twitch sign-in uses Device Code Grant Flow, not Authorization Code with PKCE | Twitch offers no PKCE; its code flow needs a client secret, which a public app cannot hold | Implicit grant returns the token in the redirect URL and Twitch's own docs conflict on whether public clients may use it; shipping a secret breaks III.4 |
+No violations. Nothing to justify.

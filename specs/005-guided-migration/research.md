@@ -16,7 +16,7 @@
   5. `POST https://id.twitch.tv/oauth2/revoke` with `client_id` and `token`, in a `finally`, then drop the token and refresh token from memory.
 - **Rationale**: Twitch docs say DCF "allows for public and confidential client types". The code flow requires `client_secret` and there is no PKCE. Sign-in stays in the system browser and the app never sees the password. The token lives only for one read (clarification).
 - **Alternatives considered**: Implicit grant: Twitch docs conflict on whether public clients may use it, and it puts the token in a redirect URL. Code flow with a shipped secret: breaks constitution III.4. A backend for the exchange: breaks the no-backend rule.
-- **Constitution**: needs the III.2 exception in [plan.md](plan.md).
+- **Constitution**: allowed by III.2 v1.4.0 (device code flow when no native SDK or PKCE exists).
 - **Owner to-do**: register the Twitch app as a public client and give the client ID.
 
 ## R3. Picking and reading the export
