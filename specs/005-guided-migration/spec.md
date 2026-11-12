@@ -16,7 +16,7 @@
 
 - Q: After Twitch sign-in reads the followed-channels list, what happens to the Twitch sign-in token? → A: The app uses it once to read the list, then revokes and deletes it. Nothing is kept. Reading the list again needs a new sign-in.
 - Q: After every row is ticked or skipped, what happens to the saved list and progress? → A: The finished screen asks the user to Keep list or Clear list. Clear list removes that platform's list and ticks. Keep list (also the result when the user leaves without choosing) keeps them: the card shows no Continue note, and tapping the card opens the kept checklist.
-- Q: How are checklist rows ordered and found? → A: Rows keep the export's order. A search box filters rows by name. Ticked and skipped rows stay in place and do not move.
+- Q: How are checklist rows ordered and found? → A: Rows are sorted by follow time, newest first. Rows with no follow time in the export go last, in export order. A search box filters rows by name. Ticked and skipped rows stay in place and do not move.
 
 ## How the screens connect
 
@@ -142,7 +142,7 @@ Platforms change their screens often. The app keeps a built-in copy of every gui
 
 **Checklist**
 
-- **FR-009**: The checklist MUST show one row per account with a tick box and the account name as a link marked with an open-in-other-app icon, and a progress bar with count (ticked and skipped against total). Rows MUST keep the export's order, and ticked or skipped rows MUST stay in place. A search box MUST filter rows by account name.
+- **FR-009**: The checklist MUST show one row per account with a tick box and the account name as a link marked with an open-in-other-app icon, and a progress bar with count (ticked and skipped against total). Rows MUST be sorted by follow time, newest first, with rows that have no follow time last in export order. Ticked or skipped rows MUST stay in place. A search box MUST filter rows by account name.
 - **FR-010**: Tapping the account name MUST take the user to the account's profile in the other app, or in the browser when the other app is not installed. Tapping the tick box MUST NOT open the profile.
 - **FR-011**: The user MUST be able to tick, untick, and skip a row. Ticked, skipped, and open rows MUST look different.
 - **FR-012**: The app MUST NOT tap Follow, open a hidden browser, read the other app's screen, use an accessibility service, or otherwise act on the user's behalf in the other platform. The user taps Follow.
@@ -194,7 +194,7 @@ erDiagram
 - **Guide**: The plain-words help for one Guided platform: the intro, the data steps, and the notes for the checklist. It exists as a built-in copy and, when online, a newer copy from the guide address.
 - **Guide Step**: One numbered step with a short sentence and a picture.
 - **Guided Progress**: One user's saved work on one Guided platform: the list of accounts and the state of each one.
-- **Follow Item**: One account from the user's list, with a display name, the link to its profile, and a state: open, ticked, or skipped.
+- **Follow Item**: One account from the user's list, with a display name, the link to its profile, the time the user followed it when the export gives one, and a state: open, ticked, or skipped.
 
 ## Success Criteria *(mandatory)*
 
