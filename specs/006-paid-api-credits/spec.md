@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-12
 
-**Status**: Draft
+**Status**: Cancelled. The app stays free, so no credits are needed. Kept as a record of the platform pricing research.
 
 **Depends on**: [004 Platform Picker](../004-multi-platform-picker/spec.md) and [005 Guided Migration](../005-guided-migration/spec.md). Credits plug into a platform's flow only where that platform's API charges money per call.
 
