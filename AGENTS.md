@@ -4,7 +4,9 @@ Instructions for every coding agent working in this repository (Claude Code, ope
 
 ## Project
 
-Magpie: a mobile app that migrates subscribed YouTube channels from one Google account to another.
+Magpie: a mobile app that migrates a user's subscriptions from one account to another on a content platform.
+
+- YouTube (with Google accounts) is the first supported platform. More platforms will be integrated later, so write specs and plans in platform-neutral terms (for example "platform sign-in" and "platform API") and put platform-specific details in clearly marked sections.
 
 - The first release ships on Android. The repository is named `youtube-subs-migrator-android` for that reason.
 - Specifications cover both Android and iOS. Do not write Android-only requirements into specs, and flag any platform-specific behavior explicitly.
@@ -13,11 +15,11 @@ Magpie: a mobile app that migrates subscribed YouTube channels from one Google a
 
 - Expo (React Native) with TypeScript.
 - EAS Build for Android and iOS builds (no local Mac needed for iOS builds).
-- YouTube Data API v3 with Google OAuth for reading and writing subscriptions.
+- Platform APIs with the platform's OAuth for reading and writing subscriptions. For YouTube: YouTube Data API v3 with Google OAuth.
 
 ## Domain constraints
 
-These come from the YouTube Data API, not from the framework. Keep them in mind when writing specs, plans, and code.
+These are the YouTube constraints (the first platform). They come from the YouTube Data API, not from the framework. Each new platform has its own limits, so document them separately. Keep them in mind when writing specs, plans, and code.
 
 - Quota: `subscriptions.insert` costs 50 units and the default project quota is 10,000 units per day, shared by all users. That is roughly 200 subscriptions per day per Google Cloud project. Design for batching, resumable progress, and graceful handling of `quotaExceeded`.
 - OAuth scope `https://www.googleapis.com/auth/youtube` is sensitive. Until the app passes Google verification, only up to 100 test users can sign in.
@@ -53,6 +55,7 @@ To add Spec Kit support for another agent, run `specify integration install <key
 
 ## Docs and comments
 
+- Specs are encouraged to use Mermaid diagrams and Markdown tables. See "Specification Style" in `.specify/memory/constitution.md`.
 - Never hard-wrap text. Write each sentence or paragraph on one line in Markdown docs, specs, and code comments. Do not insert line breaks mid-sentence to fit a column width. This overrides any template or tool that asks for wrapping.
 
 ## Git and commit rules
