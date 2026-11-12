@@ -42,7 +42,7 @@ Every feature MUST comply with this baseline. A plan or change that breaks a rul
 until the rule is met or the constitution is amended.
 
 1. **Least privilege scopes**: for each platform, request only the minimum scopes it needs: read-only scopes for the source account and write scopes only for the target account. The spec MUST list the scopes per platform. For Google, request `https://www.googleapis.com/auth/youtube.readonly` for the source account and `https://www.googleapis.com/auth/youtube` only for the target account. Request no other scopes.
-2. **Secure sign-in**: use OAuth 2.0 Authorization Code with PKCE through the system browser or the platform's native sign-in SDK. Never collect platform passwords and never sign in through an embedded WebView. Validate the OAuth `state` and redirect URI.
+2. **Secure sign-in**: for each platform, use the most secure sign-in flow that platform offers to a public client (an app that cannot keep a secret), in this order of preference: the platform's native sign-in SDK, OAuth 2.0 Authorization Code with PKCE, then OAuth 2.0 Device Authorization Grant (device code flow). Sign-in MUST happen in the native SDK or the system browser, never in an embedded WebView. Never collect platform passwords. Validate every value the flow returns (for example the OAuth `state` and redirect URI, or the device code response) before use. The spec or plan of each platform MUST name the flow it uses and why no higher one in the list is available.
 3. **Token storage**: store tokens only in `expo-secure-store` (iOS Keychain, Android Keystore).
    Never store tokens in AsyncStorage, files, or app state that is persisted elsewhere. Revoke tokens
    and delete them on sign-out.
@@ -139,4 +139,4 @@ Rationale: a spec is read by people who are new to the feature. A flow, a state 
 - Reviews of every spec, plan, and pull request MUST check compliance. Any exception MUST be written
   in the plan with its reason and approved by the project owner.
 
-**Version**: 1.3.0 | **Ratified**: 2026-11-08 | **Last Amended**: 2026-11-12
+**Version**: 1.4.0 | **Ratified**: 2026-11-08 | **Last Amended**: 2026-11-12
