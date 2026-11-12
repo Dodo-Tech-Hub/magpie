@@ -6,23 +6,39 @@
 
 **Status**: Draft
 
-**Input**: User description: "Multi-platform support: a platform picker and guided migration flow. The home screen shows a grid of platform cards in two sections, Automatic (YouTube now; Bluesky, Reddit, GitHub later) and Guided (Facebook, Instagram, Threads, TikTok, X, Twitch). Choosing an Automatic platform opens that platform's existing migration flow. Choosing a Guided platform opens one shared guided flow: intro, get your data, checklist, resume. The app never scripts taps or automates the other platform. Guide text and screenshots are per platform, bundled and updatable without an app release. Export files are parsed on the device only."
+**Input**: User description: "Multi-platform support: a platform picker and guided migration flow. The home screen shows a grid of platform cards in two sections, Automatic (YouTube now; Bluesky, Reddit, GitHub later) and Guided (Facebook, Instagram, Threads, TikTok, X, Twitch). Automatic platforms come first and must work before any Guided platform ships. Choosing an Automatic platform opens that platform's existing migration flow. Choosing a Guided platform opens one shared guided flow: intro, get your data, checklist, resume. The app never scripts taps or automates the other platform. Guide text and screenshots are per platform, bundled and updatable without an app release. Export files are parsed on the device only."
 
 ## How the screens connect
 
 ```mermaid
 flowchart TD
-    Home["Home: platform picker"] -->|Automatic card| Auto["That platform's migration flow (YouTube flow is unchanged)"]
-    Home -->|Guided card| Intro["1. Intro"]
-    Intro --> Data["2. Get your data"]
-    Data -->|export file| Pick["Pick file"]
-    Data -->|Twitch only| Sign["Sign in to Twitch"]
-    Pick --> Check["3. Checklist"]
-    Sign --> Check
-    Check -->|Open| Other["Profile in the other app"]
-    Other -->|user taps Follow, comes back| Check
-    Check -->|all done| Done["Finished"]
-    Home -->|saved progress| Check
+    Home["Home: platform picker, unfinished progress"] -->|gear icon| Settings["Settings: theme, Delete all"]
+    Home -->|Automatic card, for example YouTube| Bar
+    Home -->|Guided card| Intro
+    Home -->|unfinished progress| Pick
+    Home -->|saved guided progress| Check
+
+    subgraph Auto["Automatic flow (exists today for YouTube, unchanged)"]
+        Bar["Top bar: From, Pick, To, in any order"]
+        Bar --> From["From: sign in to old account"]
+        Bar --> Pick["Pick: search, All, counter, Already there"]
+        Bar --> To["To: sign in to new account"]
+        Pick -->|Move N channels| Moving["Moving, then Moved, Already there, or Couldn't move"]
+        Moving -->|all done| Summary["Summary"]
+        Moving -->|daily limit| Limit["Rows say Tomorrow, reminder asked"]
+        Limit -->|reminder or Continue| Pick
+    end
+
+    subgraph Guided["Guided flow (new)"]
+        Intro["1. Intro"] --> Data["2. Get your data"]
+        Data -->|export file| PickFile["Pick file"]
+        Data -->|Twitch only| Sign["Sign in to Twitch"]
+        PickFile --> Check["3. Checklist"]
+        Sign --> Check
+        Check -->|tap a name| Other["Profile in the other app"]
+        Other -->|user taps Follow, comes back| Check
+        Check -->|all done| Done["Finished"]
+    end
 ```
 
 ## User Scenarios & Testing *(mandatory)*
@@ -31,26 +47,46 @@ flowchart TD
 
 A user opens the app and sees one grid of platform cards in two sections. The first section is called Automatic and holds platforms where the app moves the follows for the user. The second section is called Guided and holds platforms where the user taps Follow themselves while the app shows the way. Each card shows the platform logo, its name, and one short line, such as "We subscribe for you" or "Step-by-step guide". The user taps a card to start.
 
-**Why this priority**: This is the front door of every other part of the feature. Without it, no platform other than YouTube can be reached.
+**Why this priority**: This is the front door of every other part of the feature. Automatic platforms ship first, so this story must work with only the Automatic section.
 
-**Independent Test**: Open the app on an Android phone and an iPhone. Check that both sections and all cards show. Tap the YouTube card and confirm the existing YouTube flow opens unchanged. Tap a Guided card and confirm its intro opens.
+**Independent Test**: Open the app on an Android phone and an iPhone. Check that the Automatic section and its card show, and that the Guided section shows only the platforms that are ready. Tap the YouTube card and confirm the existing YouTube flow opens unchanged. Tap a Guided card and confirm its intro opens.
 
 **Acceptance Scenarios**:
 
-1. **Given** the app opens on Home, **When** the user looks at the screen, **Then** the Automatic section shows YouTube and the Guided section shows Facebook, Instagram, Threads, TikTok, X, and Twitch, each with logo, name, and one-line label.
+1. **Given** the app opens on Home, **When** the user looks at the screen, **Then** the Automatic section shows YouTube with logo, name, and one-line label. The Guided section shows each Guided platform that is ready, in the same way, and is hidden while none is ready.
 2. **Given** the user taps the YouTube card, **When** the flow opens, **Then** it behaves exactly as it did before this feature, with no new steps.
 3. **Given** the user taps a Guided card, **When** the screen opens, **Then** it shows the intro for that platform.
-4. **Given** the user has saved progress for a platform, **When** Home shows, **Then** that card shows a short "Continue" note with the saved count, and tapping it opens the checklist at the saved place.
+4. **Given** the user has saved progress for a platform, **When** Home shows, **Then** that card shows a short "Continue" note with the saved count, and tapping it opens that progress at the saved place.
 5. **Given** the phone is small or the text size is large, **When** Home shows, **Then** every card stays readable and tappable, and the grid scrolls instead of cutting cards off.
 6. **Given** a screen reader is on, **When** the user moves over a card, **Then** it reads the name and the one-line label.
 
 ---
 
-### User Story 2 - Follow the guide to get my data (Priority: P1)
+### User Story 2 - The Automatic flow keeps working from the picker (Priority: P1)
+
+Everything the app does today for YouTube still works, and the user reaches it from the YouTube card. That means the From, Pick, and To steps in any order, picking channels with search and All, the Move button, the Moving, Moved, Already there, and Couldn't move states, the daily limit with the reminder, the list of unfinished progresses, and Settings with the theme choice and Delete all.
+
+**Why this priority**: Automatic platforms must be ready before Guided ones. This story protects the product that already works and makes it the first platform in the picker.
+
+**Independent Test**: From Home, tap the YouTube card and run a full move between two test accounts, hit the daily limit, close the app, and continue from the reminder. Every result matches the earlier specs for the move flow, theme and settings, and the Magpie rebrand.
+
+**Acceptance Scenarios**:
+
+1. **Given** the user taps the YouTube card, **When** the flow opens, **Then** the top bar shows From, Pick, and To, and the steps work in any order as before.
+2. **Given** the user moves channels, **When** the move runs, **Then** the row states, summary, and Already there handling are the same as before.
+3. **Given** the daily limit is reached, **When** the user taps the reminder later, **Then** the app opens that progress's channel list with a Continue button, as before.
+4. **Given** there are several unfinished YouTube progresses, **When** the user opens the YouTube flow, **Then** they see the same list of unfinished progresses as before, and Home also shows a Continue note on the YouTube card.
+5. **Given** the user opens Settings from Home, **When** they choose a theme, **Then** it applies to the picker, the Automatic flow, and the Guided flow.
+6. **Given** the user uses Delete all in Settings, **When** it finishes, **Then** YouTube progresses, tokens, and saved guided lists are all removed.
+7. **Given** the user wants to go back to Home from inside a flow, **When** they use the back action, **Then** they return to Home with no data lost.
+
+---
+
+### User Story 3 - Follow the guide to get my data (Priority: P2)
 
 A user picks a Guided platform. The intro says in plain words what they will do, about how long it takes, and that the app never signs in to their social accounts and never taps for them. The next screen shows numbered steps with pictures for asking the platform for the user's data, and a Pick file button to choose the file when it arrives. For Twitch there is no file: the screen shows a Sign in button that reads the list of channels the user follows.
 
-**Why this priority**: The user cannot move any follows until the app has their list. This is the first half of the guided flow.
+**Why this priority**: The user cannot move any follows until the app has their list. This is the first half of the guided flow, which ships after the Automatic flow.
 
 **Independent Test**: Choose a Guided platform, read the intro, follow the data steps, and pick a sample export file. Confirm the checklist opens with the right number of accounts. Repeat for Twitch using sign-in.
 
@@ -66,28 +102,28 @@ A user picks a Guided platform. The intro says in plain words what they will do,
 
 ---
 
-### User Story 3 - Work through the checklist (Priority: P1)
+### User Story 4 - Work through the checklist (Priority: P2)
 
-The checklist shows one row per account, with a progress bar such as "34 / 120". Each row has an Open button. Open takes the user to that profile in the other app. The user taps Follow there, comes back, and ticks the row. The app never taps Follow for the user.
+The checklist shows one row per account, with a progress bar such as "34 / 120". Each row has a tick box and the account name as a link, marked with an open-in-other-app icon. Tapping the name takes the user to that profile in the other app. The user taps Follow there, comes back, and ticks the row. The app never taps Follow for the user.
 
 **Why this priority**: This is the second half of the guided flow and the value the user came for.
 
-**Independent Test**: Load a sample list of 10 accounts. Tap Open on one row, confirm the profile opens in the other app or the browser, come back, tick the row, and confirm the bar moves from 0 / 10 to 1 / 10.
+**Independent Test**: Load a sample list of 10 accounts. Tap the name on one row, confirm the profile opens in the other app or the browser, come back, tick the row, and confirm the bar moves from 0 / 10 to 1 / 10.
 
 **Acceptance Scenarios**:
 
-1. **Given** the checklist shows, **When** the user taps Open on a row, **Then** that account's profile opens in the other app, or in the phone's browser if the other app is not installed.
+1. **Given** the checklist shows, **When** the user taps an account name, **Then** that account's profile opens in the other app, or in the phone's browser if the other app is not installed.
 2. **Given** the user comes back from the other app, **When** the checklist shows again, **Then** it is at the same place, and the row they opened is easy to find.
 3. **Given** the user ticks a row, **When** the tick is saved, **Then** the bar and the count update at once.
 4. **Given** the user ticked a row by mistake, **When** they tap the row again, **Then** the tick is removed and the count goes down.
-5. **Given** an account no longer exists or cannot be opened, **When** the user taps Open, **Then** the user can mark the row as Skipped, and skipped rows show apart from ticked and open rows.
+5. **Given** an account no longer exists or cannot be opened, **When** the user taps the name, **Then** the user can mark the row as Skipped, and skipped rows show apart from ticked and open rows.
 6. **Given** every row is ticked or skipped, **When** the last one is done, **Then** a finished screen shows the totals.
 7. **Given** the list has hundreds of rows, **When** the user scrolls, **Then** the list stays smooth.
 8. **Given** the user has not signed in to their new account in the other app, **When** the checklist first shows, **Then** a short note near the top reminds the user to sign in to the new account in the other app before following.
 
 ---
 
-### User Story 4 - Stop and continue later (Priority: P2)
+### User Story 5 - Stop and continue later (Priority: P2)
 
 The user can close the app at any point and later continue exactly where they stopped. Progress is saved on the phone for each platform.
 
@@ -104,7 +140,7 @@ The user can close the app at any point and later continue exactly where they st
 
 ---
 
-### User Story 5 - Guides stay correct when platforms change (Priority: P2)
+### User Story 6 - Guides stay correct when platforms change (Priority: P3)
 
 Platforms change their screens often. The app keeps a built-in copy of every guide, so guides work offline. When the phone is online, the app can also fetch newer guide text and pictures from a fixed guide address, with no app update. The app sends nothing about the user when it does this.
 
@@ -140,10 +176,10 @@ Platforms change their screens often. The app keeps a built-in copy of every gui
 
 **Picker**
 
-- **FR-001**: Home MUST show the platform picker as a grid of cards in two sections, Automatic and Guided.
+- **FR-001**: Home MUST show the platform picker as a grid of cards in two sections, Automatic and Guided. A section MUST be hidden while it has no ready platform, so the picker works with Automatic only.
 - **FR-002**: Each card MUST show the platform's official logo, its name, and one short plain-words label.
 - **FR-003**: Which section a platform sits in MUST come from one list of platforms, so moving a platform between sections needs no new screen.
-- **FR-004**: Tapping an Automatic card MUST open that platform's migration flow. The YouTube flow MUST NOT change in behavior or steps.
+- **FR-004**: Tapping an Automatic card MUST open that platform's migration flow. The YouTube flow MUST NOT change in behavior or steps, and every behavior in the move flow, theme and settings, and Magpie rebrand specs MUST stay available. Settings and Delete all MUST be reachable from Home.
 - **FR-005**: Tapping a Guided card MUST open the shared guided flow for that platform.
 - **FR-006**: Every card MUST have an accessibility label that reads the name and the one-line label.
 - **FR-007**: A card for a platform with saved progress MUST show a Continue note with the saved count.
@@ -157,8 +193,8 @@ Platforms change their screens often. The app keeps a built-in copy of every gui
 - **FR-012**: The app MUST read the chosen export on the phone only. It MUST NOT upload the file or its contents anywhere.
 - **FR-013**: The app MUST list each account once, remove duplicates, and tell the user in plain words when the file is not the expected export or has no accounts.
 - **FR-014**: For Twitch, the app MUST ask only for permission to read the list of followed channels. The user taps Follow themselves, because Twitch no longer lets apps follow for a user.
-- **FR-015**: The checklist MUST show one row per account, an Open button per row, and a progress bar with count (ticked and skipped against total).
-- **FR-016**: Open MUST take the user to the account's profile in the other app, or in the browser when the other app is not installed.
+- **FR-015**: The checklist MUST show one row per account with a tick box and the account name as a link marked with an open-in-other-app icon, and a progress bar with count (ticked and skipped against total).
+- **FR-016**: Tapping the account name MUST take the user to the account's profile in the other app, or in the browser when the other app is not installed. Tapping the tick box MUST NOT open the profile.
 - **FR-017**: The user MUST be able to tick, untick, and skip a row. Ticked, skipped, and open rows MUST look different.
 - **FR-018**: The app MUST NOT tap Follow, open a hidden browser, read the other app's screen, use an accessibility service, or otherwise act on the user's behalf in the other platform. The user taps Follow.
 - **FR-019**: The app MUST NOT ask for or keep the user's password for any Guided platform.
@@ -168,7 +204,7 @@ Platforms change their screens often. The app keeps a built-in copy of every gui
 
 - **FR-021**: The app MUST save each platform's list and every tick and skip on the phone after each change, so a closed app loses nothing.
 - **FR-022**: Progress for each platform MUST be kept apart from every other platform.
-- **FR-023**: The user MUST be able to start again for one platform, after a confirmation, and the existing Delete all action MUST also remove all guided lists and progress.
+- **FR-023**: The user MUST be able to start again for one platform, after a confirmation, and the existing Delete all action MUST also remove all guided lists and progress as well as YouTube progresses and tokens.
 - **FR-024**: Saved lists and progress MUST stay only on the phone and MUST NOT be sent anywhere.
 
 **Guide content**
@@ -228,8 +264,9 @@ erDiagram
 
 ## Assumptions
 
-- At launch, YouTube is the only Automatic platform. Bluesky, Reddit, and GitHub appear in Automatic later, each in its own feature with its own spec.
-- The first release of this feature includes the guided flow for all six Guided platforms: Facebook, Instagram, Threads, TikTok, X, and Twitch. A platform whose export format cannot be verified before release stays out of the grid until it can be.
+- Automatic comes first. The picker and the Automatic flow ship and must work before any Guided platform ships. The Guided section stays hidden until a Guided platform is ready.
+- At launch, YouTube is the only Automatic platform. Bluesky, Reddit, and GitHub appear in Automatic later, each in its own feature with its own spec. The picker takes a new Automatic platform from the single list of platforms with no new screen.
+- Guided platforms (Facebook, Instagram, Threads, TikTok, X, and Twitch) ship one at a time, each when its export format is verified and its guide is written. The order is decided later and none blocks the others.
 - The user must request their export from the old account. The app cannot do this for them.
 - The user is signed in to their new account in the other app. The app cannot check this and only reminds the user.
 - A platform's export gives a list of followed accounts with enough information to build a profile link. If a platform's export does not, that platform needs a different approach and is out of scope here.
