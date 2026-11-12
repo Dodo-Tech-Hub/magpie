@@ -10,6 +10,14 @@
 
 **Input**: User description: "Choosing a Guided platform opens one shared guided flow: intro, get your data, checklist, resume. Guided platforms are Facebook, Instagram, Threads, TikTok, X, and Twitch. Each checklist item is a link to the profile. The app never scripts taps or automates the other platform. Guide text and screenshots are per platform, bundled and updatable without an app release. Export files are parsed on the device only. Automatic platforms ship first; Guided is implemented separately."
 
+## Clarifications
+
+### Session 2026-11-12
+
+- Q: After Twitch sign-in reads the followed-channels list, what happens to the Twitch sign-in token? → A: The app uses it once to read the list, then revokes and deletes it. Nothing is kept. Reading the list again needs a new sign-in.
+- Q: After every row is ticked or skipped, what happens to the saved list and progress? → A: The finished screen asks the user to Keep list or Clear list. Clear list removes that platform's list and ticks. Keep list (also the result when the user leaves without choosing) keeps them: the card shows no Continue note, and tapping the card opens the kept checklist.
+- Q: How are checklist rows ordered and found? → A: Rows are sorted by follow time, newest first. Rows with no follow time in the export go last, in export order. A search box filters rows by name. Ticked and skipped rows stay in place and do not move.
+
 ## How the screens connect
 
 ```mermaid
@@ -64,9 +72,10 @@ The checklist shows one row per account, with a progress bar such as "34 / 120".
 3. **Given** the user taps a tick box, **When** the tick is saved, **Then** the bar and the count update at once, and no profile opens.
 4. **Given** the user ticked a row by mistake, **When** they tap the tick box again, **Then** the tick is removed and the count goes down.
 5. **Given** an account no longer exists or cannot be opened, **When** the user sees this in the other app, **Then** they can mark the row as Skipped, and skipped rows show apart from ticked and open rows.
-6. **Given** every row is ticked or skipped, **When** the last one is done, **Then** a finished screen shows the totals.
+6. **Given** every row is ticked or skipped, **When** the last one is done, **Then** a finished screen shows the totals and offers Keep list and Clear list.
 7. **Given** the list has hundreds of rows, **When** the user scrolls, **Then** the list stays smooth.
 8. **Given** the checklist first shows, **When** the user looks at the top, **Then** a short note reminds them to sign in to the new account in the other app before following.
+9. **Given** the finished screen shows, **When** the user taps Clear list, **Then** that platform's list and ticks are removed. **When** the user taps Keep list or leaves without choosing, **Then** the list is kept, the card shows no Continue note, and tapping the card opens the kept checklist.
 
 ---
 
@@ -129,11 +138,11 @@ Platforms change their screens often. The app keeps a built-in copy of every gui
 - **FR-005**: The get-your-data screen MUST offer Pick file for platforms that give an export file, and Sign in for Twitch.
 - **FR-006**: The app MUST read the chosen export on the phone only. It MUST NOT upload the file or its contents anywhere.
 - **FR-007**: The app MUST list each account once, remove duplicates, and tell the user in plain words when the file is not the expected export or has no accounts.
-- **FR-008**: For Twitch, the app MUST ask only for permission to read the list of followed channels. The user taps Follow themselves, because Twitch no longer lets apps follow for a user.
+- **FR-008**: For Twitch, the app MUST ask only for permission to read the list of followed channels. The user taps Follow themselves, because Twitch no longer lets apps follow for a user. The app MUST use the Twitch sign-in once to read the list, then revoke and delete it, and MUST NOT keep any Twitch token. Reading the list again needs a new sign-in.
 
 **Checklist**
 
-- **FR-009**: The checklist MUST show one row per account with a tick box and the account name as a link marked with an open-in-other-app icon, and a progress bar with count (ticked and skipped against total).
+- **FR-009**: The checklist MUST show one row per account with a tick box and the account name as a link marked with an open-in-other-app icon, and a progress bar with count (ticked and skipped against total). Rows MUST be sorted by follow time, newest first, with rows that have no follow time last in export order. Ticked or skipped rows MUST stay in place. A search box MUST filter rows by account name.
 - **FR-010**: Tapping the account name MUST take the user to the account's profile in the other app, or in the browser when the other app is not installed. Tapping the tick box MUST NOT open the profile.
 - **FR-011**: The user MUST be able to tick, untick, and skip a row. Ticked, skipped, and open rows MUST look different.
 - **FR-012**: The app MUST NOT tap Follow, open a hidden browser, read the other app's screen, use an accessibility service, or otherwise act on the user's behalf in the other platform. The user taps Follow.
@@ -147,6 +156,7 @@ Platforms change their screens often. The app keeps a built-in copy of every gui
 - **FR-017**: The user MUST be able to start again for one platform after a confirmation. Delete all in Settings MUST also remove all guided lists and progress.
 - **FR-018**: Saved lists and progress MUST stay only on the phone and MUST NOT be sent anywhere.
 - **FR-019**: A Guided card with saved progress MUST show the Continue note that spec 004 defines, with the ticked and skipped count.
+- **FR-026**: When every row is ticked or skipped, the finished screen MUST show the totals and offer Keep list and Clear list. Clear list MUST remove that platform's list and progress. Keep list, or leaving without choosing, MUST keep them; the card MUST then show no Continue note, and tapping the card MUST open the kept checklist.
 
 **Guide content**
 
@@ -184,7 +194,7 @@ erDiagram
 - **Guide**: The plain-words help for one Guided platform: the intro, the data steps, and the notes for the checklist. It exists as a built-in copy and, when online, a newer copy from the guide address.
 - **Guide Step**: One numbered step with a short sentence and a picture.
 - **Guided Progress**: One user's saved work on one Guided platform: the list of accounts and the state of each one.
-- **Follow Item**: One account from the user's list, with a display name, the link to its profile, and a state: open, ticked, or skipped.
+- **Follow Item**: One account from the user's list, with a display name, the link to its profile, the time the user followed it when the export gives one, and a state: open, ticked, or skipped.
 
 ## Success Criteria *(mandatory)*
 
