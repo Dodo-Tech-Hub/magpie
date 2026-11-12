@@ -30,7 +30,10 @@
 - **Decision**: Ship the official YouTube logo as `assets/platforms/youtube.png`, taken unchanged from YouTube's brand resources by the project owner. `Image` with `accessibilityElementsHidden` because the card label already names the platform.
 - **Rationale**: Constitution V and FR-012 require official, unmodified logos. The Ionicons `logo-youtube` glyph is a redrawn icon, not the official asset.
 - **Alternatives considered**: Ionicons brand glyphs: not official. Rejected.
-- **Owner to-do**: supply the logo file and confirm it meets YouTube's brand guidelines before release.
+- **Asset**: `assets/platforms/youtube.png` is `yt_icon_red_digital.png` (full-color, 1255 x 1075) from YouTube's icon download at brand.youtube, unmodified.
+- **Brand rules from the icon page** (checked 2026-11-12): keep clear space around the icon (measured by the triangle); no outline, stroke, drop shadow, custom colors, rotating, skewing, or stretching; use the black or white version when the red one is hard to see; the page states a digital minimum height of 100px.
+- **Open question**: the 100px minimum may apply to the full logo only. At the planned card size (about 40px high) the icon would break it. The owner confirms with the Brand Guidelines page or YouTube before release. If it applies, the card logo is drawn at 100px high.
+- **Owner to-do**: read the Brand Guidelines page for rules on use by other apps and on implying endorsement.
 
 ## R6. Home button in the flow
 

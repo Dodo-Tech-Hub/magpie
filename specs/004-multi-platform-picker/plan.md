@@ -15,7 +15,7 @@ Technical approach:
 - **Home**: `src/ui/HomeView.tsx` and `src/ui/PlatformCard.tsx`. A `FlatList` per section with a column count from the window width and font scale, so cards never get cut off (R3).
 - **Continue note**: the YouTube entry's `unfinished()` sums `left` from the existing `listUnfinished()`. One progress: tap calls the existing `openProgress()`. Several: tap opens the YouTube flow on the From step, where the existing Unfinished list lives (R4).
 - **Reminders**: `openProgress()` also sets `platform: 'youtube'`, so a reminder still skips Home (FR-009).
-- **Logos**: official YouTube logo file in `assets/platforms/`, supplied by the project owner (R5).
+- **Logos**: official YouTube icon at `assets/platforms/youtube.png`, unmodified. Size rule is an open question for the owner (R5).
 
 ## Technical Context
 

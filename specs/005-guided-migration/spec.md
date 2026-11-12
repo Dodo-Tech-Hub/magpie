@@ -155,7 +155,7 @@ Platforms change their screens often. The app keeps a built-in copy of every gui
 - **FR-016**: Progress for each platform MUST be kept apart from every other platform.
 - **FR-017**: The user MUST be able to start again for one platform after a confirmation. Delete all in Settings MUST also remove all guided lists and progress.
 - **FR-018**: Saved lists and progress MUST stay only on the phone and MUST NOT be sent anywhere.
-- **FR-019**: A Guided card with saved progress MUST show the Continue note that spec 004 defines, with the ticked and skipped count.
+- **FR-019**: A Guided card with saved progress MUST show the Continue note that spec 004 defines, with the count of rows still open.
 - **FR-026**: When every row is ticked or skipped, the finished screen MUST show the totals and offer Keep list and Clear list. Clear list MUST remove that platform's list and progress. Keep list, or leaving without choosing, MUST keep them; the card MUST then show no Continue note, and tapping the card MUST open the kept checklist.
 
 **Guide content**
@@ -174,7 +174,7 @@ Platforms change their screens often. The app keeps a built-in copy of every gui
 
 | Area | Android | iOS |
 | --- | --- | --- |
-| Open a profile in the other app | The phone can open the profile in the other app when it is installed. A phone that hides installed apps from this app needs the other app declared in advance. Browser is the fallback. | The app must declare in advance which other apps it may check for. Without it, the check fails and the browser opens instead. |
+| Open a profile in the other app | The profile opens as a normal web link. The phone opens the other app when it is installed, and the browser when it is not. Nothing needs to be declared in advance. | Same. The phone opens the other app when it is installed, and Safari when it is not. Nothing needs to be declared in advance. |
 | Pick the export file | The system file picker shows files from Downloads and cloud drives. | The Files app shows files from iCloud Drive, On My iPhone, and other drives. |
 | Zip exports | The user may need to unzip first, or the app reads the zip directly. The guide says which. | Files can unzip a zip, or the app reads the zip directly. The guide says which. |
 | Coming back from the other app | The back gesture or the recent-apps switch returns to the app. | The back-to-app link in the status bar or the app switcher returns to the app. |
@@ -214,7 +214,7 @@ erDiagram
 - The user must request their export from the old account. The app cannot do this for them.
 - The user is signed in to their new account in the other app. The app cannot check this and only reminds the user.
 - A platform's export gives a list of followed accounts with enough information to build a profile link. If a platform's export does not, that platform needs a different approach and is out of scope here.
-- Twitch needs one developer registration with Twitch, done by the project owner. Reading followed channels needs no Twitch review.
+- Twitch needs one developer registration with Twitch, as a public client, done by the project owner. Reading followed channels needs no Twitch review.
 - Guide pictures are simple and show the platform's own screens. They may go out of date, which is why guides can be updated without an app release.
 - There is one static guide address, owned by the project, that serves guide text and pictures and holds no user data.
 - Out of scope: following for the user on any platform without an official follow API, account sign-in for Guided platforms other than Twitch, and in-app editing of guide content.
