@@ -10,6 +10,12 @@
 
 **Related**: [005 Guided Migration](../005-guided-migration/spec.md) adds platforms to the Guided section and builds on this feature.
 
+## Clarifications
+
+### Session 2026-11-12
+
+- Q: When a platform has several unfinished progresses, what does the card's Continue note show and open? → A: The note shows the total channels left across all unfinished progresses for that platform. With one progress, tapping it opens that progress at the saved place. With several, it opens the platform's existing list of unfinished progresses.
+
 ## How the screens connect
 
 ```mermaid
@@ -45,7 +51,7 @@ A user opens the app and sees one grid of platform cards in two sections. The fi
 
 1. **Given** the app opens on Home, **When** the user looks at the screen, **Then** the Automatic section shows YouTube with logo, name, and one-line label, and the Guided section is hidden while no Guided platform is ready.
 2. **Given** a Guided platform is ready, **When** Home shows, **Then** the Guided section shows its card in the same way, and tapping it opens that platform's guided flow.
-3. **Given** the user has unfinished progress for a platform, **When** Home shows, **Then** that card shows a short "Continue" note with the count left, and tapping the note opens that progress at the saved place.
+3. **Given** the user has unfinished progress for a platform, **When** Home shows, **Then** that card shows a short "Continue" note with the total count left across all its unfinished progresses. Tapping the note opens the progress at the saved place when there is one, or the platform's list of unfinished progresses when there are several.
 4. **Given** the phone is small or the text size is large, **When** Home shows, **Then** every card stays readable and tappable, and the grid scrolls instead of cutting cards off.
 5. **Given** a screen reader is on, **When** the user moves over a card, **Then** it reads the name and the one-line label.
 
@@ -85,13 +91,13 @@ Everything the app does today for YouTube still works, and the user reaches it f
 
 **Picker**
 
-- **FR-001**: Home MUST show the platform picker as a grid of cards in two sections, Automatic and Guided. A section MUST be hidden while it has no ready platform.
+- **FR-001**: Home MUST show the platform picker as a grid of cards in two sections, Automatic and Guided. Only ready platforms MUST show, with no "Coming soon" cards for planned ones. A section MUST be hidden while it has no ready platform.
 - **FR-002**: Each card MUST show the platform's official logo, its name, and one short plain-words label.
 - **FR-003**: Which section a platform sits in, and whether it is ready, MUST come from one list of platforms, so adding a platform or moving it between sections needs no new screen.
 - **FR-004**: Tapping an Automatic card MUST open that platform's migration flow.
 - **FR-005**: Tapping a Guided card MUST open that platform's guided flow, defined in spec 005.
 - **FR-006**: Every card MUST have an accessibility label that reads the name and the one-line label.
-- **FR-007**: A card for a platform with unfinished progress MUST show a Continue note with the count left, and tapping it MUST open that progress.
+- **FR-007**: A card for a platform with unfinished progress MUST show a Continue note with the total count left across all its unfinished progresses. Tapping the note MUST open that progress at the saved place when there is one, and the platform's list of unfinished progresses when there are several.
 
 **Automatic flow**
 
