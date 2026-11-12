@@ -125,7 +125,7 @@ Platforms change their screens often. The app keeps a built-in copy of every gui
 - **FR-001**: Each Guided platform MUST appear in the picker's Guided section (spec 004) only once its guide and file reading are ready.
 - **FR-002**: The guided flow MUST have four parts in order: intro, get your data, checklist, finished. It MUST be one shared flow for all Guided platforms, with only the guide text, the pictures, the file reading, and the profile link rules differing by platform.
 - **FR-003**: The intro MUST state the task, a rough time, and that the app never signs in to the user's social accounts and never taps for them.
-- **FR-004**: The get-your-data screen MUST show numbered steps with a picture for each, in the platform's current wording.
+- **FR-004**: For platforms that give an export file, the get-your-data screen MUST show numbered steps with a picture for each, in the platform's current wording. For Twitch, it MUST show no export steps: the user signs in with the old account and the app reads the list of followed channels, then the checklist opens.
 - **FR-005**: The get-your-data screen MUST offer Pick file for platforms that give an export file, and Sign in for Twitch.
 - **FR-006**: The app MUST read the chosen export on the phone only. It MUST NOT upload the file or its contents anywhere.
 - **FR-007**: The app MUST list each account once, remove duplicates, and tell the user in plain words when the file is not the expected export or has no accounts.
