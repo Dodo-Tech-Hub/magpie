@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-09
 
-**Status**: Draft
+**Status**: Implemented
 
 **Input**: User description: "Migrate YouTube subscriptions from one Google account (old/source) to another (new/destination), on Android and iOS, using a top bar with 3 steps (From, Pick, To), a channel list with checkboxes, in-place progress, and daily-limit handling."
 

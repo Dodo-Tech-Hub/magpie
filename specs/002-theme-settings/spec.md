@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-10
 
-**Status**: Draft
+**Status**: Implemented
 
 **Input**: User description: "Add a dark and light theme to the app, and a settings page where the user can choose the theme. Theme choices: Light, Dark, and follow the phone's setting. The choice is remembered on the device. Applies on Android and iOS. The settings page is the home for this and future app options; it should respect the project constitution's screen-minimizing principle (open from the main screen with an icon, keep it light) and the existing "Delete all data" action may live there."
 

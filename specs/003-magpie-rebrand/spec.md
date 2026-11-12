@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-10
 
-**Status**: Draft
+**Status**: Implemented
 
 **Input**: User description: "Use the supplied icon for the app. Rename the app to "Magpie". Rename the package to remove the word "youtube" (ideas: transfersubs, transferfollow; ask for a suggestion). Also tell me anything else I should do about branding."
 
