@@ -7,10 +7,7 @@
 The app MUST let a user finish a migration with as few screens, transitions, and taps as possible.
 
 - Option sets of 5 or fewer items MUST use inline choices (segmented control, chips, or radio list).
-- Option sets of more than 5 items MUST use a combo box (dropdown, searchable when the list can grow).
-  Exception, approved by the project owner: the platform picker is a grid of cards in two sections
-  (Automatic and Guided), because users need to see how each platform works before choosing it. Each
-  card MUST show the logo, the name, and a one-line label.
+- Option sets of more than 5 items MUST use a combo box (dropdown, searchable when the list can grow). Exception, approved by the project owner: the platform picker is a grid of cards in two sections (Automatic and Guided), because users need to see how each platform works before choosing it. Each card MUST show the logo, the name, and a one-line label.
 - Every new screen MUST be justified in the plan. Prefer showing the next step in place on the same
   screen over navigating to a new one.
 - Confirmation dialogs MUST only appear for destructive or irreversible actions.
@@ -44,34 +41,17 @@ coverage number.
 Every feature MUST comply with this baseline. A plan or change that breaks a rule MUST NOT be merged
 until the rule is met or the constitution is amended.
 
-1. **Least privilege scopes**: for each platform, request only the minimum scopes it needs: read-only
-   scopes for the source account and write scopes only for the target account. The spec MUST list the
-   scopes per platform. For Google, request `https://www.googleapis.com/auth/youtube.readonly` for the
-   source account and `https://www.googleapis.com/auth/youtube` only for the target account. Request
-   no other scopes.
-2. **Secure sign-in**: use OAuth 2.0 Authorization Code with PKCE through the system browser or the
-   platform's native sign-in SDK. Never collect platform passwords and never sign in through an
-   embedded WebView. Validate the OAuth `state` and redirect URI.
+1. **Least privilege scopes**: for each platform, request only the minimum scopes it needs: read-only scopes for the source account and write scopes only for the target account. The spec MUST list the scopes per platform. For Google, request `https://www.googleapis.com/auth/youtube.readonly` for the source account and `https://www.googleapis.com/auth/youtube` only for the target account. Request no other scopes.
+2. **Secure sign-in**: use OAuth 2.0 Authorization Code with PKCE through the system browser or the platform's native sign-in SDK. Never collect platform passwords and never sign in through an embedded WebView. Validate the OAuth `state` and redirect URI.
 3. **Token storage**: store tokens only in `expo-secure-store` (iOS Keychain, Android Keystore).
    Never store tokens in AsyncStorage, files, or app state that is persisted elsewhere. Revoke tokens
    and delete them on sign-out.
 4. **No secrets in the app**: the app is a public OAuth client. Never ship client secrets, API keys
    with write access, or private credentials. Everything in `app.json`, `app.config.*`, and
    `EXPO_PUBLIC_*` variables is public. Never commit `.env` files with secrets.
-5. **Network**: HTTPS only. Keep iOS App Transport Security on and Android cleartext traffic off.
-   The app talks only to an allowlist of hosts: the OAuth and API hosts of each supported platform
-   (for Google: `accounts.google.com`, `oauth2.googleapis.com`, `www.googleapis.com`), plus one static
-   host for guide content (`guides.json` and images). The guide host is read-only: the app sends it
-   no user data and no identifiers. Every host MUST be listed in the spec or plan of the feature
-   that adds it. No own backend, analytics, ads, or crash-reporting SDKs without a constitution
-   amendment.
-6. **Data minimization**: keep only the data the migration needs (account IDs, names, thumbnails,
-   progress). User data never leaves the device except to the APIs of the platforms being migrated
-   between. User data exports (such as JSON or zip files from a platform) MUST be parsed on the
-   device only and never uploaded. The user MUST be able to delete all local data from inside the
-   app.
-7. **Logging**: never log tokens, authorization codes, email addresses, usernames, follow lists, or
-   export contents. Production builds MUST NOT include debug logging of API payloads.
+5. **Network**: HTTPS only. Keep iOS App Transport Security on and Android cleartext traffic off. The app talks only to an allowlist of hosts: the OAuth and API hosts of each supported platform (for Google: `accounts.google.com`, `oauth2.googleapis.com`, `www.googleapis.com`), plus one static host for guide content (`guides.json` and images). The guide host is read-only: the app sends it no user data and no identifiers. Every host MUST be listed in the spec or plan of the feature that adds it. No own backend, analytics, ads, or crash-reporting SDKs without a constitution amendment.
+6. **Data minimization**: keep only the data the migration needs (account IDs, names, thumbnails, progress). User data never leaves the device except to the APIs of the platforms being migrated between. User data exports (such as JSON or zip files from a platform) MUST be parsed on the device only and never uploaded. The user MUST be able to delete all local data from inside the app.
+7. **Logging**: never log tokens, authorization codes, email addresses, usernames, follow lists, or export contents. Production builds MUST NOT include debug logging of API payloads.
 8. **Untrusted input**: treat API responses and deep link parameters as untrusted. Validate their
    shape before use and handle only expected deep link routes.
 9. **Device permissions**: request no device permissions unless a spec requires one and explains why.
@@ -82,8 +62,7 @@ until the rule is met or the constitution is amended.
     release.
 12. **Over-the-air updates**: if EAS Update is used, updates MUST be code-signed.
 
-Rationale: the app holds access to two accounts on each platform. One leaked token or over-broad
-scope can harm the user, and failing a platform's OAuth verification blocks public release.
+Rationale: the app holds access to two accounts on each platform. One leaked token or over-broad scope can harm the user, and failing a platform's OAuth verification blocks public release.
 
 ### IV. Consistent, Modular Code Structure
 
@@ -103,31 +82,20 @@ Rationale: features will be added over time, often by AI agents. Clear homes, on
 
 The app MUST follow each platform's terms with no exceptions.
 
-- The app MUST NOT script taps, drive a WebView bot, use an accessibility service, or scrape pages to
-  follow or subscribe on a platform. This applies to every platform that has no official follow API
-  or whose terms forbid automation.
-- Platforms without an official follow API (for example Facebook, Instagram, Threads, TikTok, X, and
-  Twitch) MUST use a guided manual flow: the app shows the list and opens each profile, and the user
-  taps Follow. The app MUST NOT ask for or store the user's password for these platforms.
-- A platform's automatic flow MUST use only that platform's official API, within its quota, rate
-  limits, and terms.
-- Platform logos MUST be official and unmodified, follow each brand's guidelines, and be used only to
-  name the platform. They MUST NOT appear in the app icon or the app name.
+- The app MUST NOT script taps, drive a WebView bot, use an accessibility service, or scrape pages to follow or subscribe on a platform. This applies to every platform that has no official follow API or whose terms forbid automation.
+- Platforms without an official follow API (for example Facebook, Instagram, Threads, TikTok, X, and Twitch) MUST use a guided manual flow: the app shows the list and opens each profile, and the user taps Follow. The app MUST NOT ask for or store the user's password for these platforms.
+- A platform's automatic flow MUST use only that platform's official API, within its quota, rate limits, and terms.
+- Platform logos MUST be official and unmodified, follow each brand's guidelines, and be used only to name the platform. They MUST NOT appear in the app icon or the app name.
 
-Rationale: automation breaks platform terms and gets users' accounts banned. A guided flow is slower
-but safe, and it keeps the user in control.
+Rationale: automation breaks platform terms and gets users' accounts banned. A guided flow is slower but safe, and it keeps the user in control.
 
 ## Platform & Technology Constraints
 
 - Stack: Expo (React Native) with TypeScript in strict mode. Builds use EAS Build.
 - Specs MUST cover both Android and iOS. Android ships first. Any platform-specific behavior MUST be
   called out in the spec.
-- Data source: each supported platform's official API, or the user's own data export for guided
-  flows. Designs MUST respect each platform's API quota and terms. For example, on YouTube
-  `subscriptions.insert` costs 50 units against a shared daily project quota. Batch work, save
-  progress, resume after interruption, and tell the user clearly when a limit is reached.
-- Guide content (steps and screenshots) MAY be served from the static guide host so it can be fixed
-  without an app release. The app MUST ship a default copy so guides work offline.
+- Data source: each supported platform's official API, or the user's own data export for guided flows. Designs MUST respect each platform's API quota and terms. For example, on YouTube `subscriptions.insert` costs 50 units against a shared daily project quota. Batch work, save progress, resume after interruption, and tell the user clearly when a limit is reached.
+- Guide content (steps and screenshots) MAY be served from the static guide host so it can be fixed without an app release. The app MUST ship a default copy so guides work offline.
 
 ## Specification Style (Encouraged)
 
