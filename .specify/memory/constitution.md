@@ -89,6 +89,22 @@ The app MUST follow each platform's terms with no exceptions.
 
 Rationale: automation breaks platform terms and gets users' accounts banned. A guided flow is slower but safe, and it keeps the user in control.
 
+### VI. Adaptive Layout
+
+Every screen MUST fit the window the app actually has, from a small phone to an open foldable, a phone in landscape, or a split-screen window. [007 Adaptive Layout](../../specs/007-adaptive-layout/spec.md) is the reference design; new UI MUST follow these rules without restating them.
+
+- **Size by window, not device**: layout MUST be chosen from the current window width using the shared size classes: Compact (below 600 points), Medium (600 to 839), Expanded (840 and above). Layout MUST NOT depend on device model or device type. All sizes are density-independent points.
+- **Readable width**: in Medium and Expanded windows, content MUST sit in a centered column no wider than the shared maximum content width. Backgrounds and bars MAY fill the full window. Screens MUST use the shared size class and maximum width values, not their own breakpoints.
+- **New layouts per size class**: a screen that needs a different layout for a size class (for example two panes on Expanded) MUST say so in its spec. Otherwise the centered single column applies.
+- **Keep the user's place**: a window change (fold, unfold, rotate, split-screen resize, display size change) MUST NOT lose the current screen, user input, selections, scroll position where practical, or running work, and MUST NOT start, stop, or repeat any action.
+- **Both orientations**: screens MUST work in portrait and landscape. No screen may lock orientation without an approved exception in the plan.
+- **Small screens and large text**: every screen MUST stay usable at a 320-point-wide window and at the largest system font and display size: all controls visible or reachable by scrolling, no overlapping text, long labels wrap or end with an ellipsis without pushing controls off screen. Primary actions (for example a bottom action button) MUST stay visible on short windows.
+- **Safe areas**: no text or control may be drawn under camera cutouts, rounded corners, status bars, or system navigation areas.
+- **Touch targets**: at least 44 by 44 points on iOS and 48 by 48 points on Android.
+- **Specs and tests**: every spec that adds or changes a screen MUST state how it behaves in each size class and orientation, or state that the default column applies. Component tests for a changed screen MUST cover at least one Compact and one Medium or wider window.
+
+Rationale: users run the app on many screen sizes, and foldables change size while the app is open. One shared set of rules keeps every screen readable and keeps a fold or rotation from losing the user's work.
+
 ## Platform & Technology Constraints
 
 - Stack: Expo (React Native) with TypeScript in strict mode. Builds use EAS Build.
@@ -123,7 +139,7 @@ Rationale: a spec is read by people who are new to the feature. A flow, a state 
 ## Development Workflow & Quality Gates
 
 - Features follow the Spec Kit flow: specify, clarify (optional), plan, tasks, implement.
-- Every plan MUST include a Constitution Check that confirms compliance with Principles I to V.
+- Every plan MUST include a Constitution Check that confirms compliance with Principles I to VI.
 - A change is ready to merge only when: tests pass, TypeScript and lint report no errors, and the
   security baseline is met.
 - Git, commit, and approval rules are defined in `AGENTS.md` and apply to all contributors and agents.
@@ -139,4 +155,4 @@ Rationale: a spec is read by people who are new to the feature. A flow, a state 
 - Reviews of every spec, plan, and pull request MUST check compliance. Any exception MUST be written
   in the plan with its reason and approved by the project owner.
 
-**Version**: 1.3.0 | **Ratified**: 2026-11-08 | **Last Amended**: 2026-11-12
+**Version**: 1.4.0 | **Ratified**: 2026-11-08 | **Last Amended**: 2026-11-13
