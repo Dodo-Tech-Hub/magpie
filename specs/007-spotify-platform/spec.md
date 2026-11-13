@@ -24,7 +24,7 @@ flowchart TD
     subgraph Auto["Automatic flow (same steps as YouTube)"]
         Bar["Top bar: From, Pick, To, in any order"]
         Bar --> From["From: sign in to old Spotify account, unfinished Spotify progresses"]
-        Bar --> Pick["Pick: items grouped by kind, search, All, counter, Already there"]
+        Bar --> Pick["Pick: one section per kind, search, All, counter, Already there"]
         Bar --> To["To: sign in to new Spotify account"]
         Pick -->|Move N items| Moving["Moving, then Moved, Already there, or Couldn't move"]
         Moving -->|all done| Summary["Summary"]
@@ -157,7 +157,7 @@ The user signs out of a Spotify account or uses Delete all. The app deletes its 
 
 - **FR-SP-001**: The Spotify card MUST appear in the Automatic section of Home, after YouTube, through the one list of platforms (spec 004, FR-003). The app MUST move three kinds of items: followed artists, saved podcasts, and followed playlists made by others.
 - **FR-SP-002**: Tapping the Spotify card MUST open the same From, Pick, To flow as YouTube, with the same steps, row states, summary, saved progress, unfinished progress list, Home button, and Settings. The flow MUST NOT get Spotify-only screens.
-- **FR-SP-003**: Pick MUST group items by kind under a short heading per kind ("Artists", "Podcasts", and "Playlists"), when more than one kind is moved. Search, All, and the counter MUST work across all groups.
+- **FR-SP-003**: When the old account has more than one kind of item, Pick MUST split the list into one section per kind, each under a short heading ("Artists", "Podcasts", "Playlists"). A kind with no items MUST NOT show a section. With only one kind, Pick MUST show a plain list with no heading. Search, All, and the counter MUST work across all sections.
 - **FR-SP-018**: After the To sign-in, the app MUST check each followed playlist with the new account. A playlist the new account cannot reach (for example deleted, made private, or not available in its country) MUST show greyed out as "Not available" with a short reason, and MUST NOT be pickable. The check MUST only read; it MUST NOT follow anything.
 - **FR-SP-019**: When an item fails during the move, its "Couldn't move" row MUST show the actual reason in simple words (for example "Playlist was deleted" or "Not available in your country"), never a raw error.
 - **FR-SP-004**: All user-facing text MUST say "items" or the kind name (for example "Move 12 items", "12 of 340 picked") instead of "channels" in the Spotify flow, and MUST live with the other app text.
