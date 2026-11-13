@@ -27,11 +27,10 @@ describe('Home at 320 points wide with the largest text', () => {
     expect(screen.getByTestId('cell-youtube').props.style.width).toBe('100%');
   });
 
-  it('lets a name wrap to 2 lines and a label to 3, with no cutting off', async () => {
+  it('lets a name wrap to 2 lines, with no cutting off', async () => {
     await render(<App />);
     await screen.findByText('Automatic');
     expect(screen.getByText('YouTube').props.numberOfLines).toBe(2);
-    expect(screen.getByText('We move them for you').props.numberOfLines).toBe(3);
   });
 
   it('keeps the grid inside a scroll view', async () => {

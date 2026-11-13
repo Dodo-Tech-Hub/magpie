@@ -1,20 +1,25 @@
 import React, { useMemo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '@/state/AppState';
 import { strings } from '@/strings';
 import { useTheme, type Colors } from '@/theme/theme';
 
-// Top bar for Home: the title, and the gear (or a back arrow while Settings is open).
+// Top bar for Home: the app icon, and the gear (or a back arrow while Settings is open).
 export function HomeBar() {
   const { state, dispatch } = useApp();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={styles.bar}>
-      <Text style={styles.title} accessibilityRole="header">
-        {strings.homeTitle}
-      </Text>
+      <View style={styles.title} accessible accessibilityRole="header" accessibilityLabel={strings.homeTitle}>
+        <Image
+          source={require('../../assets/icon.png')}
+          style={styles.icon}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        />
+      </View>
       <Pressable
         style={styles.gear}
         accessibilityRole="button"
@@ -30,6 +35,7 @@ export function HomeBar() {
 const makeStyles = (c: Colors) =>
   StyleSheet.create({
     bar: { flexDirection: 'row', alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth, borderColor: c.border },
-    title: { flex: 1, color: c.text, fontSize: 20, fontWeight: '600', paddingHorizontal: 16, paddingVertical: 12 },
+    title: { flex: 1, paddingHorizontal: 16, paddingVertical: 8, alignItems: 'flex-start' },
+    icon: { width: 36, height: 36, borderRadius: 8 },
     gear: { width: 52, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
   });

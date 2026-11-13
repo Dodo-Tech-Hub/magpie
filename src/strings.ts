@@ -44,8 +44,6 @@ export const strings = {
   sectionAutomatic: 'Automatic',
   sectionGuided: 'Guided',
   platformYoutube: 'YouTube',
-  youtubeLine: 'We move them for you',
-  guidedLine: 'Step-by-step guide',
   look: 'Look',
   light: 'Light',
   dark: 'Dark',

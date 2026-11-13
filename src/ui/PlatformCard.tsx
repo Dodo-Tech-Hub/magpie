@@ -23,7 +23,7 @@ export function PlatformCard({ platform, left = 0, onOpen, onContinue }: Props) 
       <Pressable
         style={styles.body}
         accessibilityRole="button"
-        accessibilityLabel={`${platform.name}. ${platform.label}`}
+        accessibilityLabel={platform.name}
         onPress={onOpen}
       >
         {!logoFailed && (
@@ -39,9 +39,6 @@ export function PlatformCard({ platform, left = 0, onOpen, onContinue }: Props) 
         )}
         <Text style={styles.name} numberOfLines={2}>
           {platform.name}
-        </Text>
-        <Text style={styles.label} numberOfLines={3}>
-          {platform.label}
         </Text>
       </Pressable>
       {left > 0 && (
@@ -62,10 +59,9 @@ export function PlatformCard({ platform, left = 0, onOpen, onContinue }: Props) 
 const makeStyles = (c: Colors) =>
   StyleSheet.create({
     card: { flex: 1, borderWidth: 1, borderColor: c.border, borderRadius: 12, overflow: 'hidden' },
-    body: { padding: 12, minHeight: 48 },
+    body: { padding: 12, minHeight: 48, alignItems: 'center' },
     logo: { width: 48, height: 41, marginBottom: 8 },
-    name: { color: c.text, fontSize: 16, fontWeight: '600' },
-    label: { color: c.muted, fontSize: 13, marginTop: 2 },
+    name: { color: c.text, fontSize: 16, fontWeight: '600', textAlign: 'center' },
     note: {
       flexDirection: 'row',
       alignItems: 'center',

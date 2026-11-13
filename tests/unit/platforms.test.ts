@@ -1,6 +1,5 @@
 import { PLATFORMS, readyBySection, type Platform } from '@/platforms/platforms';
 import { closeStore, getOrCreateProgress, initStore, saveChannels } from '@/store/progressStore';
-import { strings } from '@/strings';
 
 const acct = (id: string) => ({ id, email: `${id}@x.com`, name: id, photoUrl: null });
 const ch = (id: string) => ({ channelId: id, title: id, thumbnailUrl: null });
@@ -17,16 +16,11 @@ describe('platform list', () => {
     expect(yt).toMatchObject({
       id: 'youtube',
       name: 'YouTube',
-      label: strings.youtubeLine,
       section: 'automatic',
       ready: true,
     });
   });
 
-  it('keeps every label to 6 words or fewer (FR-002)', () => {
-    for (const p of PLATFORMS) expect(p.label.trim().split(/\s+/).length).toBeLessThanOrEqual(6);
-    expect(strings.guidedLine.split(/\s+/).length).toBeLessThanOrEqual(6);
-  });
 });
 
 describe('readyBySection', () => {

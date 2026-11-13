@@ -34,6 +34,6 @@ export const answerAlert = (spy: jest.SpyInstance, text: string) =>
 // Render the app and open the YouTube flow, so tests start where they did before Home existed.
 export async function renderApp() {
   const view = await render(<App />);
-  await fireEvent.press(await screen.findByLabelText('YouTube. We move them for you'));
+  await fireEvent.press(await screen.findByLabelText('YouTube'));
   return view;
 }

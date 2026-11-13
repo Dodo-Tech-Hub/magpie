@@ -72,7 +72,7 @@ describe('top bar', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Home' }));
     expect(await screen.findByText('Automatic')).toBeTruthy();
     expect(screen.queryByRole('tab', { name: 'From' })).toBeNull();
-    await fireEvent.press(screen.getByLabelText('YouTube. We move them for you'));
+    await fireEvent.press(screen.getByLabelText('YouTube'));
     expect(stepState('From')).toBe('done');
     expect(screen.getByLabelText('b')).toBeTruthy();
     expect(screen.getByLabelText('a').props.accessibilityState?.checked).toBe(false);

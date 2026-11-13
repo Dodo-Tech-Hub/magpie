@@ -10,7 +10,6 @@ export type Section = 'automatic' | 'guided';
 export type Platform = {
   id: PlatformId;
   name: string;
-  label: string;
   logo: ImageSourcePropType;
   section: Section;
   ready: boolean;
@@ -23,7 +22,6 @@ export const PLATFORMS: Platform[] = [
   {
     id: 'youtube',
     name: strings.platformYoutube,
-    label: strings.youtubeLine,
     logo: require('../../assets/platforms/youtube.png'),
     section: 'automatic',
     ready: true,
