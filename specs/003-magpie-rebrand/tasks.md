@@ -174,8 +174,9 @@ Status on 2026-11-11: everything an agent can do is done and checked on a Pixel 
 4. **T026:** run the full quickstart (steps 1 to 7) once items 1 to 3 are done.
 5. **T027 (owner):** rename the GitHub repository to `magpie`, then update `AGENTS.md` line 9. Check "Magpie" for store-name and trademark conflicts. Fill in the consent screen (logo, support email, privacy policy link). Update the constitution title.
 6. **Housekeeping:** `assets/magpie-icon-large.png` is untracked and unused. Delete it or commit it as a source image.
+7. **YouTube brand use (owner):** the app shows the official YouTube icon on its Home card (spec 004, `assets/platforms/youtube.png`). Before publishing, request permission to use the YouTube brand at https://support.google.com/youtube/contact/brand_request?hl=en . Mention the icon size used on the card, since the icon page lists a 100px minimum height for digital use.
 
-Do not release to a store before items 1, 2, and 5 are done.
+Do not release to a store before items 1, 2, 5, and 7 are done.
 
 ## Notes
 
