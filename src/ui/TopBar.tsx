@@ -30,6 +30,14 @@ export function TopBar() {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={styles.bar}>
+      <Pressable
+        style={styles.gear}
+        accessibilityRole="button"
+        accessibilityLabel={strings.home}
+        onPress={() => dispatch({ type: 'goHome' })}
+      >
+        <Ionicons name="home-outline" size={24} color={colors.text} />
+      </Pressable>
       <View style={styles.tabs} accessibilityRole="tablist">
         {STEPS.map(({ step, label, icon }) => {
           const st = stateOf(step, state);

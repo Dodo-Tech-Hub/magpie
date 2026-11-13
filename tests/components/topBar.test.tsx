@@ -61,4 +61,20 @@ describe('top bar', () => {
     await screen.findByLabelText('a');
     expect(stepState('Pick')).toBe('current');
   });
+
+  it('has a Home button that returns to Home with nothing lost', async () => {
+    listMock.mockResolvedValueOnce([ch('a'), ch('b')]);
+    await renderApp();
+    nextSignIn('old');
+    await fireEvent.press(screen.getByLabelText('Sign in with Google: Old account'));
+    await screen.findByLabelText('a');
+    await fireEvent.press(screen.getByLabelText('a'));
+    await fireEvent.press(screen.getByRole('button', { name: 'Home' }));
+    expect(await screen.findByText('Automatic')).toBeTruthy();
+    expect(screen.queryByRole('tab', { name: 'From' })).toBeNull();
+    await fireEvent.press(screen.getByLabelText('YouTube. We move them for you'));
+    expect(stepState('From')).toBe('done');
+    expect(screen.getByLabelText('b')).toBeTruthy();
+    expect(screen.getByLabelText('a').props.accessibilityState?.checked).toBe(false);
+  });
 });

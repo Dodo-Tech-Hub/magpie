@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { BackHandler, StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { initReminders, onReminderTapped } from '@/reminders/reminder';
@@ -20,6 +20,16 @@ function Screen() {
   const { colors } = useTheme();
   // Tapping a reminder opens that progress. Unknown IDs are ignored (constitution III.8).
   useEffect(() => onReminderTapped((id) => void openProgress(dispatch, id)), [dispatch]);
+  // Android back: close Settings, else go Home, else let the system handle it (FR-010).
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (state.settingsOpen) dispatch({ type: 'closeSettings' });
+      else if (state.platform !== null) dispatch({ type: 'goHome' });
+      else return false;
+      return true;
+    });
+    return () => sub.remove();
+  }, [state.settingsOpen, state.platform, dispatch]);
   return (
     <View style={[styles.flex, { backgroundColor: colors.background }]} testID="root">
       {state.platform === null ? <HomeBar /> : <TopBar />}

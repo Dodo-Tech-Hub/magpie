@@ -1,6 +1,7 @@
 import { Alert } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import { act, fireEvent, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import App from '../../App';
 import { GoogleSignin, mockUser, signInAs } from '../mocks/googleSignin';
 import {
   getChannels,
@@ -135,5 +136,31 @@ describe('saved progresses', () => {
     await fireEvent.press(screen.getByLabelText('Delete all my data'));
     await act(async () => undefined);
     expect((await listUnfinished()).length).toBe(1);
+  });
+
+  it('opens the progress straight from a reminder while Home shows', async () => {
+    const pid = await seed();
+    const listener = Notifications.addNotificationResponseReceivedListener as jest.Mock;
+    await render(<App />);
+    await screen.findByText('Automatic');
+    await act(async () =>
+      listener.mock.calls.at(-1)[0]({ notification: { request: { content: { data: { progressId: pid } } } } }),
+    );
+    expect(await screen.findByText('Sign in to new.me@gmail.com to keep going.')).toBeTruthy();
+    expect(screen.queryByText('Automatic')).toBeNull();
+  });
+
+  it('closes Settings and opens the progress when a reminder is tapped there', async () => {
+    const pid = await seed();
+    const listener = Notifications.addNotificationResponseReceivedListener as jest.Mock;
+    await render(<App />);
+    await screen.findByText('Automatic');
+    await fireEvent.press(screen.getByLabelText('Settings'));
+    expect(screen.getByText('Look')).toBeTruthy();
+    await act(async () =>
+      listener.mock.calls.at(-1)[0]({ notification: { request: { content: { data: { progressId: pid } } } } }),
+    );
+    expect(await screen.findByText('Sign in to new.me@gmail.com to keep going.')).toBeTruthy();
+    expect(screen.queryByText('Look')).toBeNull();
   });
 });
