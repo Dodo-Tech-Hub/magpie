@@ -39,6 +39,11 @@ export const strings = {
   no: 'No',
   settings: 'Settings',
   back: 'Back',
+  home: 'Home',
+  homeTitle: 'Magpie',
+  sectionAutomatic: 'Automatic',
+  sectionGuided: 'Guided',
+  platformYoutube: 'YouTube',
   look: 'Look',
   light: 'Light',
   dark: 'Dark',
@@ -46,6 +51,8 @@ export const strings = {
   notAffiliated: 'Magpie is not made by or linked with YouTube or Google. YouTube is a trademark of Google LLC.',
 } as const;
 
+export const continueLeft = (n: number) => `Continue: ${n} left`;
+export const continueLabel = (name: string, n: number) => `Continue ${name}, ${n} left`;
 export const signInTo = (email: string) => `Sign in to ${email} to keep going.`;
 export const wrongAccount = (email: string) => `This one needs ${email}. Pick that account.`;
 export const moveButton = (n: number) => `Move ${n} channel${n === 1 ? '' : 's'}`;
