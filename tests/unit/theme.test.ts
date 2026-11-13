@@ -42,4 +42,10 @@ describe.each(['light', 'dark'] as const)('%s colors', (look) => {
   it('text is readable on the picked-row tint', () => {
     expect(contrast(c.text, c.primarySoft)).toBeGreaterThanOrEqual(4.5);
   });
+
+  it('platform card text is readable (FR-018): name and label on the background, note on its tint', () => {
+    expect(contrast(c.text, c.background)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(c.muted, c.background)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(c.text, c.primarySoft)).toBeGreaterThanOrEqual(4.5);
+  });
 });
