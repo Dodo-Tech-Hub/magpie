@@ -60,7 +60,9 @@ sequenceDiagram
 
 ## Clarifications
 
-_None yet. See the three open questions marked NEEDS CLARIFICATION below._
+### Session 2026-11-13
+
+- Q: Which kinds of Spotify items should a migration move? → A: Followed artists, saved podcasts, and followed playlists made by others. After the To sign-in, the app checks each playlist with the new account and greys out the ones it cannot reach, with the reason. Any playlist that still fails during the move shows the actual reason in simple words.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -136,7 +138,8 @@ The user signs out of a Spotify account or uses Delete all. The app deletes its 
 ### Edge Cases
 
 - The old account follows nothing that can be moved: Pick says "This account doesn't follow anything yet" and Move is not offered.
-- An item no longer exists on Spotify, or is not available in the new account's country: its row shows "Couldn't move" and the rest go on.
+- A followed playlist cannot be reached by the new account (deleted, made private, or not available in its country): after the To sign-in, its row shows greyed out as "Not available" with the reason, and cannot be picked (FR-SP-018).
+- An item no longer exists on Spotify, or is not available in the new account's country, and this shows only during the move: its row shows "Couldn't move" with the actual reason, and the rest go on (FR-SP-019).
 - An item is owned by Spotify itself (for example an editorial playlist) and the API does not return or accept it: the app leaves it out of the list, or marks it "Couldn't move", and says why in simple words.
 - The old account has thousands of items: the list loads in parts, shows a loading line, and stays searchable when it ends.
 - The token runs out during a move: the app renews it without asking the user. If renewal fails, the step shows signed out and the progress is saved.
@@ -152,9 +155,11 @@ The user signs out of a Spotify account or uses Delete all. The app deletes its 
 
 **Picker and flow**
 
-- **FR-SP-001**: The Spotify card MUST appear in the Automatic section of Home, after YouTube, through the one list of platforms (spec 004, FR-003). Which kinds of items are moved: [NEEDS CLARIFICATION: Which kinds of items should a Spotify migration move? Options: followed artists only; followed artists and saved podcasts; or followed artists, saved podcasts, and followed playlists made by others.]
+- **FR-SP-001**: The Spotify card MUST appear in the Automatic section of Home, after YouTube, through the one list of platforms (spec 004, FR-003). The app MUST move three kinds of items: followed artists, saved podcasts, and followed playlists made by others.
 - **FR-SP-002**: Tapping the Spotify card MUST open the same From, Pick, To flow as YouTube, with the same steps, row states, summary, saved progress, unfinished progress list, Home button, and Settings. The flow MUST NOT get Spotify-only screens.
-- **FR-SP-003**: Pick MUST group items by kind under a short heading per kind (for example "Artists" and "Podcasts"), when more than one kind is moved. Search, All, and the counter MUST work across all groups.
+- **FR-SP-003**: Pick MUST group items by kind under a short heading per kind ("Artists", "Podcasts", and "Playlists"), when more than one kind is moved. Search, All, and the counter MUST work across all groups.
+- **FR-SP-018**: After the To sign-in, the app MUST check each followed playlist with the new account. A playlist the new account cannot reach (for example deleted, made private, or not available in its country) MUST show greyed out as "Not available" with a short reason, and MUST NOT be pickable. The check MUST only read; it MUST NOT follow anything.
+- **FR-SP-019**: When an item fails during the move, its "Couldn't move" row MUST show the actual reason in simple words (for example "Playlist was deleted" or "Not available in your country"), never a raw error.
 - **FR-SP-004**: All user-facing text MUST say "items" or the kind name (for example "Move 12 items", "12 of 340 picked") instead of "channels" in the Spotify flow, and MUST live with the other app text.
 
 **Accounts and sign-in**
@@ -183,7 +188,7 @@ The user signs out of a Spotify account or uses Delete all. The app deletes its 
 
 - **Platform**: Spotify is a new entry in the existing list of platforms, in the Automatic section.
 - **Account**: A signed-in Spotify account on From or To, with an ID, a display name, and a picture.
-- **Item**: Something the old account follows or saved that can be moved. It has a kind (for example artist or podcast), a name, and a picture. This is what YouTube calls a channel.
+- **Item**: Something the old account follows or saved that can be moved. It has a kind (artist, podcast, or playlist), a name, and a picture. This is what YouTube calls a channel.
 - **Progress**: The existing saved move progress, now tied to a platform. One progress per old and new account pair per platform.
 
 ```mermaid
@@ -204,7 +209,8 @@ erDiagram
 | Moving | Moving… | Yes |
 | Moved | Moved | Yes |
 | Paused by limit | Later | No. YouTube says "Tomorrow" because its limit resets daily. Spotify's wait has no fixed length. |
-| Failed | Couldn't move | Yes |
+| Not reachable by the new account | Not available, with the reason | No. New state, only for playlists the To check could not reach (FR-SP-018). Greyed out, cannot be picked. |
+| Failed | Couldn't move, with the reason | Yes, plus the reason (FR-SP-019). |
 
 ## Spotify section *(platform-specific)*
 
@@ -212,16 +218,16 @@ These details come from Spotify's Web API and its rules for developers as of Nov
 
 **Sign-in flow (Principle III, rule 2)**: OAuth 2.0 Authorization Code with PKCE, opened in the system browser, with Spotify's "always show the account chooser" option. The plan MUST decide whether Spotify's native sign-in SDK can be used instead (it ranks higher in the constitution). It qualifies only if it supports PKCE without a client secret, works without the Spotify app installed, can force the account chooser, and fits the Expo build. The plan MUST name the chosen flow and why the higher one was not used. The app MUST check the returned `state` and redirect address before use.
 
-**Access per account (Principle III, rule 1)**: final list depends on the answer to FR-SP-001.
+**Access per account (Principle III, rule 1)**: artists, podcasts, and followed playlists are moved (FR-SP-001).
 
 | Account | Access asked | Why |
 | --- | --- | --- |
 | Old (From) | `user-follow-read` | Read followed artists. |
-| Old (From) | `user-library-read` | Read saved podcasts, if podcasts are moved. |
-| Old (From) | `playlist-read-private` | Read followed playlists, if playlists are moved. |
+| Old (From) | `user-library-read` | Read saved podcasts. |
+| Old (From) | `playlist-read-private` | Read followed playlists. |
 | New (To) | `user-follow-read`, `user-follow-modify` | Check and add followed artists. |
-| New (To) | `user-library-read`, `user-library-modify` | Check and add saved podcasts, if podcasts are moved. |
-| New (To) | the smallest access that lets the app follow a playlist | Only if playlists are moved. The plan MUST check whether Spotify's newer library request covers this, to avoid asking for access to change the user's own playlists. |
+| New (To) | `user-library-read`, `user-library-modify` | Check and add saved podcasts. |
+| New (To) | the smallest access that lets the app follow a playlist | Follow playlists, and read them for the check in FR-SP-018. The plan MUST check whether Spotify's newer library request covers this, to avoid asking for access to change the user's own playlists. |
 
 **Hosts (Principle III, rule 5)**: `accounts.spotify.com` (sign-in and token), `api.spotify.com` (API), and Spotify's image hosts for item pictures (for example `i.scdn.co`). The plan MUST list the final image hosts.
 
@@ -265,5 +271,5 @@ These steps need your accounts and cannot be done by an agent. They block the pl
 4. **Android and iOS details** (only if the plan picks the native SDK): add package name `io.github.dodotechhub.magpie` with the SHA-1 fingerprint of the debug and EAS release keys, and iOS bundle ID `io.github.dodotechhub.magpie`.
 5. **Allowed accounts**: under User Management, add up to 5 test accounts (name and email of each Spotify account). Use at least two of your own: one old account that follows some artists, and one new account.
 6. **Client ID**: copy the Client ID into your local `.env` as `EXPO_PUBLIC_SPOTIFY_CLIENT_ID` and into the EAS environment variables. It is public, so this is safe. **Never copy the Client secret anywhere.** The app does not use it.
-7. **Answer the three open questions** in this spec (FR-SP-001, FR-SP-012, User Story 4), or run `/speckit-clarify`.
+7. **Answer the open questions** in this spec (FR-SP-012, User Story 4), or run `/speckit-clarify`.
 8. **Logo check**: before release, check the Spotify logo use against Spotify's brand rules, as for other platforms.
