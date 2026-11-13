@@ -1,10 +1,13 @@
 import React, { createContext, useContext, useMemo, useReducer } from 'react';
+import type { PlatformId } from '@/platforms/platforms';
 import type { AccountInfo, StoredChannel } from '@/store/progressStore';
 
 export type Step = 'from' | 'pick' | 'to';
 export type MoveState = 'idle' | 'moving' | 'limit' | 'done' | 'offline' | 'auth';
 
 export type State = {
+  // null shows Home. A platform id shows that platform's flow.
+  platform: PlatformId | null;
   step: Step;
   settingsOpen: boolean;
   oldAccount: AccountInfo | null;
@@ -18,6 +21,8 @@ export type State = {
 };
 
 export type Action =
+  | { type: 'openPlatform'; platform: PlatformId }
+  | { type: 'goHome' }
   | { type: 'setStep'; step: Step }
   | { type: 'openSettings' }
   | { type: 'closeSettings' }
@@ -31,6 +36,7 @@ export type Action =
   | { type: 'reset' };
 
 export const initialState: State = {
+  platform: null,
   step: 'from',
   settingsOpen: false,
   oldAccount: null,
@@ -44,6 +50,10 @@ export const initialState: State = {
 
 export function reducer(state: State, action: Action): State {
   switch (action.type) {
+    case 'openPlatform':
+      return { ...state, platform: action.platform, settingsOpen: false };
+    case 'goHome':
+      return { ...state, platform: null, settingsOpen: false };
     case 'setStep':
       return { ...state, step: action.step, settingsOpen: false, notice: null };
     case 'openSettings':
@@ -74,7 +84,8 @@ export function reducer(state: State, action: Action): State {
     case 'setNotice':
       return { ...state, notice: action.notice };
     case 'reset':
-      return initialState;
+      // Delete all keeps the user where they are (FR-010, research R1).
+      return { ...initialState, platform: state.platform };
   }
 }
 
