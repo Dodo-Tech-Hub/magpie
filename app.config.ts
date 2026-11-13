@@ -16,10 +16,10 @@ const config: ExpoConfig = {
   userInterfaceStyle: 'automatic',
   ios: {
     supportsTablet: false,
-    bundleIdentifier: 'com.dodotechhub.magpie',
+    bundleIdentifier: 'io.github.dodotechhub.magpie',
   },
   android: {
-    package: 'com.dodotechhub.magpie',
+    package: 'io.github.dodotechhub.magpie',
     allowBackup: false,
     adaptiveIcon: {
       backgroundColor: '#1F1F1F',

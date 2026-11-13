@@ -8,7 +8,7 @@ What a user, a store, and Google see. The app has no server, so this is the only
 |---------|---------|-----|
 | Home screen label | `Magpie` | `Magpie` |
 | App switcher card | `Magpie` | `Magpie` |
-| Store identifier | `com.dodotechhub.magpie` (`android.package`) | `com.dodotechhub.magpie` (`ios.bundleIdentifier`) |
+| Store identifier | `io.github.dodotechhub.magpie` (`android.package`) | `io.github.dodotechhub.magpie` (`ios.bundleIdentifier`) |
 | Install link name | `magpie` | `magpie` |
 | Notification title | `Magpie` | `Magpie` |
 | Permission question title | `Magpie` (same string) | `Magpie` (same string) |
@@ -33,7 +33,7 @@ No identifier contains "youtube". Names that stay unchanged because they name th
 
 ## Google Cloud (owner action)
 
-- Android OAuth client: package `com.dodotechhub.magpie`, signing SHA-1 of the build.
-- iOS OAuth client: bundle `com.dodotechhub.magpie`.
+- Android OAuth client: package `io.github.dodotechhub.magpie`, signing SHA-1 of the build.
+- iOS OAuth client: bundle `io.github.dodotechhub.magpie`.
 - Consent screen: app name "Magpie", new icon, support email, link to the privacy policy (hosted from the separate privacy policy PR).
 - Until these exist, sign-in on the new identifiers shows the app's existing friendly sign-in error.
