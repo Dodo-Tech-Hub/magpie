@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-12
 
-**Status**: Draft
+**Status**: In progress
 
 **Input**: User description: "Multi-platform support: a platform picker. The home screen shows a grid of platform cards in two sections, Automatic (YouTube now; Bluesky, Reddit, GitHub later) and Guided (Facebook, Instagram, Threads, TikTok, X, Twitch). Automatic platforms come first and must work before any Guided platform ships. Choosing an Automatic platform opens that platform's existing migration flow. The Guided flow is specified and implemented separately."
 
