@@ -262,7 +262,7 @@ These steps need your accounts and cannot be done by an agent. They block the pl
 1. **Spotify Premium**: make sure the Spotify account that will own the developer app has Premium. Spotify requires it for Development Mode since February 2026.
 2. **Create the developer app**: sign in at <https://developer.spotify.com/dashboard>, accept the developer terms, and tap Create app. Name it "Magpie", add a short description, and tick **Web API** (also tick **Android** and **iOS** if the plan picks the native SDK).
 3. **Redirect address**: add the redirect URI the plan picks (for example `magpie://spotify-auth`) under Redirect URIs, and save.
-4. **Android and iOS details** (only if the plan picks the native SDK): add package name `com.dodotechhub.magpie` with the SHA-1 fingerprint of the debug and EAS release keys, and iOS bundle ID `com.dodotechhub.magpie`.
+4. **Android and iOS details** (only if the plan picks the native SDK): add package name `io.github.dodotechhub.magpie` with the SHA-1 fingerprint of the debug and EAS release keys, and iOS bundle ID `io.github.dodotechhub.magpie`.
 5. **Allowed accounts**: under User Management, add up to 5 test accounts (name and email of each Spotify account). Use at least two of your own: one old account that follows some artists, and one new account.
 6. **Client ID**: copy the Client ID into your local `.env` as `EXPO_PUBLIC_SPOTIFY_CLIENT_ID` and into the EAS environment variables. It is public, so this is safe. **Never copy the Client secret anywhere.** The app does not use it.
 7. **Answer the three open questions** in this spec (FR-SP-001, FR-SP-012, User Story 4), or run `/speckit-clarify`.
