@@ -112,7 +112,7 @@ description: "Task list for the guided migration"
 
 ### Implementation for User Story 3
 
-- [ ] T033 [US3] Edit `src/platforms/platforms.ts`: add `guidedEntry(g: GuidedPlatform): Platform` that builds a Guided entry (`section: 'guided'`, label `strings.guidedLine`, `ready` from `g.ready`, `open` dispatching `openPlatform`, `unfinished` from `getSummary`), and append `...GUIDED_PLATFORMS.map(guidedEntry)` to `PLATFORMS`. Add a `ready` field to `GuidedPlatform` in `src/guided/guidedPlatforms.ts`, default `false`. Make T032 pass.
+- [ ] T033 [US3] Edit `src/platforms/platforms.ts`: add `guidedEntry(g: GuidedPlatform): Platform` that builds a Guided entry (`section: 'guided'`, `ready` from `g.ready`, `open` dispatching `openPlatform`, `unfinished` from `getSummary`), and append `...GUIDED_PLATFORMS.map(guidedEntry)` to `PLATFORMS`. Add a `ready` field to `GuidedPlatform` in `src/guided/guidedPlatforms.ts`, default `false`. Make T032 pass.
 - [ ] T034 [US3] Edit `src/ui/GuidedChecklist.tsx`: add the Start again button (icon `refresh-outline`, label `strings.startAgain`) to the header; it asks with `Alert.alert(strings.startAgain, strings.startAgainAsk(name), ...)` and on yes calls `clearPlatform` then shows the data screen. Make T031 pass.
 
 **Checkpoint**: Progress survives restart and clean-up works.

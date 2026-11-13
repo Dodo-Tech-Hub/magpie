@@ -8,7 +8,6 @@ No stored data is added. This feature adds one in-code list and one state field.
 | --- | --- | --- |
 | `id` | `PlatformId` (string union, for example `'youtube'`) | Unique. Used as the state value and the list key. |
 | `name` | `string` from `strings` | Shown on the card. |
-| `label` | `string` from `strings` | One short line, for example "We move them for you". |
 | `logo` | image module (`require('../../assets/platforms/<id>.png')`) | Official, unmodified (FR-012). |
 | `section` | `'automatic' \| 'guided'` | Which Home section holds the card. Moving a platform is a change to this field only. |
 | `ready` | `boolean` | `false` hides the card. A section with no ready card is hidden (FR-001). |

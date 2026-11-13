@@ -2,7 +2,7 @@
 
 A Guided platform needs two entries and some files. Shared screens never name a platform.
 
-1. An entry in `src/platforms/platforms.ts` (spec 004 contract) with `section: 'guided'`, `label: strings.guidedLine`, and `ready: false` until step 4.
+1. An entry in `src/platforms/platforms.ts` (spec 004 contract) with `section: 'guided'` and `ready: false` until step 4.
 2. An entry in `src/guided/guidedPlatforms.ts`:
 
 ```ts

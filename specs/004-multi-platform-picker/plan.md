@@ -10,13 +10,13 @@ Add a Home screen in front of the existing YouTube flow. Home is a grid of platf
 
 Technical approach:
 
-- **Platform list**: one typed array in `src/platforms/platforms.ts`. Each entry has id, name, logo, label, section, ready, and two functions: `open(dispatch)` and `unfinished()`. Home reads only this list (FR-003, SC-003). See [contracts/platform-list.md](contracts/platform-list.md).
+- **Platform list**: one typed array in `src/platforms/platforms.ts`. Each entry has id, name, logo, section, ready, and two functions: `open(dispatch)` and `unfinished()`. Home reads only this list (FR-003, SC-003). See [contracts/platform-list.md](contracts/platform-list.md).
 - **Routing**: no navigation library. App state gets one new field, `platform: PlatformId | null`. `null` means Home. `App.tsx` shows Home, Settings, or the YouTube steps from that field (research R1). `reset` keeps `platform`, so Delete all and deleting the open progress do not throw the user out of the flow (data model).
-- **Home**: `src/ui/HomeBar.tsx`, `src/ui/HomeView.tsx`, and `src/ui/PlatformCard.tsx`. A `FlatList` per section with a column count from `columnsFor()` in `src/ui/gridColumns.ts`, so cards never get cut off. Names wrap to 2 lines, labels to 3 (R3, FR-018). Section headers are headings; the card body and the Continue note are separate 48 x 48 point tap targets (FR-015, FR-016, R8).
+- **Home**: `src/ui/HomeBar.tsx`, `src/ui/HomeView.tsx`, and `src/ui/PlatformCard.tsx`. A `FlatList` per section with a column count from `columnsFor()` in `src/ui/gridColumns.ts`, so cards never get cut off. Names wrap to 2 lines (R3, FR-018). The card is logo and name, centered (FR-002). `HomeBar` shows the app icon, not the name (FR-021). Section headers are headings; the card body and the Continue note are separate 48 x 48 point tap targets (FR-015, FR-016, R8).
 - **Continue note**: the YouTube entry's `unfinished()` sums `left` from the existing `listUnfinished()`. One progress: tap calls the existing `openProgress()`. Several: tap opens the YouTube flow on the From step, where the existing Unfinished list lives (R4).
 - **Reminders**: `openProgress()` also sets `platform: 'youtube'`, so a reminder still skips Home (FR-009).
 - **Way back**: Home button in the YouTube top bar dispatches `goHome`. A `BackHandler` listener in `App.tsx` does the same on Android, closing Settings first (R6, FR-010).
-- **Logos**: official YouTube icon at `assets/platforms/youtube.png`, unmodified, hidden from screen readers. If it cannot load, the card still shows name and label (FR-017, FR-020). Store release is blocked until the owner confirms brand use, including size (R5).
+- **Logos**: official YouTube icon at `assets/platforms/youtube.png`, unmodified, hidden from screen readers. If it cannot load, the card still shows the name (FR-017, FR-020). Store release is blocked until the owner confirms brand use, including size (R5).
 
 ## Technical Context
 
@@ -26,7 +26,7 @@ Technical approach:
 
 **Storage**: No change. Home reads the existing `progress` tables through `listUnfinished()`. Delete all already removes every table the app has (FR-011); spec 005 extends `deleteAll()` for its own tables.
 
-**Testing**: Jest with `jest-expo` and React Native Testing Library. New: reducer test (`platform`, `openPlatform`, `goHome`, `reset` keeps `platform`), platform list unit test (sections, ready filter, label length, YouTube entry), `columnsFor()` unit test, Home component tests (headers, card labels, logo hidden and logo failure, Continue note for 0, 1, and several progresses, separate tap targets, no loading indicator, live count), Home layout test (320 wide at font scale 2), Android back and Settings navigation test, TopBar Home button test, reminder still opens progress directly, contrast test for card text. All existing tests pass with no change to what they check (SC-002); a `renderApp()` helper in `tests/components/helpers.tsx` renders the app and presses the YouTube card, so existing tests keep their starting screen (R7).
+**Testing**: Jest with `jest-expo` and React Native Testing Library. New: reducer test (`platform`, `openPlatform`, `goHome`, `reset` keeps `platform`), platform list unit test (sections, ready filter, YouTube entry), `columnsFor()` unit test, Home component tests (headers, card labels, logo hidden and logo failure, Continue note for 0, 1, and several progresses, separate tap targets, no loading indicator, live count), Home layout test (320 wide at font scale 2), Android back and Settings navigation test, TopBar Home button test, reminder still opens progress directly, contrast test for card text. All existing tests pass with no change to what they check (SC-002); a `renderApp()` helper in `tests/components/helpers.tsx` renders the app and presses the YouTube card, so existing tests keep their starting screen (R7).
 
 **Target Platform**: Android 8.0+ first, iOS 16+. No platform-specific behavior (FR-014).
 
@@ -47,10 +47,10 @@ Checked against `.specify/memory/constitution.md` v1.4.0.
 | Principle / rule | How the plan complies | Status |
 |------------------|-----------------------|--------|
 | I. New screen justified | Home is the one new screen. It is the approved exception for the platform picker (grid of cards in two sections). Settings stays the existing view. `HomeBar` is Home's top bar, not a screen. | Pass |
-| I. Card content | Logo, name, one-line label on each card (FR-002). | Pass |
+| I. Card content | Logo and name on each card, centered (FR-002). | Pass |
 | I. Icons and labels | Home button in the top bar uses `home-outline` with label "Home". Gear on Home with label "Settings", same place as in the flow (FR-011). Continue note uses `time-outline` and a text label. | Pass |
-| I. Simple words | "We move them for you", "Step-by-step guide", "Continue: 12 left", "Home". | Pass |
-| I. Accessibility | Card label reads name and line (FR-006). Continue note reads "Continue YouTube, 12 left" (FR-017). Headers are headings (FR-015). Tap targets at least 48 x 48 points (FR-016). Text contrast at least 4.5 to 1, names and labels wrap, no cut-off at 320 points wide and largest text (FR-018, SC-004). | Pass |
+| I. Simple words | "Continue: 12 left", "Home". | Pass |
+| I. Accessibility | Card label reads the name (FR-006). Continue note reads "Continue YouTube, 12 left" (FR-017). Headers are headings (FR-015). Tap targets at least 48 x 48 points (FR-016). Text contrast at least 4.5 to 1, names wrap, no cut-off at 320 points wide and largest text (FR-018, SC-004). | Pass |
 | I. Confirmations | None added. | N/A |
 | II. Tests | Unit and component tests listed above. Existing tests unchanged in what they check. | Pass |
 | III.1 to III.4 | Sign-in, scopes, tokens, and secrets untouched. | Pass |
