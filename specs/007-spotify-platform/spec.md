@@ -4,11 +4,32 @@
 
 **Created**: 2026-11-13
 
-**Status**: Draft
+**Status**: Cancelled. Spotify gives wider API access only to registered organisations with at least 250,000 monthly active users, so Magpie can serve at most 5 test accounts.
 
 **Input**: User description: "add platform Spotify. If you need me do anything (such as creating Auth app), list out here"
 
 **Related**: [004 Platform Picker](../004-multi-platform-picker/spec.md) adds the card to Home. [001 Subscription Migration](../001-subscription-migration/spec.md) defines the Automatic flow that Spotify reuses. [006 Paid API Credits](../006-paid-api-credits/spec.md) holds the earlier research on Spotify access rules.
+
+## Why cancelled
+
+The project owner cancelled this spec on 2026-11-13. Spotify's test mode (Development Mode) serves at most 5 named accounts, and Magpie does not meet the rules for wider access. The spec is kept as a record.
+
+From Spotify's [Quota modes](https://developer.spotify.com/documentation/web-api/concepts/quota-modes) page:
+
+> **Quota Extension Request for New Potential Partners**
+>
+> Please note that as of May 15th 2025, Spotify only accepts applications from organizations (not individuals). For more information on this update, read [here](https://developer.spotify.com/blog/2025-04-15-updating-the-criteria-for-web-api-extended-access).
+>
+> Application must be sent through a company email by using this form. Check out the implementation requirements below to make sure your company is compatible before submitting your application.
+>
+> Implementation requirements:
+>
+> - Established Business Entity (legally registered business or organisation)
+> - Operating an active, and Launched Service
+> - Maintaining a minimum of active users (at least 250k MAUs)
+> - Being available in key Spotify markets
+> - Commercial Viability
+> - Adherence to Terms
 
 ## Summary
 
