@@ -98,7 +98,7 @@ description: "Task list for the platform picker"
 - [ ] T025 [P] Check that every new text is in `src/strings.ts`, every new button has an icon, a label, and an accessibility label, and no new file is a catch-all (constitution I and IV). Fix anything found.
 - [ ] T026 Run `npm test`, `npm run typecheck`, and `npm run lint`. All pass. Compare the test count with T002: every earlier test still runs and passes (SC-002).
 - [ ] T027 Walk through `quickstart.md` checks 1 to 10 on an Android device or emulator, and checks 1 to 9 on an iPhone or simulator. Write results in the pull request description. Check 10 is Android only.
-- [ ] T028 [P] Update the design docs to match what was built: in `data-model.md` change the `reset` rule to "returns to initial state but keeps `platform`" and add `HomeBar.tsx` and `gridColumns.ts` to plan.md Source Code and Scale/Scope (2 more new files, justified: `HomeBar` is a separate top bar for Home, `gridColumns` is one pure unit-tested function); in `research.md` R7 say tests start through a `renderApp()` helper that presses the YouTube card, because `App` owns its own provider.
+- [ ] T028 [P] Check that `plan.md`, `data-model.md`, `research.md`, and `contracts/platform-list.md` still match what was built (file list, `reset` rule, `renderApp()`, strings). Fix any drift in the docs.
 
 ---
 
@@ -127,4 +127,4 @@ flowchart TD
 1. **MVP**: Phases 1 to 3. At the checkpoint the app opens on Home and the YouTube flow works through the card, with the full old suite passing.
 2. **Then** US2 for the way back, Android back action, and reminders.
 3. **Last** polish, the contrast check, and the manual run on both phones.
-4. **Owner to-dos before release** (not tasks): confirm YouTube's minimum logo size and read its Brand Guidelines page (research R5).
+4. **Owner to-dos before release** (not tasks): YouTube brand use request, which settles the minimum logo size (research R5, open item 7 in `specs/003-magpie-rebrand/tasks.md`).

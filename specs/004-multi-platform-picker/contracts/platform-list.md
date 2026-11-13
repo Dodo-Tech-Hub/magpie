@@ -26,7 +26,12 @@ type Platform = {
 | Home shows only entries with `ready: true`. | FR-001, clarification 2026-11-12 |
 | A section with no ready entry is not drawn, header included. | FR-001 |
 | Automatic is drawn before Guided. | Spec title, FR-001 |
-| A card's accessibility label is `"<name>. <label>"`. | FR-006 |
+| `label` has at most 6 words. Cards follow the order of the array. | FR-002 |
+| A section header reads "Automatic" or "Guided" and is a heading. | FR-015 |
+| A card's accessibility label is `"<name>. <label>"`. The logo is hidden from screen readers. | FR-006, FR-017 |
+| Card body and Continue note are separate tap targets, each at least 48 x 48 points. The note's accessibility label is `"Continue <name>, <n> left"`. | FR-016, FR-017 |
+| The note is added once `unfinished()` returns, with no loading indicator, and updates when the count changes. | FR-019, edge case |
+| A logo that fails to load is hidden; name and label stay. | FR-020 |
 | Continue note shows when `left > 0`. Tap with one id opens that progress; with several ids, opens the platform's own unfinished list. | FR-007 |
 | Card body tap calls `open`. | FR-004, FR-005 |
 | Adding a platform: one entry, one logo file, strings, and the platform's own flow. No change to `HomeView` or `PlatformCard`. | FR-003, SC-003 |
@@ -49,9 +54,12 @@ type Platform = {
 
 | Key | Text |
 | --- | --- |
+| `homeTitle` | "Magpie" |
 | `home` | "Home" |
 | `sectionAutomatic` | "Automatic" |
 | `sectionGuided` | "Guided" |
+| `platformYoutube` | "YouTube" |
 | `youtubeLine` | "We move them for you" |
 | `guidedLine` | "Step-by-step guide" |
 | `continueLeft(n)` | "Continue: n left" |
+| `continueLabel(name, n)` | "Continue name, n left" |

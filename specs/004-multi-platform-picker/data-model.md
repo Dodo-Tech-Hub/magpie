@@ -21,7 +21,7 @@ Order of the array is the order on Home.
 
 | Field | Type | Rule |
 | --- | --- | --- |
-| `platform` | `PlatformId \| null` | `null` shows Home. Initial value `null`. `reset` returns to `null`. |
+| `platform` | `PlatformId \| null` | `null` shows Home. Initial value `null`. `reset` returns every other field to its initial value but keeps `platform`, so Delete all and deleting the open progress keep the user where they are. |
 
 New actions:
 
@@ -37,8 +37,10 @@ New actions:
 | `settingsOpen` | `platform` | Screen |
 | --- | --- | --- |
 | true | any | Settings |
-| false | `null` | Home |
+| false | `null` | Home top bar (`HomeBar`) and Home |
 | false | `'youtube'` | YouTube top bar and current step |
+
+While Settings is open from Home, `HomeBar` stays on top. Settings opened from the flow keeps the YouTube top bar, as today.
 
 ## Progress (existing, read only)
 
