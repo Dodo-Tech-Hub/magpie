@@ -1,7 +1,5 @@
-import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react-native';
-import App from '../../App';
-import { ch, listMock, nextSignIn, resetWorld } from './helpers';
+import { fireEvent, screen } from '@testing-library/react-native';
+import { ch, listMock, nextSignIn, renderApp, resetWorld } from './helpers';
 
 jest.mock('@/api/youtube', () => ({
   ...jest.requireActual('@/api/youtube'),
@@ -16,7 +14,7 @@ const stepState = (name: string) =>
 
 describe('top bar', () => {
   it('always shows From, Pick and To, with From as the current step at the start', async () => {
-    await render(<App />);
+    await renderApp();
     expect(screen.getByRole('tab', { name: 'From' })).toBeTruthy();
     expect(screen.getByRole('tab', { name: 'Pick' })).toBeTruthy();
     expect(screen.getByRole('tab', { name: 'To' })).toBeTruthy();
@@ -24,14 +22,14 @@ describe('top bar', () => {
   });
 
   it('locks Pick until the old account is signed in and says why', async () => {
-    await render(<App />);
+    await renderApp();
     expect(stepState('Pick')).toBe('locked');
     await fireEvent.press(screen.getByRole('tab', { name: 'Pick' }));
     expect(await screen.findByText('Sign in to your old account first')).toBeTruthy();
   });
 
   it('lets the user open the steps in any order', async () => {
-    await render(<App />);
+    await renderApp();
     await fireEvent.press(screen.getByRole('tab', { name: 'To' }));
     expect(screen.getByLabelText('Sign in with Google: New account')).toBeTruthy();
     expect(stepState('To')).toBe('current');
@@ -41,7 +39,7 @@ describe('top bar', () => {
 
   it('marks a step done after its account is signed in, and unlocks Pick', async () => {
     listMock.mockResolvedValueOnce([ch('a')]);
-    await render(<App />);
+    await renderApp();
     nextSignIn('old');
     await fireEvent.press(screen.getByLabelText('Sign in with Google: Old account'));
     await screen.findByLabelText('a');
@@ -51,7 +49,7 @@ describe('top bar', () => {
 
   it('still works when the user signs in to the new account first', async () => {
     listMock.mockResolvedValueOnce([ch('a')]);
-    await render(<App />);
+    await renderApp();
     await fireEvent.press(screen.getByRole('tab', { name: 'To' }));
     nextSignIn('new');
     await fireEvent.press(screen.getByLabelText('Sign in with Google: New account'));

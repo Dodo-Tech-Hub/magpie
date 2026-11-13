@@ -7,6 +7,8 @@ import { AppStateProvider, useApp } from '@/state/AppState';
 import { openProgress } from '@/state/flows';
 import { initStore } from '@/store/progressStore';
 import { ThemeProvider, useTheme } from '@/theme/theme';
+import { HomeBar } from '@/ui/HomeBar';
+import { HomeView } from '@/ui/HomeView';
 import { TopBar } from '@/ui/TopBar';
 import { FromStep } from '@/ui/FromStep';
 import { PickStep } from '@/ui/PickStep';
@@ -20,12 +22,13 @@ function Screen() {
   useEffect(() => onReminderTapped((id) => void openProgress(dispatch, id)), [dispatch]);
   return (
     <View style={[styles.flex, { backgroundColor: colors.background }]} testID="root">
-      <TopBar />
+      {state.platform === null ? <HomeBar /> : <TopBar />}
       <View style={styles.flex}>
         {state.settingsOpen && <SettingsView />}
-        {!state.settingsOpen && state.step === 'from' && <FromStep />}
-        {!state.settingsOpen && state.step === 'pick' && <PickStep />}
-        {!state.settingsOpen && state.step === 'to' && <ToStep />}
+        {!state.settingsOpen && state.platform === null && <HomeView />}
+        {!state.settingsOpen && state.platform === 'youtube' && state.step === 'from' && <FromStep />}
+        {!state.settingsOpen && state.platform === 'youtube' && state.step === 'pick' && <PickStep />}
+        {!state.settingsOpen && state.platform === 'youtube' && state.step === 'to' && <ToStep />}
       </View>
     </View>
   );

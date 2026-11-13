@@ -1,9 +1,7 @@
-import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
-import App from '../../App';
+import { fireEvent, screen, waitFor } from '@testing-library/react-native';
 import { GoogleSignin, mockUser, signInAs } from '../mocks/googleSignin';
 import { listUnfinished } from '@/store/progressStore';
-import { ch, listMock, nextSignIn, resetWorld, subMock } from './helpers';
+import { ch, listMock, nextSignIn, renderApp, resetWorld, subMock } from './helpers';
 
 jest.mock('@/api/youtube', () => ({
   ...jest.requireActual('@/api/youtube'),
@@ -17,7 +15,7 @@ async function bothSignedIn() {
   listMock
     .mockResolvedValueOnce([ch('a', 'Alpha'), ch('b', 'Beta')])
     .mockResolvedValueOnce([]);
-  await render(<App />);
+  await renderApp();
   nextSignIn('old');
   await fireEvent.press(screen.getByLabelText('Sign in with Google: Old account'));
   await screen.findByLabelText('Alpha');
@@ -39,7 +37,7 @@ describe('accounts', () => {
 
   it('refuses the old account as the new account', async () => {
     listMock.mockResolvedValueOnce([ch('a', 'Alpha')]);
-    await render(<App />);
+    await renderApp();
     nextSignIn('old');
     await fireEvent.press(screen.getByLabelText('Sign in with Google: Old account'));
     await screen.findByLabelText('Alpha');
@@ -51,7 +49,7 @@ describe('accounts', () => {
   });
 
   it('refuses the new account as the old account', async () => {
-    await render(<App />);
+    await renderApp();
     await fireEvent.press(screen.getByRole('tab', { name: 'To' }));
     nextSignIn('new');
     await fireEvent.press(screen.getByLabelText('Sign in with Google: New account'));

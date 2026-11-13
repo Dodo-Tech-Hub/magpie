@@ -1,9 +1,7 @@
-import React from 'react';
 import { Alert } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import { fireEvent, render, screen } from '@testing-library/react-native';
-import App from '../../App';
-import { answerAlert, ch, listMock, nextSignIn, resetWorld, subMock } from './helpers';
+import { fireEvent, screen } from '@testing-library/react-native';
+import { answerAlert, ch, listMock, nextSignIn, renderApp, resetWorld, subMock } from './helpers';
 
 jest.mock('@/api/youtube', () => ({
   ...jest.requireActual('@/api/youtube'),
@@ -36,7 +34,7 @@ async function hitLimitAfterOne() {
   listMock
     .mockResolvedValueOnce([ch('a', 'Alpha'), ch('b', 'Beta'), ch('c', 'Gamma')])
     .mockResolvedValueOnce([]);
-  await render(<App />);
+  await renderApp();
   nextSignIn('old');
   await fireEvent.press(screen.getByLabelText('Sign in with Google: Old account'));
   await screen.findByLabelText('Alpha');

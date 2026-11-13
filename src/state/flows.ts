@@ -173,6 +173,8 @@ export async function openProgress(dispatch: D, progressId: string): Promise<voi
   const saved = await getProgress(progressId);
   if (!saved) return;
   const channels = await getChannels(progressId);
+  // A reminder or the Continue note opens the flow from Home or Settings (FR-009).
+  dispatch({ type: 'openPlatform', platform: 'youtube' });
   dispatch({ type: 'setOld', account: saved.oldAccount, channels });
   dispatch({ type: 'setProgress', progressId, channels });
   dispatch({ type: 'setNew', account: null });
