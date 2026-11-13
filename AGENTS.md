@@ -49,6 +49,20 @@ Workflow, in order:
 
 Command names differ slightly by agent (for example `/speckit-plan` in Claude Code, `/speckit.plan` in opencode).
 
+### Spec status
+
+Every `spec.md` has a `**Status**:` line near the top. Use only these values. For `Cancelled` and `Superseded`, add a short reason after a period (for example `**Status**: Cancelled. The app stays free, so no credits are needed.`).
+
+| Status | Meaning |
+|--------|---------|
+| `Draft` | Just created. Still being written or clarified. Not ready to implement. |
+| `In progress` | Implementation has started (plan or tasks exist, code is being written). |
+| `Implemented` | Fully implemented and merged. |
+| `Superseded` | Replaced by a newer spec. Name the spec that replaces it (for example `**Status**: Superseded by 007-foo.`). |
+| `Cancelled` | The project owner cancelled it. Kept as a record. Give the reason. |
+
+Update the status when the work changes state: set `In progress` when `speckit-implement` starts, and `Implemented` when the work is merged.
+
 The user is new to Spec Kit. Do not explain Spec Kit steps unprompted beyond naming the files changed and the next step. When the user asks, explain in full and in plain language.
 
 To add Spec Kit support for another agent, run `specify integration install <key>` (see `specify integration list`).
