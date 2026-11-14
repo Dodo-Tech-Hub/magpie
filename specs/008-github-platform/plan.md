@@ -13,7 +13,7 @@ The work has two parts and one check before Part B.
 | Step | What | Needs | Ships as |
 | --- | --- | --- | --- |
 | Check | Owner creates the OAuth app and runs [verify-access.sh](verify-access.sh) to confirm star, follow, gist star, and star lists with the planned scopes. | Done 2026-11-14: passed (research R1) | Recorded in research R1 |
-| Part A | Make the Automatic flow platform-neutral behind a platform driver. YouTube is the only driver. No behavior change. | Owner approval of the restructure (Principle IV) | Its own pull request, before Part B |
+| Part A | Make the Automatic flow platform-neutral behind a platform driver. YouTube is the only driver. No behavior change. | Owner approved the restructure on 2026-11-14 (Principle IV) | Its own pull request, before Part B |
 | Part B | Add the GitHub driver, the code sign-in, sections on Pick, the pacer, token handling, and the texts. | Check passed, Part A merged, one client ID | One or more pull requests |
 
 **App type**: GitHub's docs show a GitHub App can star only repositories where it is installed, so the plan uses one classic OAuth app, approved by the owner on 2026-11-14 ([research.md](research.md), R1). The check confirms the one scope the docs do not name: `user` for star lists. Part A does not depend on it.
@@ -74,10 +74,10 @@ Checked against `.specify/memory/constitution.md` v1.5.0.
 | IV. One home per thing | Drivers in `src/platforms/`. GitHub calls in `src/api/github.ts`, sign-in in `src/auth/github.ts`, pacer in `src/move/`. No new folder. | Pass |
 | IV. Extend, do not patch | No `if (platform === 'github')` in shared code. Shared code reads the driver. | Pass |
 | IV. Simplest solution first | `fetch` and `Linking` (built in), `expo-secure-store` and `expo-clipboard` (Expo SDK, the first is required by III.3), no new HTTP, state, or navigation library. The driver has two real users (YouTube, GitHub), not a hypothetical one. Known shortcuts carry a `// ponytail:` comment: the pace numbers are fixed constants, and "Not available" uses only the `private` flag (R7). | Pass |
-| IV. Restructure instead of forcing it | The feature reshapes many modules, so the restructure (Part A) is proposed here, is its own change, and is done and tested before Part B. **Needs owner approval.** | Pass once approved |
+| IV. Restructure instead of forcing it | The feature reshapes many modules, so the restructure (Part A) is proposed here, is its own change, and is done and tested before Part B. Approved by the owner on 2026-11-14. | Pass |
 | V. Platform rules | Official API only. Pace far under GitHub's limits. No scripted taps. Official, unmodified logo. | Pass |
 
-**Gate result (pre-research)**: Pass with approved exceptions. **Gate result (post-design)**: Pass with two approved exceptions. Access check passed on 2026-11-14. One open item for the owner: approve the restructure.
+**Gate result (pre-research)**: Pass with approved exceptions. **Gate result (post-design)**: Pass with two approved exceptions. Access check passed and restructure approved on 2026-11-14. No open items.
 
 ## Project Structure
 
@@ -184,7 +184,7 @@ Done when: every existing test passes with renames only, the migration test pass
 
 ## What the project owner needs to do
 
-1. **Approve the restructure** (Part A) as its own change.
+1. ~~Approve the restructure (Part A)~~: approved on 2026-11-14.
 2. **Create the OAuth app and run the access check** (spec, "What the project owner needs to do"; [quickstart.md](quickstart.md), step 0) and paste the output. Needed before Part B, not Part A.
 3. Add the official GitHub mark at `assets/platforms/github.png`.
 
