@@ -73,7 +73,7 @@ Steps that need judgment use a deep-reasoning model. Steps that follow a written
 
 | Step | Model | Why |
 |------|-------|-----|
-| `speckit-constitution`, `speckit-specify`, `speckit-clarify`, `speckit-plan` | Deep reasoning (Opus) | Requirements and architecture. Mistakes here spread to every later step. |
+| `speckit-constitution`, `speckit-specify`, `speckit-clarify`, `speckit-plan` | Deep reasoning (Fable if available, otherwise Opus) | Requirements and architecture. Mistakes here spread to every later step. |
 | `speckit-analyze`, `speckit-converge` | Deep reasoning (Opus) | They find gaps across many files. |
 | `speckit-tasks`, `speckit-checklist` | Fast coding (Sonnet) | They follow the structure of the plan. |
 | `speckit-implement` | Fast coding (Sonnet) | The plan and tasks already decide the design. |
