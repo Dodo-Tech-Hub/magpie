@@ -3,7 +3,7 @@
 One driver per Automatic platform, in `src/platforms/`. The flow, the mover, and the screens call only these functions for the open platform. Adding an Automatic platform is one driver plus one entry in the platform list. This is the shape the tasks build; names may change in code review, the jobs may not.
 
 ```ts
-type Role = 'old' | 'new' | 'extra';          // 'extra' is an optional sign-in, such as gist access
+type Role = 'old' | 'new';
 
 type Outcome =
   | { kind: 'moved' }
@@ -21,11 +21,12 @@ type Driver = {
   pace?: { perMinute: number; perHour: number };
   removeAccessUrl?: string;                    // page where the user removes the app's access
 
-  signIn(role: Role, onCode: (code: SignInCode | null) => void): Promise<SignInResult>;
+  signIn(role: Role, kinds: string[], onCode: (code: SignInCode | null) => void): Promise<SignInResult>; // kinds: what the new account needs access for
   signOut(role?: Role): Promise<void>;         // no role = all roles
+  granted(): Promise<string[]>;                // kinds the new account has access for
   canAct(role: Role, accountId: string): Promise<boolean>; // is there a usable sign-in for this account
   listOld(): Promise<NewItem[]>;               // read the old account; the driver then drops old access if it must
-  checkNew(items: StoredItem[], unlocked: string[]): Promise<{ there: string[]; unavailable: { itemId: string; reason: string }[] }>;
+  checkNew(items: StoredItem[], granted: string[]): Promise<{ there: string[]; unavailable: { itemId: string; reason: string }[] }>;
   add(item: StoredItem, items: StoredItem[]): Promise<Outcome>;
 };
 ```
@@ -54,4 +55,4 @@ type Driver = {
 
 ## YouTube driver (Part A)
 
-Wraps today's `src/auth/google.ts` and `src/api/youtube.ts` with no behavior change. One kind, `channel`, no heading. No `pace`, no `removeAccessUrl`, no `extra` role. `add` returns `later` with `resumeAt` from `nextQuotaReset()` where it returns `tomorrow` today.
+Wraps today's `src/auth/google.ts` and `src/api/youtube.ts` with no behavior change. One kind, `channel`, no heading. No `pace`, no `removeAccessUrl`. `signIn` ignores `kinds`, and `granted()` is always `['channel']`. `add` returns `later` with `resumeAt` from `nextQuotaReset()` where it returns `tomorrow` today.

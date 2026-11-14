@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
-# Checks what a GitHub App (or classic OAuth app) user token can do, for research R1.
+# Checks what a classic OAuth app token can do, for research R1.
 # It signs in with the device flow, then tries one star, one follow, one gist star, and one star list.
 # Run it with a TEST account: it stars octocat/Hello-World, follows octocat, stars one gist, and creates a list named "magpie-test".
 #
 # Usage:   ./verify-access.sh <client_id> [scope]
-# Example: ./verify-access.sh Iv23abc...                              (GitHub App: no scope)
-#          ./verify-access.sh Ov23abc... "public_repo user:follow user gist"   (classic OAuth app)
+# Example: ./verify-access.sh Ov23abc... "public_repo user gist"
 # The token is never printed. Paste the output into the pull request or the chat.
 set -euo pipefail
 
@@ -36,7 +35,7 @@ while [ -z "$token" ]; do
   esac
 done
 echo "Signed in. Token fields: $(printf '%s' "$poll" | tr ',' '\n' | sed -n 's/^[{ ]*"\([a-z_]*\)".*/\1/p' | tr '\n' ' ')"
-echo "Expires in (seconds): $(printf '%s' "$poll" | field expires_in)"
+echo "Granted scopes: $(printf '%s' "$poll" | sed -n 's/.*"scope":"\([^"]*\)".*/\1/p')"
 
 api() { # method path [json body]; prints status and the permission header GitHub wanted
   local out
@@ -58,4 +57,4 @@ echo "8. Read my star lists:"
 gql '{"query":"{ viewer { lists(first: 5) { nodes { id name } } } }"}'
 echo "9. Create a star list:"
 gql '{"query":"mutation { createUserList(input: {name: \"magpie-test\"}) { list { id name } } }"}'
-echo "Done. 204 or 200 means it works. 403 or 404 on line 2 means a GitHub App token cannot star (research R1)."
+echo "Done. 204 or 200 means it works. Lines 8 and 9 need \"data\" and no \"errors\" for star lists."

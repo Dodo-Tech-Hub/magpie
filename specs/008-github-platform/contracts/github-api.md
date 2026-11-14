@@ -2,17 +2,17 @@
 
 Every call the GitHub driver makes. Hosts: `github.com` (sign-in), `api.github.com` (API), `avatars.githubusercontent.com` (pictures, loaded by `Image`). HTTPS only. Headers on every API call: `Authorization: Bearer <token>`, `Accept: application/vnd.github+json`, `X-GitHub-Api-Version: 2022-11-28`.
 
-This contract assumes research R1 passes. If the owner picks a classic OAuth app instead, only the client ID and a `scope` field change; the calls stay.
+One classic OAuth app (research R1). Client ID: `EXPO_PUBLIC_GITHUB_CLIENT_ID`.
 
 ## Sign-in
 
 | Step | Call | Fields used | Checked before use |
 | --- | --- | --- | --- |
-| Get a code | `POST github.com/login/device/code` with `client_id` | `device_code`, `user_code`, `verification_uri`, `expires_in`, `interval` | See research R2. |
-| Wait | `POST github.com/login/oauth/access_token` with `client_id`, `device_code`, `grant_type` | `access_token`, `expires_in`, or `error` | `access_token` is a string. `refresh_token` is ignored. |
+| Get a code | `POST github.com/login/device/code` with `client_id` and `scope` | `device_code`, `user_code`, `verification_uri`, `expires_in`, `interval` | See research R2. |
+| Wait | `POST github.com/login/oauth/access_token` with `client_id`, `device_code`, `grant_type` | `access_token`, `scope`, or `error` | `access_token` and `scope` are strings. Granted kinds come from `scope`. |
 | Who signed in | `GET /user` | `id`, `login`, `name`, `avatar_url` | `id` is a number, `login` a string. |
 
-Client ID per role: `old` uses `EXPO_PUBLIC_GITHUB_READ_CLIENT_ID`, `new` uses `EXPO_PUBLIC_GITHUB_CLIENT_ID`, `extra` uses `EXPO_PUBLIC_GITHUB_GISTS_CLIENT_ID`.
+Scope per sign-in: old account `""`. New account: the union of `public_repo` (stars), `user:follow` (people), `user` (lists, includes follow), `gist` (gists) for the kinds asked, plus the scopes already granted on an "Allow" sign-in.
 
 | Poll answer | The app |
 | --- | --- |
@@ -56,3 +56,5 @@ Client ID per role: `old` uses `EXPO_PUBLIC_GITHUB_READ_CLIENT_ID`, `new` uses `
 | GraphQL `errors` for a list | `couldnt_move` | "GitHub couldn't make this list." |
 
 A rate limit is a 403 or 429 with a `retry-after` header, or `x-ratelimit-remaining: 0`, or a message that contains "rate limit".
+
+The remove-access button opens `https://github.com/settings/applications`.

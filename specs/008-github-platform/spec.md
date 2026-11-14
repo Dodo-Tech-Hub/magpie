@@ -20,13 +20,13 @@ GitHub is feasible. Unlike YouTube and Spotify, it has no test-user cap, no app 
 
 | Question | Answer | Blocks the feature? |
 | --- | --- | --- |
-| Can anyone sign in, or only test users? | Anyone. GitHub apps need no review and have no user cap. | No |
+| Can anyone sign in, or only test users? | Anyone. GitHub OAuth apps need no review and have no user cap. | No |
 | Does the API cost money? | No. | No |
 | Can the app read the old account's items? | Yes, for stars and follows. | No |
 | Can the app add items to the new account? | Yes, for stars and follows. See "What GitHub supports" for the rest. | No |
-| Can a GitHub App token star any public repository and edit star lists? | Not confirmed. The plan found one report that it cannot. | Open. The owner runs one test before any GitHub work (plan, research R1). |
+| Which app type can move stars? | Only a classic OAuth app. GitHub's docs say starring needs read access to the repository, and a GitHub App has that only where it is installed. A classic OAuth app stars any public repository with the `public_repo` scope. | No. The project owner chose a classic OAuth app with an approved exception (Clarifications, 2026-11-14). |
 | Can the app sign in without a secret? | Yes, with the device code flow. The browser flow still needs a client secret, which a phone app cannot keep. | No, but the sign-in has one extra step (enter a short code). |
-| Can the app cancel its access on sign-out? | No. Cancelling a token needs the client secret. | No. The project owner approved an exception with 3 safeguards (FR-GH-019). |
+| Can the app cancel its access on sign-out? | No. Cancelling a token needs the client secret, and classic OAuth tokens do not run out on their own. | No. The project owner approved an exception with safeguards (FR-GH-019). |
 | Are there speed limits? | Yes. About 5,000 requests per hour per user, and about 80 adds per minute and 500 adds per hour. | No. A few hundred items fit in one hour. |
 | Do GitHub's rules allow automated starring or following? | GitHub's Acceptable Use Policies name "rank abuse, such as automated starring or following" and "starring and/or following accounts or repositories in large volume in a short period of time" as not allowed. | Risk, not a blocker. The user moves their own items once, at a slow pace, which the app enforces (FR-GH-010). |
 | Can one person have two accounts? | GitHub's Terms allow one free personal account per person (plus one machine account). Most users move from an old account they then close, or between a paid work account and a personal one. | No. The app does not check this. See Assumptions. |
@@ -37,12 +37,12 @@ This table answers "which items can be moved". The plan MUST check each row agai
 
 | Item | Read from old account | Add to new account | Access needed | Verdict |
 | --- | --- | --- | --- | --- |
-| Starred repositories | Yes | Yes | Starring | In scope |
-| Followed people | Yes | Yes | Followers | In scope |
-| Star lists (named groups of stars) | Yes, through GitHub's newer query API | Yes, create list and add items | Starring (plan to confirm) | In scope |
-| Watched repositories | Yes | Only with a classic OAuth app and a broad access (`notifications` or `repo`). Not with GitHub App tokens. | Broad | Out of scope. It breaks least privilege (Principle III, rule 1). |
-| Starred gists | Yes | Yes | Gists (plan to confirm the smallest level) | In scope |
-| Followed organizations | Plan to confirm | Plan to confirm | Followers | Out of scope until the plan confirms the API. |
+| Starred repositories | Yes | Yes | `public_repo` | In scope |
+| Followed people | Yes | Yes | `user:follow` | In scope |
+| Star lists (named groups of stars) | Yes, public lists, through GitHub's newer query API | Yes, create list and add items | `user` (plan to confirm with the access test) | In scope |
+| Watched repositories | Yes | Yes, with the `notifications` scope | `notifications` | Out of scope. Not one of the four kinds the owner chose. |
+| Starred gists | Yes | Yes | `gist` (there is no smaller level) | In scope |
+| Followed organizations | Plan to confirm | Plan to confirm | `user:follow` | Out of scope until the plan confirms the API. |
 | Starred topics | No API | No API | None | Not possible |
 | Sponsorships | Yes | No. They involve payment. | None | Not possible |
 | Organization and team membership, repository access | Yes | No. An owner must invite the new account. | None | Not possible |
@@ -61,7 +61,7 @@ flowchart TD
         From ~~~ To ~~~ Pick
     end
 
-    Pick -.->|Optional: tap Allow gists| Gists["Sign in to the new account again<br/>for gist access"]
+    Pick -.->|Optional: tap Allow on a greyed kind| Gists["Sign in to the new account again<br/>to add that access"]
     Gists -.-> Pick
     Pick -->|Tap Move N items| Moving["Moving<br/>Rows change one at a time"]
     Moving -->|All items done| Summary["Summary"]
@@ -71,7 +71,7 @@ flowchart TD
 
 ## How a move works, from start to end
 
-Each "Sign in with a code" box is the same sign-in, shown step by step in the next diagram. Only the app name and the account change.
+Each "Sign in with a code" box is the same sign-in, shown step by step in the next diagram. Only the access asked for and the account change.
 
 ```mermaid
 sequenceDiagram
@@ -81,19 +81,19 @@ sequenceDiagram
 
     Note over User,GitHub: 1. From (old account)
     User->>App: Tap Sign in on From
-    Note over User,GitHub: Sign in with a code. App name: Magpie Read. Access: read only.
+    Note over User,GitHub: Sign in with a code. Access: none beyond public info.
     App->>GitHub: Read stars, star lists, starred gists, and followed people
     App->>App: Delete the old account token
 
     Note over User,GitHub: 2. To (new account)
     User->>App: Tap Sign in on To
-    Note over User,GitHub: Sign in with a code. App name: Magpie. Access: add stars and follows.
+    Note over User,GitHub: Sign in with a code. Access: only for the picked kinds, never gists.
     App->>GitHub: Which of these items does the new account already have?
-    App->>User: Pick shows every item. Gists are greyed out.
+    App->>User: Pick shows every item. Kinds without access are greyed out.
 
-    opt 3. Only if the user taps Allow gists
-        Note over User,GitHub: Sign in with a code. App name: Magpie Gists. Access: gists.
-        App->>User: Gists are now pickable
+    opt 3. Only if the user taps Allow on a greyed kind
+        Note over User,GitHub: Sign in with a code. Access: what the app had, plus that kind.
+        App->>User: That kind is now pickable
     end
 
     Note over User,GitHub: 4. Move
@@ -109,7 +109,7 @@ sequenceDiagram
         end
     end
     App->>User: Summary
-    App->>App: Delete the new account token and the gist token
+    App->>App: Delete the new account token
 ```
 
 ## How "Sign in with a code" works
@@ -151,7 +151,11 @@ sequenceDiagram
 
 - Q: Which kinds of GitHub items should a migration move? → A: Starred repositories, followed people, star lists, and starred gists (everything GitHub allows an app to add).
 - Q: The app cannot cancel a GitHub token on sign-out (Principle III, rule 3). Is an exception approved? → A: Yes, with 3 safeguards: delete the old account token right after its list is read, never save the refresh token, and delete the new account token when the summary shows, on sign-out, and on Delete all. After sign-out, show a link to the GitHub page where the user removes Magpie's access.
-- Q: Gists may need write access that also lets the app change the user's own gists. Can users choose what they share? → A: Yes. GitHub asks the user to accept all of an app's permissions at once, so gist access is a separate, optional sign-in. The app moves only the kinds the user granted access for.
+- Q: Gists may need write access that also lets the app change the user's own gists. Can users choose what they share? → A: Yes. GitHub asks the user to accept all of an app's permissions at once, so gist access is a separate, optional sign-in. The app moves only the kinds the user granted access for. (On 2026-11-14 the app type changed to a classic OAuth app; the opt-in idea stays and now covers every kind, FR-GH-020.)
+
+### Session 2026-11-14
+
+- Q: GitHub's docs show a GitHub App can star only repositories where it is installed. Which app type should Magpie use? → A: One classic OAuth app. Each sign-in asks only for the scopes of the kinds the user picked, and the user can remove scopes on GitHub's page. The owner approved an exception to Principle III, rule 1 (`public_repo` also allows writing code in public repositories, and `user` allows editing profile info) and a wider exception to rule 3 (classic tokens do not run out on their own). Safeguards are in FR-GH-019.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -211,7 +215,7 @@ GitHub limits how fast an app can add stars and follows, and its rules forbid st
 
 ### User Story 4 - Sign out and remove access (Priority: P2)
 
-The user signs out of a GitHub account or uses Delete all. The app deletes its GitHub tokens and data from the phone. GitHub lets an app cancel a token only with the client secret, which a phone app cannot hold. The project owner approved an exception to Principle III, rule 3, with 3 safeguards that keep each token on the phone for as short a time as possible (FR-GH-019). A deleted token stays valid on GitHub until it runs out, at most 8 hours after sign-in, unless the user removes Magpie's access in GitHub.
+The user signs out of a GitHub account or uses Delete all. The app deletes its GitHub tokens and data from the phone. GitHub lets an app cancel a token only with the client secret, which a phone app cannot hold, and classic OAuth tokens do not run out on their own. The project owner approved an exception to Principle III, rule 3, with safeguards that keep each token on the phone for as short a time as possible and point the user to GitHub's page to remove Magpie's access (FR-GH-019). A deleted token stays valid on GitHub until the user removes Magpie's access there.
 
 **Why this priority**: The constitution requires sign-out to remove access. The safeguards are the approved way to meet that rule as closely as GitHub allows.
 
@@ -221,26 +225,28 @@ The user signs out of a GitHub account or uses Delete all. The app deletes its G
 
 1. **Given** a GitHub account is signed in, **When** the user taps Switch on that step (GitHub's sign-out), **Then** its token is deleted from the phone and the step shows signed out.
 2. **Given** the user uses Delete all, **When** it ends, **Then** every GitHub account, token, list, and progress is gone from the phone.
-3. **Given** the app deleted the new account token (at the summary or on Switch), **When** the To step shows, **Then** it shows a short line, for example "To fully remove Magpie's access, open GitHub settings.", with a button that opens that GitHub page in the system browser. Settings shows the same button next to Delete all.
+3. **Given** the app deleted the new account token (at the summary or on Switch), **When** the To step shows, **Then** it shows a short line, for example "Magpie can still use your account until you remove it in GitHub settings.", with a button that opens that GitHub page in the system browser. Settings shows the same button next to Delete all.
 4. **Given** the old account's list is read, **When** Pick shows it, **Then** the app holds no token for the old account.
 5. **Given** a move ends, **When** the summary shows, **Then** the app holds no token for the new account. Continue after a pause uses the saved token only while the move is unfinished.
 
 ---
 
-### User Story 5 - Choose to share gist access (Priority: P3)
+### User Story 5 - Choose what to share (Priority: P2)
 
-Starred gists need extra access that also lets the app change the user's own gists. GitHub asks the user to accept all of an app's permissions at once, so the app keeps gist access in a separate, optional sign-in. On Pick, the Gists section shows the old account's starred gists greyed out with one button, "Allow gists". Only users who tap it and sign in again give that access. Users who skip it move everything else.
+Each kind needs its own access on the new account, and some access is broad: stars need access that also allows writing code in public repositories, lists need access that allows editing the profile, and gists need access that allows changing the user's own gists. The To sign-in asks only for the access of the kinds that are picked at that moment, and never for gists. On GitHub's page the user can untick any access. On Pick, a kind without access shows greyed out with one "Allow" button. Tapping it signs in to the new account again and asks for that access too. The app moves only the kinds the user gave access for.
 
-**Why this priority**: Gists are the smallest kind and the only one that needs broad access. Keeping them optional lets most users share only star and follow access.
+**Why this priority**: The owner asked that users share only what they want. It also keeps users who move only people or gists away from the broad star access.
 
-**Independent Test**: Run a move without tapping "Allow gists" and confirm stars, lists, and people move, and gists stay greyed out and are not moved. Run again, tap "Allow gists", sign in to the new account, and confirm the gists become pickable and move.
+**Independent Test**: Untick everything but People on Pick, sign in to To, and confirm GitHub asks only for follow access. Confirm Stars, Lists, and Gists show greyed with "Allow". Tap "Allow" on Stars, sign in again, and confirm stars become pickable and move. Sign in on To with stars picked but untick the star access on GitHub's page, and confirm Stars show greyed.
 
 **Acceptance Scenarios**:
 
-1. **Given** the old account has starred gists and gist access is not given, **When** Pick shows, **Then** the Gists section shows them greyed out with the line "Magpie needs extra access to move gists." and an "Allow gists" button.
-2. **Given** the user taps "Allow gists", **When** the gist sign-in ends with the new account, **Then** the gist rows become pickable and all picked, and Move includes them.
-3. **Given** the user signs in to a different account on the gist sign-in, **When** sign-in ends, **Then** the app refuses it with "Use your new account for gists too."
-4. **Given** gist access is not given, **When** the user taps Move, **Then** the move runs for the other kinds and the summary does not count gists as failed.
+1. **Given** some kinds are picked, **When** the user signs in on To, **Then** GitHub's page lists only the access of those kinds, and never gist access.
+2. **Given** the new account has no access for a kind, **When** Pick shows, **Then** that kind's section is greyed out with a line such as "Magpie needs extra access to move gists." and an "Allow" button.
+3. **Given** the user taps "Allow", **When** sign-in ends with the new account, **Then** that kind's rows become pickable and all picked, and the access the app had before is kept.
+4. **Given** the user signs in to a different account on an "Allow" sign-in, **When** sign-in ends, **Then** the app refuses it with "Use your new account here too."
+5. **Given** the user unticks an access on GitHub's page, **When** sign-in ends, **Then** the app reads the access GitHub actually granted, and that kind stays greyed.
+6. **Given** a kind has no access, **When** the user taps Move, **Then** the move runs for the other kinds and the summary does not count that kind as failed.
 
 ---
 
@@ -251,7 +257,7 @@ Starred gists need extra access that also lets the app change the user's own gis
 - A followed person deleted their account or blocked the new account: the row shows "Couldn't move" with the reason, and the rest go on (FR-GH-017).
 - The old account follows the new account, or the new account would follow itself: the app leaves that row out, because an account cannot follow itself.
 - The old account has thousands of stars: the list loads in parts, shows a loading line, and stays searchable when it ends. The time-left line shows that the move takes more than one session.
-- The token runs out during a move: the step shows signed out, the progress is saved, and the user signs in again to continue.
+- The user removes Magpie's access on GitHub during a move: the next add fails with a sign-in error, the step shows signed out, the progress is saved, and the user signs in again to continue.
 - GitHub flags the new account for unusual activity: the next add fails, the app stops, saves the progress, and shows "GitHub paused your account's activity. Try again later." It does not retry in a loop.
 - The internet drops during a move: the move pauses, unfinished rows go back to waiting, and the user sees "No internet. Try again when you're online."
 - The user closes the app during a move: on return, moved items stay Moved and the rest are waiting.
@@ -277,7 +283,7 @@ Starred gists need extra access that also lets the app change the user's own gis
 - **FR-GH-005**: Users MUST be able to sign in to a GitHub account on From and on To. Each step MUST show the account's picture and username, and a Switch button.
 - **FR-GH-006**: Sign-in MUST show a short code in large text, copy it, and open GitHub's sign-in page in the system browser. The app MUST check for the result on its own and finish sign-in without an extra tap when the user returns. If the code runs out, the step MUST stay signed out with "Sign-in didn't finish. Try again." If the user taps Cancel on GitHub's page, the app MUST stop checking, and the step MUST stay signed out with no error line.
 - **FR-GH-007**: Before the second sign-in, the app MUST show a one-line hint on how to switch account in the browser. The app MUST refuse the same GitHub account on From and To, with a simple message.
-- **FR-GH-008**: The app MUST ask only for read access on the old account, and only for the access needed to read and add items on the new account. The exact access list is in the GitHub section below.
+- **FR-GH-008**: The app MUST ask for no scope on the old account beyond public info, and on the new account only for the scopes of the kinds the user picked (FR-GH-020). The exact scope per kind is in the GitHub section below.
 - **FR-GH-009**: The move MUST only add items to the new account. It MUST NOT change or remove anything on the old account, and MUST NOT remove anything on the new account.
 
 **Pace and progress**
@@ -288,8 +294,8 @@ Starred gists need extra access that also lets the app change the user's own gis
 
 **Data, security, and both phone types**
 
-- **FR-GH-019**: The app MUST keep each GitHub token on the phone for as short a time as possible, as an approved exception to Principle III, rule 3: (a) delete the old account token as soon as its list is read; (b) never save a refresh token; (c) delete the new account and gist tokens when the summary shows, on sign-out, and on Delete all. GitHub's sign-out is Switch on a step, or Delete all. After the new account token is deleted (at the summary or on Switch), the To step MUST show a button that opens the GitHub page where the user removes Magpie's access, and Settings MUST show the same button next to Delete all.
-- **FR-GH-020**: Gist access MUST be a separate, optional sign-in to the new account, started only by the "Allow gists" button on Pick. Without it, gist rows MUST stay greyed out and MUST NOT be moved, and the rest of the move MUST work. The app MUST move only the kinds the user gave access for.
+- **FR-GH-019**: The app MUST keep each GitHub token on the phone for as short a time as possible, as an approved exception to Principle III, rule 3: (a) delete the old account token as soon as its list is read; (b) delete the new account token when the summary shows, on Switch, and on Delete all. GitHub's sign-out is Switch on a step, or Delete all. Because the token stays valid on GitHub, the summary MUST say so in one line with a button that opens GitHub's page where the user removes Magpie's access. The To step after Switch and Settings next to Delete all MUST show the same button.
+- **FR-GH-020**: The To sign-in MUST ask only for the scopes of the kinds picked at that moment (all kinds except gists when the old list is not read yet), and never for gists. The app MUST read the scopes GitHub actually granted. A kind without its scope MUST show greyed out with an "Allow" button, MUST NOT be moved, and MUST NOT count as failed. "Allow" MUST sign in to the same new account again, asking for the granted scopes plus that kind's scope. The rest of the move MUST work without it.
 - **FR-GH-013**: GitHub tokens MUST be stored only in the phone's secure storage and deleted on sign-out and on Delete all. Delete all MUST remove every GitHub account, token, list, and progress.
 - **FR-GH-014**: The app MUST keep only what the move needs: account ID, username, picture, item IDs, item names and pictures, and progress. It MUST NOT log tokens, codes, usernames, emails, or item lists.
 - **FR-GH-015**: The app MUST talk to GitHub only on the hosts listed in the GitHub section below, over HTTPS. The GitHub logo MUST be the official mark, unmodified, used only to name the platform. The feature MUST work the same way on Android and iOS.
@@ -324,9 +330,9 @@ erDiagram
 
 ## GitHub section *(platform-specific)*
 
-These details come from GitHub's changelog, its policy pages, and search results as of November 2026. GitHub's docs site was not reachable from the spec session, so the plan MUST check every item below against GitHub's current documentation.
+These details come from GitHub's docs (checked 2026-11-14), changelog, and policy pages. Star list scopes are not in the docs; the plan's access test confirms them.
 
-**App type**: a GitHub App, not a classic OAuth app. A GitHub App can ask for narrow user permissions ("Starring", "Followers"). A classic OAuth app needs the `public_repo` access to star, which also lets it change code in the user's public repositories. That breaks least privilege.
+**App type**: one classic OAuth app. GitHub's docs say starring needs "Metadata" read access to the repository, and a GitHub App has repository access only on accounts where it is installed, so a GitHub App cannot star most repositories. A classic OAuth app has no install step and stars any public repository, but only with the broad `public_repo` scope. The owner approved this (Clarifications, 2026-11-14).
 
 **Sign-in flow (Principle III, rule 2)**: OAuth 2.0 Device Authorization Grant (device code flow), opened in the system browser. Why no higher flow:
 
@@ -338,25 +344,27 @@ These details come from GitHub's changelog, its policy pages, and search results
 
 The app MUST check the device code response shape before use, and MUST stop checking when the code runs out. The plan MUST confirm that GitHub has not made the secret optional for PKCE; if it has, the plan MUST switch to PKCE with `prompt=select_account`, which forces GitHub's account chooser.
 
-**Access per account (Principle III, rule 1)**: a GitHub App has one fixed set of permissions, and the user accepts all of them at once. Read-only access for the old account and optional gist access each need their own app.
+**Access per account (Principle III, rule 1)**: a classic OAuth app can ask for different scopes on each sign-in, and the user can untick scopes on GitHub's page. The token response lists the scopes actually granted.
 
-| App | Used for | User permissions | Why |
+| Sign-in | Scopes | Why | Broader than needed? |
 | --- | --- | --- | --- |
-| Magpie Read | Old (From) | Starring: read. Followers: read. Gists: read. | Read stars, star lists, starred gists, and follows, including stars of private repositories the user can see. |
-| Magpie | New (To) | Starring: read and write. Followers: read and write. | Check and add stars, star lists, and follows. |
-| Magpie Gists | New (To), only after "Allow gists" | Gists: read and write. | Check and star gists. This access also lets the app create, change, and delete the user's own gists, which is why it is optional (FR-GH-020). The plan MUST check whether a smaller level can star a gist, and use it if so. |
+| Old (From) | None | Reads public stars, follows, starred gists, and public star lists. | No. Read-only, public info only. |
+| New (To), Stars picked | `public_repo` | Star repositories. | Yes. Also allows writing code, statuses, and settings in public repositories. Approved exception. |
+| New (To), People picked | `user:follow` | Follow people. | No. |
+| New (To), Lists picked | `user` | Create lists and add repositories to them. Includes `user:follow`. | Yes. Also allows editing profile info. Approved exception. |
+| New (To), after "Allow" on Gists | `gist` | Star gists. | Yes. Also allows creating, changing, and deleting the user's own gists. Approved exception, and opt-in only. |
 
-The plan MUST confirm which permission star lists need.
+Private stars and private star lists of the old account are not read, because reading them needs the full `repo` scope.
 
-**Hosts (Principle III, rule 5)**: `github.com` (device sign-in page and token), `api.github.com` (API), `avatars.githubusercontent.com` (pictures). The plan MUST confirm the final list, and whether star lists need `api.github.com/graphql` (same host).
+**Hosts (Principle III, rule 5)**: `github.com` (device sign-in page, token, and the page to remove access), `api.github.com` (API), `avatars.githubusercontent.com` (pictures). Star lists use `api.github.com/graphql` (same host).
 
 **Limits**:
 
 - About 5,000 requests per hour per signed-in user.
 - Adds (content-creating requests) are capped at about 80 per minute and 500 per hour, counted across the web and the API. GitHub says these limits change without notice and offers no way to check them in advance. When hit, GitHub answers 403 or 429, sometimes with a wait time.
 - GitHub's Acceptable Use Policies forbid "rank abuse, such as automated starring or following" and name "starring and/or following accounts or repositories in large volume in a short period of time" as disrupting other users. FR-GH-010 keeps the pace low for this reason.
-- GitHub App user tokens expire after 8 hours by default. Renewing them may need the client secret; the plan MUST check. A move of a few hundred items finishes well inside 8 hours.
-- Cancelling a token needs the client secret. Users remove an app's access in GitHub Settings, Applications, Authorized GitHub Apps. FR-GH-019 lists the approved safeguards.
+- Classic OAuth tokens do not run out on their own and come with no refresh token. They stay valid until the user removes Magpie's access on GitHub.
+- Cancelling a token needs the client secret. Users remove an app's access in GitHub Settings, Applications, Authorized OAuth Apps. FR-GH-019 lists the approved safeguards.
 
 **Redirect back to the app**: none. The device code flow does not redirect. The user returns to the app on their own, and the app checks for the result.
 
@@ -373,11 +381,11 @@ The plan MUST confirm which permission star lists need.
 
 ## Assumptions
 
-- **Access test (blocks tasks)**: the plan found one report that a GitHub App token cannot star a repository where the app is not installed, and could not confirm which access star lists need (plan, research R1). Before tasks are made, the owner runs the access test. Each kind stays in scope only if the test shows the access in the GitHub section can add it. A kind that fails is taken out of this spec, or moved to a broader access only after the owner approves a new exception to Principle III and this spec is changed. The options are in research R1.
+- **Access test (before GitHub code)**: the docs name no scope for star lists. Before Part B of the plan, the owner runs the access test with the OAuth app. If lists fail with `user`, star lists are taken out of this spec.
 
 - GitHub reuses the Automatic flow from specs 001 and 004. Any part of that flow that is tied to YouTube today is made platform-neutral in the plan, without changing YouTube's behavior.
 - The app has no server. The client IDs are public and ship in the app. No client secret is used.
-- Watched repositories are out of scope, because adding them needs a classic OAuth app with broad access.
+- Watched repositories are out of scope. The owner chose four kinds.
 - Own repositories, organization membership, sponsorships, and starred topics are out of scope. They are not follows, or GitHub offers no way to add them.
 - The app does not check whether the user is allowed to keep two GitHub accounts. That is between the user and GitHub's Terms.
 - Users with a few hundred items finish in one session at the pace in FR-GH-010. Users with more finish across several sessions.
@@ -386,9 +394,7 @@ The plan MUST confirm which permission star lists need.
 
 These steps need your GitHub account and cannot be done by an agent. They block the plan's sign-in work, not this spec.
 
-1. **Create three GitHub Apps** at <https://github.com/settings/apps/new>: "Magpie Read", "Magpie", and "Magpie Gists". For each, set a homepage URL (the repository page is fine), turn off Webhook, and tick **Enable Device Flow**.
-2. **Permissions**: under Account permissions, set Magpie Read to Starring, Followers, and Gists: Read-only. Set Magpie to Starring and Followers: Read and write. Set Magpie Gists to Gists: Read and write only. Leave every Repository and Organization permission at No access.
-3. **Who can install**: choose "Any account", so any user can sign in.
-4. **Token lifetime**: keep "Expire user authorization tokens" on.
-5. **Client IDs**: copy each Client ID into your local `.env` as `EXPO_PUBLIC_GITHUB_READ_CLIENT_ID`, `EXPO_PUBLIC_GITHUB_CLIENT_ID`, and `EXPO_PUBLIC_GITHUB_GISTS_CLIENT_ID`, and into the EAS environment variables. They are public, so this is safe. **Do not generate a client secret or private key.** The app does not use them.
-6. **Test accounts**: have two GitHub accounts ready, one that stars and follows a few items and one new.
+1. **Create one OAuth app** at <https://github.com/settings/applications/new>, named "Magpie". Set the homepage URL and the callback URL to the repository page (the app never uses the callback). Tick **Enable Device Flow**.
+2. **Client ID**: copy the Client ID into your local `.env` as `EXPO_PUBLIC_GITHUB_CLIENT_ID`, and into the EAS environment variables. It is public, so this is safe. **Do not generate a client secret.** The app does not use one.
+3. **Access test**: run the access test in the plan's quickstart, step 0, with this Client ID.
+4. **Test accounts**: have two GitHub accounts ready, one that stars and follows a few items and one new.

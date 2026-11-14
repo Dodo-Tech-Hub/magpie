@@ -80,7 +80,7 @@ stateDiagram-v2
 | --- | --- |
 | `channels` | Renamed `items`. |
 | `signInCode: { role, code, hint } or null` | New. The code a sign-in is waiting on. The account card shows it in place. Platforms with a native sign-in never set it. |
-| `unlocked: string[]` | New. Kinds opened by an optional sign-in (GitHub: `gist`). Empty for YouTube. |
+| `granted: string[]` | New. Kinds the new account has access for, from the scopes GitHub granted. YouTube: always `['channel']`. |
 
 `openProgress()` reads the platform from the saved progress and no longer assumes YouTube.
 
@@ -88,12 +88,12 @@ stateDiagram-v2
 
 ### Kinds and item data
 
-| Kind | Heading | `item_id` | `data` | Row picture |
-| --- | --- | --- | --- | --- |
-| `repo` | Stars | `repo:<id>` | `{ fullName, nodeId, private }` | Owner's picture |
-| `person` | People | `person:<id>` | `{ login }` | The person's picture |
-| `gist` | Gists | `gist:<id>` | `{ gistId }` | Owner's picture |
-| `list` | Lists | `list:<node id>` | `{ description, isPrivate, repoItemIds: string[] }` | None (icon) |
+| Kind | Heading | Scope | `item_id` | `data` | Row picture |
+| --- | --- | --- | --- | --- | --- |
+| `repo` | Stars | `public_repo` | `repo:<id>` | `{ fullName, nodeId, private }` | Owner's picture |
+| `person` | People | `user:follow` (or `user`) | `person:<id>` | `{ login }` | The person's picture |
+| `gist` | Gists | `gist` | `gist:<id>` | `{ gistId }` | Owner's picture |
+| `list` | Lists | `user` | `list:<node id>` | `{ description, isPrivate, repoItemIds: string[] }` | None (icon) |
 
 Title: `owner/name` for a repository, the username for a person, the description or first file name for a gist, the name for a list.
 
@@ -101,7 +101,7 @@ Rules:
 
 - A person whose ID equals the new account's ID is left out (spec, Edge Cases).
 - A `repo` with `private: true` becomes `not_available` after the To sign-in (research R7).
-- A `gist` row is greyed out and not movable while `unlocked` has no `gist` (FR-GH-020). This is shown from state, not saved as a status, so the row is ready the moment access is given.
+- A row whose kind is not in `granted` is greyed out and not movable, with the section's "Allow" button (FR-GH-020). Gists are never asked for on the first To sign-in. This is shown from state, not saved as a status, so the row is ready the moment access is given.
 - A `list` moves after its repositories. Its `reason` says how many repositories were left out (FR-GH-018).
 
 ### add_log (new table)
@@ -118,11 +118,10 @@ Rows older than 1 hour are deleted on each write. The pacer reads this table (re
 | Token | Where | Deleted |
 | --- | --- | --- |
 | Old account | Memory only | As soon as the old list is read. |
-| New account | `expo-secure-store`, key `github.new`, value `{ token, accountId, expiresAt }` | Summary shows, Switch, Delete all, or `expiresAt` passed. |
-| Gist access | `expo-secure-store`, key `github.gists`, same shape | Same. |
+| New account | `expo-secure-store`, key `github.new`, value `{ token, accountId, scopes }` | Summary shows, Switch, or Delete all. An "Allow" sign-in replaces it. |
 
-No refresh token is read or saved (FR-GH-019). `unlocked` is rebuilt from `github.gists` when a progress opens.
+Classic tokens have no expiry and no refresh token. `granted` is rebuilt from the saved `scopes` when a progress opens.
 
 ### What Delete all removes
 
-Every row of `progress`, `progress_item`, `add_log`, and `setting`, both secure-store keys, every scheduled reminder, and the YouTube sign-in as today (FR-GH-013).
+Every row of `progress`, `progress_item`, `add_log`, and `setting`, the secure-store key, every scheduled reminder, and the YouTube sign-in as today (FR-GH-013).

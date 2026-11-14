@@ -35,3 +35,4 @@
 - The "Feasibility" and "What GitHub supports" sections answer the project owner's request to discuss supported items and platform limits.
 - GitHub's docs site was not reachable when the spec was written. Facts come from GitHub's changelog, policy pages, and search results. The plan must check them.
 - All questions answered on 2026-11-13: move all four kinds, token exception approved with 3 safeguards (FR-GH-019), gist access optional (FR-GH-020). Ready for `/speckit-plan`.
+- 2026-11-14: app type changed to one classic OAuth app with scopes per picked kind, after GitHub's docs showed a GitHub App cannot star most repositories. Owner approved the wider exceptions.
