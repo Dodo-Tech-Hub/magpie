@@ -67,6 +67,26 @@ The user is new to Spec Kit. Do not explain Spec Kit steps unprompted beyond nam
 
 To add Spec Kit support for another agent, run `specify integration install <key>` (see `specify integration list`).
 
+### Model per step
+
+Steps that need judgment use a deep-reasoning model. Steps that follow a written plan use a fast coding model. In Claude Code, switch with `/model opus` or `/model sonnet` before each step. Other agents use their own model settings with the same split.
+
+| Step | Model | Why |
+|------|-------|-----|
+| `speckit-constitution`, `speckit-specify`, `speckit-clarify`, `speckit-plan` | Deep reasoning (Opus) | Requirements and architecture. Mistakes here spread to every later step. |
+| `speckit-analyze`, `speckit-converge` | Deep reasoning (Opus) | They find gaps across many files. |
+| `speckit-tasks`, `speckit-checklist` | Fast coding (Sonnet) | They follow the structure of the plan. |
+| `speckit-implement`, Leaf tasks | Fast coding (Sonnet) | The plan and tasks already decide the design. |
+| `speckit-implement`, Trunk tasks | Deep reasoning (Opus) | Bugs in Trunk code cost the most (see "Review by Blast Radius" in the constitution). |
+| Trunk review and launch audit | Deep reasoning (Opus) | They replace a line-by-line human review. |
+
+- The review agent starts with a fresh context and, where possible, uses a different model from the author agent (for example Opus reviews Sonnet's code). A fresh Opus agent reviews Opus's code.
+- Do not pin models by editing the generated `speckit-*` skill or command files. A Spec Kit upgrade can overwrite them.
+
+### Recommended plugin
+
+[Ponytail](https://github.com/DietrichGebert/ponytail) applies the "Simplest solution first" rule of the constitution (Principle IV). Install it for your agent if you want it. It is optional, and the constitution wins when its rules conflict.
+
 ## Docs and comments
 
 - Specs are encouraged to use Mermaid diagrams and Markdown tables. See "Specification Style" in `.specify/memory/constitution.md`.
