@@ -38,9 +38,9 @@ This table answers "which items can be moved". The plan MUST check each row agai
 | --- | --- | --- | --- | --- |
 | Starred repositories | Yes | Yes | Starring | In scope |
 | Followed people | Yes | Yes | Followers | In scope |
-| Star lists (named groups of stars) | Yes, through GitHub's newer query API | Yes, create list and add items | Starring (plan to confirm) | [NEEDS CLARIFICATION: see Question 1] |
+| Star lists (named groups of stars) | Yes, through GitHub's newer query API | Yes, create list and add items | Starring (plan to confirm) | In scope |
 | Watched repositories | Yes | Only with a classic OAuth app and a broad access (`notifications` or `repo`). Not with GitHub App tokens. | Broad | Out of scope. It breaks least privilege (Principle III, rule 1). |
-| Starred gists | Yes | Yes | Gists | [NEEDS CLARIFICATION: see Question 1] |
+| Starred gists | Yes | Yes | Gists (plan to confirm the smallest level) | In scope |
 | Followed organizations | Plan to confirm | Plan to confirm | Followers | Out of scope until the plan confirms the API. |
 | Starred topics | No API | No API | None | Not possible |
 | Sponsorships | Yes | No. They involve payment. | None | Not possible |
@@ -92,6 +92,12 @@ sequenceDiagram
         API-->>App: Done, or wait for some time
     end
 ```
+
+## Clarifications
+
+### Session 2026-11-13
+
+- Q: Which kinds of GitHub items should a migration move? → A: Starred repositories, followed people, star lists, and starred gists (everything GitHub allows an app to add).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -185,10 +191,11 @@ The user signs out of a GitHub account or uses Delete all. The app deletes its G
 
 **Picker and flow**
 
-- **FR-GH-001**: The GitHub card MUST appear in the Automatic section of Home, after YouTube, through the one list of platforms (spec 004, FR-003). The app MUST move two kinds of items: starred repositories and followed people. Other kinds depend on Question 1.
+- **FR-GH-001**: The GitHub card MUST appear in the Automatic section of Home, after YouTube, through the one list of platforms (spec 004, FR-003). The app MUST move four kinds of items: starred repositories, star lists, starred gists, and followed people.
 - **FR-GH-002**: Tapping the GitHub card MUST open the same From, Pick, To flow as YouTube, with the same steps, row states, summary, saved progress, unfinished progress list, Home button, and Settings. The flow MUST NOT get GitHub-only screens. The sign-in code (FR-GH-006) shows in place on the From or To step.
-- **FR-GH-003**: When the old account has more than one kind of item, Pick MUST split the list into one section per kind, each under a short heading ("Stars", "People"). A kind with no items MUST NOT show a section. With only one kind, Pick MUST show a plain list with no heading. Search, All, and the counter MUST work across all sections.
+- **FR-GH-003**: When the old account has more than one kind of item, Pick MUST split the list into one section per kind, each under a short heading ("Stars", "Lists", "Gists", "People"). A kind with no items MUST NOT show a section. With only one kind, Pick MUST show a plain list with no heading. Search, All, and the counter MUST work across all sections.
 - **FR-GH-004**: All user-facing text MUST say "items" or the kind name (for example "Move 12 items", "12 of 340 picked") instead of "channels" in the GitHub flow, and MUST live with the other app text.
+- **FR-GH-018**: Moving a star list MUST create a list with the same name and description on the new account, or reuse one with the same name, and add to it every repository of the list that is Moved or Already there. Repositories of the list that are not picked or fail MUST be left out of the list, and the list row MUST say how many were left out. Picking a list MUST NOT pick its repositories on its own.
 - **FR-GH-016**: After the To sign-in, the app MUST check each starred repository with the new account. A repository the new account cannot see (private, deleted, or blocked) MUST show greyed out as "Not available" with a short reason, and MUST NOT be pickable. The check MUST only read.
 - **FR-GH-017**: When an item fails during the move, its "Couldn't move" row MUST show the actual reason in simple words (for example "Account was deleted"), never a raw error.
 
@@ -216,7 +223,7 @@ The user signs out of a GitHub account or uses Delete all. The app deletes its G
 
 - **Platform**: GitHub is a new entry in the existing list of platforms, in the Automatic section.
 - **Account**: A signed-in GitHub account on From or To, with an ID, a username, and a picture.
-- **Item**: Something the old account stars or follows that can be moved. It has a kind (repository or person), a name, and a picture. This is what YouTube calls a channel.
+- **Item**: Something the old account stars or follows that can be moved. It has a kind (repository, list, gist, or person), a name, and a picture. This is what YouTube calls a channel.
 - **Progress**: The existing saved move progress, tied to a platform. One progress per old and new account pair per platform.
 
 ```mermaid
@@ -260,10 +267,10 @@ The app MUST check the device code response shape before use, and MUST stop chec
 
 | App | Used for | User permissions | Why |
 | --- | --- | --- | --- |
-| Magpie Read | Old (From) | Starring: read. Followers: read. | Read stars and follows, including stars of private repositories the user can see. |
-| Magpie | New (To) | Starring: read and write. Followers: read and write. | Check and add stars and follows. |
+| Magpie Read | Old (From) | Starring: read. Followers: read. Gists: read. | Read stars, star lists, starred gists, and follows, including stars of private repositories the user can see. |
+| Magpie | New (To) | Starring: read and write. Followers: read and write. Gists: read and write. | Check and add stars, star lists, starred gists, and follows. Gists write also lets the app create, change, and delete the user's own gists. The plan MUST check whether a smaller level can star a gist, and drop gists if it cannot be kept narrow. |
 
-Extra permissions for star lists or gists depend on Question 1.
+The plan MUST confirm which permission star lists need.
 
 **Hosts (Principle III, rule 5)**: `github.com` (device sign-in page and token), `api.github.com` (API), `avatars.githubusercontent.com` (pictures). The plan MUST confirm the final list, and whether star lists need `api.github.com/graphql` (same host).
 
@@ -299,17 +306,6 @@ Extra permissions for star lists or gists depend on Question 1.
 
 ## Open questions
 
-### Question 1: Which extra kinds of items to move
-
-**Context**: FR-GH-001 moves starred repositories and followed people. GitHub also supports star lists and starred gists through its API.
-
-| Option | Answer | Implications |
-| --- | --- | --- |
-| A | Stars and people only | Smallest scope and access. Star lists are lost: stars move, but not their grouping. |
-| B | Stars, people, and star lists | Keeps the user's grouping. Needs GitHub's newer query API and more work. Plan to confirm the permission. |
-| C | Stars, people, star lists, and starred gists | Moves everything GitHub allows. Adds the Gists permission to both apps. |
-| Custom | Your own list | Name the kinds to include. |
-
 ### Question 2: Token cancel exception
 
 **Context**: User Story 4. The constitution asks the app to cancel tokens on sign-out (Principle III, rule 3). GitHub allows that only with the client secret.
@@ -326,9 +322,9 @@ Extra permissions for star lists or gists depend on Question 1.
 These steps need your GitHub account and cannot be done by an agent. They block the plan's sign-in work, not this spec.
 
 1. **Create two GitHub Apps** at <https://github.com/settings/apps/new>: "Magpie Read" and "Magpie". For each, set a homepage URL (the repository page is fine), turn off Webhook, and tick **Enable Device Flow**.
-2. **Permissions**: under Account permissions, set Magpie Read to Starring: Read-only and Followers: Read-only. Set Magpie to Starring: Read and write and Followers: Read and write. Leave every Repository and Organization permission at No access.
+2. **Permissions**: under Account permissions, set Magpie Read to Starring, Followers, and Gists: Read-only. Set Magpie to Starring, Followers, and Gists: Read and write. Leave every Repository and Organization permission at No access.
 3. **Who can install**: choose "Any account", so any user can sign in.
 4. **Token lifetime**: keep "Expire user authorization tokens" on.
 5. **Client IDs**: copy each Client ID into your local `.env` as `EXPO_PUBLIC_GITHUB_READ_CLIENT_ID` and `EXPO_PUBLIC_GITHUB_CLIENT_ID`, and into the EAS environment variables. They are public, so this is safe. **Do not generate a client secret or private key.** The app does not use them.
 6. **Test accounts**: have two GitHub accounts ready, one that stars and follows a few items and one new.
-7. **Answer the open questions** above, or run `/speckit-clarify`.
+7. **Answer the open question** above, or run `/speckit-clarify`.
