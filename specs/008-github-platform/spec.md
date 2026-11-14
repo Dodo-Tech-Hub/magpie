@@ -383,7 +383,7 @@ Private stars and private star lists of the old account are not read, because re
 
 ## Assumptions
 
-- **Access test (before GitHub code)**: the docs name no scope for star lists. Before Part B of the plan, the owner runs the access test with the OAuth app. If lists fail with `user`, star lists are taken out of this spec.
+- **Access test**: passed on 2026-11-14. With `public_repo user gist`, starring, following, starring a gist, and creating a star list all worked (plan, research R1).
 
 - GitHub reuses the Automatic flow from specs 001 and 004. Any part of that flow that is tied to YouTube today is made platform-neutral in the plan, without changing YouTube's behavior.
 - The app has no server. The client IDs are public and ship in the app. No client secret is used.

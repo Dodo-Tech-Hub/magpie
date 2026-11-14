@@ -12,7 +12,7 @@ The work has two parts and one check before Part B.
 
 | Step | What | Needs | Ships as |
 | --- | --- | --- | --- |
-| Check | Owner creates the OAuth app and runs [verify-access.sh](verify-access.sh) to confirm star, follow, gist star, and star lists with the planned scopes. | Owner, 10 minutes | Result pasted in the pull request |
+| Check | Owner creates the OAuth app and runs [verify-access.sh](verify-access.sh) to confirm star, follow, gist star, and star lists with the planned scopes. | Done 2026-11-14: passed (research R1) | Recorded in research R1 |
 | Part A | Make the Automatic flow platform-neutral behind a platform driver. YouTube is the only driver. No behavior change. | Owner approval of the restructure (Principle IV) | Its own pull request, before Part B |
 | Part B | Add the GitHub driver, the code sign-in, sections on Pick, the pacer, token handling, and the texts. | Check passed, Part A merged, one client ID | One or more pull requests |
 
@@ -77,7 +77,7 @@ Checked against `.specify/memory/constitution.md` v1.5.0.
 | IV. Restructure instead of forcing it | The feature reshapes many modules, so the restructure (Part A) is proposed here, is its own change, and is done and tested before Part B. **Needs owner approval.** | Pass once approved |
 | V. Platform rules | Official API only. Pace far under GitHub's limits. No scripted taps. Official, unmodified logo. | Pass |
 
-**Gate result (pre-research)**: Pass with approved exceptions. **Gate result (post-design)**: Pass with two approved exceptions, and two open items for the owner: approve the restructure, and run the access check.
+**Gate result (pre-research)**: Pass with approved exceptions. **Gate result (post-design)**: Pass with two approved exceptions. Access check passed on 2026-11-14. One open item for the owner: approve the restructure.
 
 ## Project Structure
 
