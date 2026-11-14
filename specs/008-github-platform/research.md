@@ -62,7 +62,7 @@ GitHub's docs site (`docs.github.com`) was not reachable from the plan session e
 
 - **Decision**: After the To sign-in, read the new account's stars, follows, lists, and (with gist access) starred gists with the same calls as R6. An item in both lists is "Already there". A starred repository marked `private` in the old list is "Not available" with the reason "Private. Your new account can't use it here." No extra request per repository.
 - **Rationale**: FR-GH-016 asks for a read-only check per repository. Public repositories are visible to every account, and deleted ones are not in the old list, so the only case left is private. One request per repository would spend the hourly limit on large lists for no gain. A repository whose owner blocked the new account fails at move time with its reason (FR-GH-017).
-- **Spec note**: FR-GH-016 says "check each starred repository". This plan checks by the `private` flag. `/speckit-tasks` should keep that wording in mind; no behavior the user sees differs.
+- **Spec note**: FR-GH-016 was updated on 2026-11-14 to use the `private` flag, so spec and plan agree.
 
 ## R8. Adding items
 
