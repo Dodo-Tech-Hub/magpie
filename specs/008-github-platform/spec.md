@@ -78,13 +78,20 @@ sequenceDiagram
     User->>App: Tap From, then Sign in
     App->>API: Ask for a short sign-in code (read access)
     App->>User: Show the code, copy it, open the sign-in page
-    User->>SignIn: Paste the code, pick the old account, allow
-    App->>API: Check every few seconds until sign-in ends
-    API-->>App: Token
+    par User signs in
+        User->>SignIn: Paste the code, pick the old account, tap Allow
+    and App waits for the user
+        loop Every few seconds, until the user taps Allow or the code expires
+            App->>API: Did the user allow this code yet?
+            API-->>App: Not yet
+        end
+    end
+    App->>API: Did the user allow this code yet?
+    API-->>App: Yes, here is the token
     App->>API: Read the old account's items
     User->>App: Tap To, then Sign in
     App->>User: Hint: switch to your new account in the browser
-    App->>API: Ask for a code (add access), same steps as above
+    App->>API: Ask for a code (add access), then the same code, sign-in, and wait steps as above
     App->>API: Check which items the new account already has
     User->>App: Tap Move N items
     loop One item at a time, at a slow pace
