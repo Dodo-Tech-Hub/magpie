@@ -20,16 +20,22 @@ type Driver = {
   kinds: { id: string; heading: string; optional?: boolean }[];
   pace?: { perMinute: number; perHour: number };
   removeAccessUrl?: string;                    // page where the user removes the app's access
+  switchSignsOut?: boolean;                    // Switch signs out and shows Sign in again, instead of opening a new sign-in at once
 
-  signIn(role: Role, kinds: string[], onCode: (code: SignInCode | null) => void): Promise<SignInResult>; // kinds: what the new account needs access for
+  signIn(role: Role, kinds: string[], onCode: (code: SignInCode | null) => void, signal?: AbortSignal): Promise<SignInResult>; // kinds: what the new account needs access for. Abort = the user tapped Cancel.
   signOut(role?: Role): Promise<void>;         // no role = all roles
   granted(): Promise<string[]>;                // kinds the new account has access for
   canAct(role: Role, accountId: string): Promise<boolean>; // is there a usable sign-in for this account
   listOld(): Promise<NewItem[]>;               // read the old account; the driver then drops old access if it must
   checkNew(items: StoredItem[], granted: string[]): Promise<{ there: string[]; unavailable: { itemId: string; reason: string }[] }>;
   add(item: StoredItem, items: StoredItem[]): Promise<Outcome>;
+  endMove?(): Promise<void>;                   // called when a move finished with nothing left to move: drop the new account token
 };
 ```
+
+## Words
+
+`words` holds every platform-specific text, kept in `src/strings.ts` (`youtubeWords`, `githubWords`): `signIn` (button label), `signInIcon`, `oldHint`, `newHint`, `searchPlaceholder`, `noItems`, `needPick`, `later` (row label for the `later` state), `limitReached`, `reminderBody`, `moveButton(n)`, `notAffiliated`, and for GitHub only `accessNote`.
 
 ## Rules
 
