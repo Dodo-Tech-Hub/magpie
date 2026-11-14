@@ -51,7 +51,7 @@ Technical approach:
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-Checked against `.specify/memory/constitution.md` v1.4.0.
+Checked against `.specify/memory/constitution.md` v1.5.0.
 
 | Principle / rule | How the plan complies | Status |
 | --- | --- | --- |
@@ -60,6 +60,7 @@ Checked against `.specify/memory/constitution.md` v1.4.0.
 | I. Accessibility | The code is read letter by letter in its label. Section headings are headings. Greyed rows say why. Every new button has a label. | Pass |
 | I. Confirmations | None added. | N/A |
 | II. Tests | Unit tests for the driver, the pacer, the migration, and the mover. Component tests for the code sign-in, sections, gists, pause, and sign-out. No real GitHub calls. | Pass |
+| II. Tests check behavior | Each test checks what the user sees or a business rule (pace, list union, scope per kind, migration). A test asserts a mocked call only where that call is the behavior itself: the browser opens, the token is saved or deleted. No coverage-only tests. | Pass |
 | III.1 Least privilege | One classic OAuth app. No scope for the old account. Scopes per picked kind for the new account; `gist` only on request; the user can untick any scope. `public_repo`, `user`, and `gist` are broader than needed: **approved exception** (2026-11-14), listed below. | Pass with approved exception |
 | III.2 Sign-in flow | Device code flow in the system browser. Native SDK does not exist; PKCE needs a secret (R2). Every value from the flow is checked before use. | Pass |
 | III.3 Token storage | `expo-secure-store` only. Tokens cannot be cancelled without a secret and never run out: **approved exception** with safeguards (FR-GH-019), listed below. | Pass with approved exception |
@@ -72,6 +73,7 @@ Checked against `.specify/memory/constitution.md` v1.4.0.
 | III.11 Dependencies | Two Expo SDK modules. Lockfile committed. | Pass |
 | IV. One home per thing | Drivers in `src/platforms/`. GitHub calls in `src/api/github.ts`, sign-in in `src/auth/github.ts`, pacer in `src/move/`. No new folder. | Pass |
 | IV. Extend, do not patch | No `if (platform === 'github')` in shared code. Shared code reads the driver. | Pass |
+| IV. Simplest solution first | `fetch` and `Linking` (built in), `expo-secure-store` and `expo-clipboard` (Expo SDK, the first is required by III.3), no new HTTP, state, or navigation library. The driver has two real users (YouTube, GitHub), not a hypothetical one. Known shortcuts carry a `// ponytail:` comment: the pace numbers are fixed constants, and "Not available" uses only the `private` flag (R7). | Pass |
 | IV. Restructure instead of forcing it | The feature reshapes many modules, so the restructure (Part A) is proposed here, is its own change, and is done and tested before Part B. **Needs owner approval.** | Pass once approved |
 | V. Platform rules | Official API only. Pace far under GitHub's limits. No scripted taps. Official, unmodified logo. | Pass |
 
