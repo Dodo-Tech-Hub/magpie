@@ -51,54 +51,98 @@ This table answers "which items can be moved". The plan MUST check each row agai
 
 ```mermaid
 flowchart TD
-    Home["Home: platform picker"] -->|GitHub card| Bar
-    Home -->|GitHub card with Continue note| Pick
+    Home["Home"] -->|Tap the GitHub card| From
 
-    subgraph Auto["Automatic flow (same steps as YouTube)"]
-        Bar["Top bar: From, Pick, To, in any order"]
-        Bar --> From["From: sign in to old GitHub account, unfinished GitHub progresses"]
-        Bar --> Pick["Pick: one section per kind, search, All, counter, Already there"]
-        Bar --> To["To: sign in to new GitHub account"]
-        Pick -->|Move N items| Moving["Moving, then Moved, Already there, or Couldn't move"]
-        Moving -->|all done| Summary["Summary"]
-        Moving -->|GitHub asks to wait| Wait["Rows say Later, reminder asked"]
-        Wait -->|reminder or Continue| Pick
+    subgraph Steps["Top bar: the user can open these 3 steps in any order"]
+        From["From<br/>Sign in to the old account"]
+        To["To<br/>Sign in to the new account"]
+        Pick["Pick<br/>Choose the items to move"]
+        From ~~~ To ~~~ Pick
     end
+
+    Pick -.->|Optional: tap Allow gists| Gists["Sign in to the new account again<br/>for gist access"]
+    Gists -.-> Pick
+    Pick -->|Tap Move N items| Moving["Moving<br/>Rows change one at a time"]
+    Moving -->|All items done| Summary["Summary"]
+    Moving -->|GitHub asks the app to wait| Later["Rows say Later<br/>The app offers a reminder"]
+    Later -->|Reminder, or Continue on Home| Pick
 ```
 
-## How sign-in and the move work
+## How a move works, from start to end
+
+Each "Sign in with a code" box is the same sign-in, shown step by step in the next diagram. Only the app name and the account change.
 
 ```mermaid
 sequenceDiagram
     actor User
-    participant App
-    participant SignIn as Platform sign-in (system browser)
-    participant API as Platform API
+    participant App as Magpie
+    participant GitHub
 
-    User->>App: Tap From, then Sign in
-    App->>API: Ask for a short sign-in code (read access)
-    App->>User: Show the code, copy it, open the sign-in page
-    par User signs in
-        User->>SignIn: Paste the code, pick the old account, tap Allow
-    and App waits for the user
-        loop Every few seconds, until the user taps Allow or the code expires
-            App->>API: Did the user allow this code yet?
-            API-->>App: Error authorization_pending (user has not tapped Allow, no token yet)
+    Note over User,GitHub: 1. From (old account)
+    User->>App: Tap Sign in on From
+    Note over User,GitHub: Sign in with a code. App name: Magpie Read. Access: read only.
+    App->>GitHub: Read stars, star lists, starred gists, and followed people
+    App->>App: Delete the old account token
+
+    Note over User,GitHub: 2. To (new account)
+    User->>App: Tap Sign in on To
+    Note over User,GitHub: Sign in with a code. App name: Magpie. Access: add stars and follows.
+    App->>GitHub: Which of these items does the new account already have?
+    App->>User: Pick shows every item. Gists are greyed out.
+
+    opt 3. Only if the user taps Allow gists
+        Note over User,GitHub: Sign in with a code. App name: Magpie Gists. Access: gists.
+        App->>User: Gists are now pickable
+    end
+
+    Note over User,GitHub: 4. Move
+    User->>App: Tap Move N items
+    loop One item at a time, at most 20 per minute and 300 per hour
+        App->>GitHub: Add this item to the new account
+        alt GitHub added it
+            GitHub-->>App: Done
+            App->>User: Row says Moved
+        else GitHub asks the app to wait
+            GitHub-->>App: Wait
+            App->>User: Remaining rows say Later
         end
     end
-    App->>API: Did the user allow this code yet?
-    API-->>App: Yes, here is the token
-    App->>API: Read the old account's items
-    User->>App: Tap To, then Sign in
-    App->>User: Hint: switch to your new account in the browser
-    App->>API: Ask for a code (add access), then the same code, sign-in, and wait steps as above
-    App->>API: Check which items the new account already has
-    User->>App: Tap Move N items
-    loop One item at a time, at a slow pace
-        App->>API: Add one item to the new account
-        API-->>App: Done, or wait for some time
-    end
+    App->>User: Summary
+    App->>App: Delete the new account token and the gist token
 ```
+
+## How "Sign in with a code" works
+
+GitHub does not tell the app when the user taps Allow. The app must ask again and again until GitHub answers with a token.
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant App as Magpie
+    participant GitHub
+
+    User->>App: Tap Sign in
+    App->>GitHub: Give me a sign-in code
+    GitHub-->>App: A short code, valid for some minutes
+    App->>User: Show the code, copy it, open GitHub in the browser
+    User->>GitHub: Paste the code and pick the account
+
+    loop Every few seconds, while the user has not tapped Allow
+        App->>GitHub: Did the user allow this code?
+        GitHub-->>App: No (authorization_pending). No token yet.
+    end
+
+    User->>GitHub: Tap Allow
+    App->>GitHub: Did the user allow this code?
+    GitHub-->>App: Yes. Here is the token.
+    App->>User: The step shows the signed-in account
+```
+
+| If | Then |
+| --- | --- |
+| The code runs out before the user taps Allow | The app stops asking. The step stays signed out with "Sign-in didn't finish. Try again." |
+| The user taps Cancel on GitHub | The app stops asking. The step stays signed out. |
+| The app goes to the background | The app continues to ask when the user returns. |
 
 ## Clarifications
 
