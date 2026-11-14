@@ -128,36 +128,8 @@ Rationale: a spec is read by people who are new to the feature. A flow, a state 
 - Features follow the Spec Kit flow: specify, clarify (optional), plan, tasks, implement.
 - Every plan MUST include a Constitution Check that confirms compliance with Principles I to V.
 - A change is ready to merge only when: tests pass, TypeScript and lint report no errors, the
-  security baseline is met, and the reviews and proof below are done.
+  security baseline is met, and the independent review below is done.
 - Git, commit, and approval rules are defined in `AGENTS.md` and apply to all contributors and agents.
-
-### Review by Blast Radius
-
-Most code is written by AI agents, and the project owner does not read every line. Review depth depends on how much of the app a change can break.
-
-| Tier | What it covers | Review |
-| --- | --- | --- |
-| Trunk | `src/auth/`, `src/api/`, `src/store/`, `src/state/`, `src/move/` (batching, quota, resume), `App.tsx`, `app.config.ts`, `eas.json`, and any change to tokens, scopes, or the host allowlist | Full review by agents, as described below |
-| Leaf | An isolated UI component, `src/strings.ts`, theme tokens, guide content, or a new module behind a feature flag | Skim, if the change has proof and sits behind a flag |
-
-- A change that is hard to undo (for example a scope change, a token storage format, or a migration of stored data) is always Trunk and MUST be approved by the project owner.
-- **Agents review Trunk changes**: at least one fresh review agent MUST review every Trunk change for correctness and one for security. Each sees only the diff, this constitution, and the spec, never the author agent's conversation.
-- **The owner approves the what, not the how**: for every Trunk change, the review agent MUST explain in plain words what changed, what can break, and how to undo it. The project owner approves or rejects from that summary.
-- **Red flags are checked by machine**: an automated check (CI or a script) MUST flag a pull request for owner approval when its diff adds or changes an OAuth scope, adds a network host, touches token storage or uses `AsyncStorage` for tokens, adds a dependency, or changes `app.config.ts`, `eas.json`, or the Android manifest.
-- **Trunk changes need behavior tests**: every Trunk change MUST add or update unit tests for the behavior it touches (for example batching, resume, quota handling, or revoking tokens on sign-out).
-- **Trunk pull requests stay small**: one Trunk concern per pull request. A large Trunk diff MUST be split before review.
-- **One human expert review before public release**: before the app is submitted for platform OAuth verification or public release, a human security expert MUST review sign-in and token handling once.
-
-### Proof in Every Pull Request
-
-Every pull request written by an agent MUST include proof, so a reviewer does not have to run the branch:
-
-- the names of the tests added or changed, and what each one checks;
-- the result of running tests, TypeScript, and lint locally;
-- screenshots or a screen recording for any UI change, on both Android and iOS where behavior differs;
-- a short risk note: the tier (Trunk or Leaf), how to undo the change, and the agent's confidence.
-
-The pull request description MUST be shorter than the diff.
 
 ### Independent Review
 
@@ -172,14 +144,6 @@ The pull request description MUST be shorter than the diff.
 - Flags are local (app config or code). Remote flag services are not allowed (see Principle III, Network).
 - A flag MUST be removed after the feature is fully launched.
 
-### Merge-Ready Is Not Launch-Ready
-
-Merged code is not finished. Before a feature is released to users:
-
-- Run one launch audit of the whole feature against its spec: performance, the security baseline, edge cases (for example daily limit reached, sign-in cancelled, or the app closed during a batch), plain-word UX (Principle I), and cleanup of code left behind by agents. Review every `ponytail:` comment in the feature and either fix it or accept it for this release, and record the choice in the audit.
-- Release with a staged rollout: a small Google Play rollout percentage and TestFlight first. Watch the crash data built into Play Console and App Store Connect before going to 100%. No crash-reporting SDK is added (see Principle III, Network).
-- If EAS Update channels are used for a gradual release, updates MUST be code-signed (see Principle III, Over-the-air updates).
-
 ## Governance
 
 - This constitution overrides other project practices. Runtime guidance for agents lives in
@@ -190,6 +154,5 @@ Merged code is not finished. Before a feature is released to users:
   or materially expanding guidance, PATCH for wording fixes.
 - Reviews of every spec, plan, and pull request MUST check compliance. Any exception MUST be written
   in the plan with its reason and approved by the project owner.
-- A spec's status becomes `Implemented` only after its launch audit is done (see "Merge-Ready Is Not Launch-Ready"), not when its code is merged.
 
 **Version**: 1.5.0 | **Ratified**: 2026-11-08 | **Last Amended**: 2026-11-14
