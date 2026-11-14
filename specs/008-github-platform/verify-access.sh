@@ -35,6 +35,7 @@ while [ -z "$token" ]; do
   esac
 done
 echo "Signed in. Token fields: $(printf '%s' "$poll" | tr ',' '\n' | sed -n 's/^[{ ]*"\([a-z_]*\)".*/\1/p' | tr '\n' ' ')"
+echo "Token expires in (seconds, empty = never): $(printf '%s' "$poll" | field expires_in)"
 echo "Granted scopes: $(printf '%s' "$poll" | sed -n 's/.*"scope":"\([^"]*\)".*/\1/p')"
 
 api() { # method path [json body]; prints status and the permission header GitHub wanted
