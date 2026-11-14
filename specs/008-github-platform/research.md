@@ -92,5 +92,6 @@ GitHub's docs site was not reachable when the plan was first written; R1, R2, an
 
 ## R11. Logo
 
-- **Decision**: GitHub's official mark (Invertocat) from GitHub's brand page, unmodified, at `assets/platforms/github.png`, added by the project owner. If the black mark is hard to see on a dark card, use GitHub's official white mark for the dark look.
-- **Rationale**: Principle V and FR-GH-015. GitHub's logo rules allow the mark to name GitHub and forbid changing it. Both colors are official.
+- **Decision**: GitHub's official Invertocat, unchanged, from GitHub's brand toolkit ([logo](https://brand.github.com/foundations/logo), file `GitHub_Logos.zip`, downloaded 2026-11-14). `assets/platforms/github.png` is `GitHub_Invertocat_Black.png` (light look) and `assets/platforms/github-white.png` is `GitHub_Invertocat_White.png` (dark look), both 294 by 288 pixels. Part B lets a platform entry name a dark-look logo; the card picks the one that matches the theme.
+- **Rationale**: Principle V and FR-GH-015. GitHub's rules: the Invertocat appears only in white or black (rarely grey or green), with high contrast, with no effects, and never changed, stretched, or rearranged. The black mark on a dark card fails the contrast rule, so both colors ship.
+- **Owner check**: before a store release, the owner confirms GitHub's brand rules allow this use (naming GitHub on a card in a third-party app), as for the YouTube logo.
