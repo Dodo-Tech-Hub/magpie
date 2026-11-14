@@ -24,6 +24,7 @@ GitHub is feasible. Unlike YouTube and Spotify, it has no test-user cap, no app 
 | Does the API cost money? | No. | No |
 | Can the app read the old account's items? | Yes, for stars and follows. | No |
 | Can the app add items to the new account? | Yes, for stars and follows. See "What GitHub supports" for the rest. | No |
+| Can a GitHub App token star any public repository and edit star lists? | Not confirmed. The plan found one report that it cannot. | Open. The owner runs one test before any GitHub work (plan, research R1). |
 | Can the app sign in without a secret? | Yes, with the device code flow. The browser flow still needs a client secret, which a phone app cannot keep. | No, but the sign-in has one extra step (enter a short code). |
 | Can the app cancel its access on sign-out? | No. Cancelling a token needs the client secret. | No. The project owner approved an exception with 3 safeguards (FR-GH-019). |
 | Are there speed limits? | Yes. About 5,000 requests per hour per user, and about 80 adds per minute and 500 adds per hour. | No. A few hundred items fit in one hour. |
