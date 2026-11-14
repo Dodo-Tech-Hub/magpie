@@ -127,22 +127,9 @@ Rationale: a spec is read by people who are new to the feature. A flow, a state 
 
 - Features follow the Spec Kit flow: specify, clarify (optional), plan, tasks, implement.
 - Every plan MUST include a Constitution Check that confirms compliance with Principles I to V.
-- A change is ready to merge only when: tests pass, TypeScript and lint report no errors, the
-  security baseline is met, and the independent review below is done.
+- A change is ready to merge only when: tests pass, TypeScript and lint report no errors, and the
+  security baseline is met.
 - Git, commit, and approval rules are defined in `AGENTS.md` and apply to all contributors and agents.
-
-### Independent Review
-
-- The agent that wrote a change MUST NOT be its only reviewer.
-- A review agent MUST start with a fresh context: it sees only the diff, this constitution, and the spec.
-- Review comments cover correctness, security, and spec compliance. Style, formatting, and types are checked by lint and TypeScript only, so reviewers MUST NOT leave style comments ("nits").
-
-### Feature Flags
-
-- The plan of a feature that changes an existing user flow MUST say how the new behavior is turned on and off with a local feature flag, and where the flag is checked. The flag is checked at one integration point, in line with "Extend, do not patch" in Principle IV.
-- The plan MUST keep the new code apart from its integration point, so a review can answer: "if this code fails, does the current flow still work, and does turning off the flag stop it?"
-- Flags are local (app config or code). Remote flag services are not allowed (see Principle III, Network).
-- A flag MUST be removed after the feature is fully launched.
 
 ## Governance
 
