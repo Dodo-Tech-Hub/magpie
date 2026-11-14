@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain
+- [x] No [NEEDS CLARIFICATION] markers remain
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -34,4 +34,4 @@
 - Sign-in flow, app type, access, hosts, and limits appear only in the marked "GitHub section". The constitution (Principle III, rules 1, 2, 5) requires the spec or plan to list them, so they are kept on purpose.
 - The "Feasibility" and "What GitHub supports" sections answer the project owner's request to discuss supported items and platform limits.
 - GitHub's docs site was not reachable when the spec was written. Facts come from GitHub's changelog, policy pages, and search results. The plan must check them.
-- 1 open question remains: the token cancel exception (Question 2). Question 1 was answered on 2026-11-13 (move all four kinds). Resolve before `/speckit-plan`.
+- All questions answered on 2026-11-13: move all four kinds, token exception approved with 3 safeguards (FR-GH-019), gist access optional (FR-GH-020). Ready for `/speckit-plan`.
