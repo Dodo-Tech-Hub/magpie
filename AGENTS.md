@@ -57,11 +57,11 @@ Every `spec.md` has a `**Status**:` line near the top. Use only these values. Fo
 |--------|---------|
 | `Draft` | Just created. Still being written or clarified. Not ready to implement. |
 | `In progress` | Implementation has started (plan or tasks exist, code is being written). |
-| `Implemented` | Fully implemented, merged, and the launch audit is done (see "Merge-Ready Is Not Launch-Ready" in the constitution). |
+| `Implemented` | Fully implemented and merged. |
 | `Superseded` | Replaced by a newer spec. Name the spec that replaces it (for example `**Status**: Superseded by 007-foo.`). |
 | `Cancelled` | The project owner cancelled it. Kept as a record. Give the reason. |
 
-Update the status when the work changes state: set `In progress` when `speckit-implement` starts, and `Implemented` when the work is merged and its launch audit is done.
+Update the status when the work changes state: set `In progress` when `speckit-implement` starts, and `Implemented` when the work is merged.
 
 The user is new to Spec Kit. Do not explain Spec Kit steps unprompted beyond naming the files changed and the next step. When the user asks, explain in full and in plain language.
 
@@ -76,9 +76,8 @@ Steps that need judgment use a deep-reasoning model. Steps that follow a written
 | `speckit-constitution`, `speckit-specify`, `speckit-clarify`, `speckit-plan` | Deep reasoning (Opus) | Requirements and architecture. Mistakes here spread to every later step. |
 | `speckit-analyze`, `speckit-converge` | Deep reasoning (Opus) | They find gaps across many files. |
 | `speckit-tasks`, `speckit-checklist` | Fast coding (Sonnet) | They follow the structure of the plan. |
-| `speckit-implement`, Leaf tasks | Fast coding (Sonnet) | The plan and tasks already decide the design. |
-| `speckit-implement`, Trunk tasks | Deep reasoning (Opus) | Bugs in Trunk code cost the most (see "Review by Blast Radius" in the constitution). |
-| Trunk review and launch audit | Deep reasoning (Opus) | They replace a line-by-line human review. |
+| `speckit-implement` | Fast coding (Sonnet) | The plan and tasks already decide the design. |
+| Code review | Deep reasoning (Opus) | It replaces a line-by-line human review. |
 
 - The review agent starts with a fresh context and, where possible, uses a different model from the author agent (for example Opus reviews Sonnet's code). A fresh Opus agent reviews Opus's code.
 - Do not pin models by editing the generated `speckit-*` skill or command files. A Spec Kit upgrade can overwrite them.
