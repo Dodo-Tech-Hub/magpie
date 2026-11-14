@@ -26,7 +26,7 @@ GitHub is feasible. Unlike YouTube and Spotify, it has no test-user cap, no app 
 | Can the app add items to the new account? | Yes, for stars and follows. See "What GitHub supports" for the rest. | No |
 | Which app type can move stars? | Only a classic OAuth app. GitHub's docs say starring needs read access to the repository, and a GitHub App has that only where it is installed. A classic OAuth app stars any public repository with the `public_repo` scope. | No. The project owner chose a classic OAuth app with an approved exception (Clarifications, 2026-11-14). |
 | Can the app sign in without a secret? | Yes, with the device code flow. The browser flow still needs a client secret, which a phone app cannot keep. | No, but the sign-in has one extra step (enter a short code). |
-| Can the app cancel its access on sign-out? | No. Cancelling a token needs the client secret, and classic OAuth tokens do not run out on their own. | No. The project owner approved an exception with safeguards (FR-GH-019). |
+| Can the app cancel its access on sign-out? | No. Cancelling a token needs the client secret. With "Expire user access tokens" on, a token runs out 8 hours after sign-in (confirmed by the access check). | No. The project owner approved an exception with safeguards (FR-GH-019). |
 | Are there speed limits? | Yes. About 5,000 requests per hour per user, and about 80 adds per minute and 500 adds per hour. | No. A few hundred items fit in one hour. |
 | Do GitHub's rules allow automated starring or following? | GitHub's Acceptable Use Policies name "rank abuse, such as automated starring or following" and "starring and/or following accounts or repositories in large volume in a short period of time" as not allowed. | Risk, not a blocker. The user moves their own items once, at a slow pace, which the app enforces (FR-GH-010). |
 | Can one person have two accounts? | GitHub's Terms allow one free personal account per person (plus one machine account). Most users move from an old account they then close, or between a paid work account and a personal one. | No. The app does not check this. See Assumptions. |
@@ -156,6 +156,8 @@ sequenceDiagram
 ### Session 2026-11-14
 
 - Q: GitHub's docs show a GitHub App can star only repositories where it is installed. Which app type should Magpie use? → A: One classic OAuth app. Each sign-in asks only for the scopes of the kinds the user picked, and the user can remove scopes on GitHub's page. The owner approved an exception to Principle III, rule 1 (`public_repo` also allows writing code in public repositories, and `user` allows editing profile info) and a wider exception to rule 3 (classic tokens do not run out on their own). Safeguards are in FR-GH-019.
+- Update (2026-11-14): GitHub OAuth apps now offer "Expire user access tokens". The owner turned it on, and the access check showed tokens run out after 8 hours. The rule 3 exception shrinks back to "deleted on the phone, not cancelled, runs out within 8 hours".
+- Access check (2026-11-14): with no scope, the old account reads stars, follows, starred gists, and star lists. GitHub's error for `createUserList` names `user` as the required scope, so star lists stay in scope.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -215,7 +217,7 @@ GitHub limits how fast an app can add stars and follows, and its rules forbid st
 
 ### User Story 4 - Sign out and remove access (Priority: P2)
 
-The user signs out of a GitHub account or uses Delete all. The app deletes its GitHub tokens and data from the phone. GitHub lets an app cancel a token only with the client secret, which a phone app cannot hold, and classic OAuth tokens do not run out on their own. The project owner approved an exception to Principle III, rule 3, with safeguards that keep each token on the phone for as short a time as possible and point the user to GitHub's page to remove Magpie's access (FR-GH-019). A deleted token stays valid on GitHub until the user removes Magpie's access there.
+The user signs out of a GitHub account or uses Delete all. The app deletes its GitHub tokens and data from the phone. GitHub lets an app cancel a token only with the client secret, which a phone app cannot hold. The project owner approved an exception to Principle III, rule 3, with safeguards that keep each token on the phone for as short a time as possible and point the user to GitHub's page to remove Magpie's access (FR-GH-019). A deleted token stays valid on GitHub until it runs out, 8 hours after sign-in, unless the user removes Magpie's access there first.
 
 **Why this priority**: The constitution requires sign-out to remove access. The safeguards are the approved way to meet that rule as closely as GitHub allows.
 
@@ -225,7 +227,7 @@ The user signs out of a GitHub account or uses Delete all. The app deletes its G
 
 1. **Given** a GitHub account is signed in, **When** the user taps Switch on that step (GitHub's sign-out), **Then** its token is deleted from the phone and the step shows signed out.
 2. **Given** the user uses Delete all, **When** it ends, **Then** every GitHub account, token, list, and progress is gone from the phone.
-3. **Given** the app deleted the new account token (at the summary or on Switch), **When** the To step shows, **Then** it shows a short line, for example "Magpie can still use your account until you remove it in GitHub settings.", with a button that opens that GitHub page in the system browser. Settings shows the same button next to Delete all.
+3. **Given** the app deleted the new account token (at the summary or on Switch), **When** the To step shows, **Then** it shows a short line, for example "Magpie's access ends on its own within 8 hours. To end it now, open GitHub settings.", with a button that opens that GitHub page in the system browser. Settings shows the same button next to Delete all.
 4. **Given** the old account's list is read, **When** Pick shows it, **Then** the app holds no token for the old account.
 5. **Given** a move ends, **When** the summary shows, **Then** the app holds no token for the new account. Continue after a pause uses the saved token only while the move is unfinished.
 
@@ -257,7 +259,7 @@ Each kind needs its own access on the new account, and some access is broad: sta
 - A followed person deleted their account or blocked the new account: the row shows "Couldn't move" with the reason, and the rest go on (FR-GH-017).
 - The old account follows the new account, or the new account would follow itself: the app leaves that row out, because an account cannot follow itself.
 - The old account has thousands of stars: the list loads in parts, shows a loading line, and stays searchable when it ends. The time-left line shows that the move takes more than one session.
-- The user removes Magpie's access on GitHub during a move: the next add fails with a sign-in error, the step shows signed out, the progress is saved, and the user signs in again to continue.
+- The token runs out (8 hours after sign-in) or the user removes Magpie's access on GitHub during a move: the next add fails with a sign-in error, the step shows signed out, the progress is saved, and the user signs in again to continue.
 - GitHub flags the new account for unusual activity: the next add fails, the app stops, saves the progress, and shows "GitHub paused your account's activity. Try again later." It does not retry in a loop.
 - The internet drops during a move: the move pauses, unfinished rows go back to waiting, and the user sees "No internet. Try again when you're online."
 - The user closes the app during a move: on return, moved items stay Moved and the rest are waiting.
@@ -294,7 +296,7 @@ Each kind needs its own access on the new account, and some access is broad: sta
 
 **Data, security, and both phone types**
 
-- **FR-GH-019**: The app MUST keep each GitHub token on the phone for as short a time as possible, as an approved exception to Principle III, rule 3: (a) delete the old account token as soon as its list is read; (b) delete the new account token when the summary shows, on Switch, and on Delete all. GitHub's sign-out is Switch on a step, or Delete all. Because the token stays valid on GitHub, the summary MUST say so in one line with a button that opens GitHub's page where the user removes Magpie's access. The To step after Switch and Settings next to Delete all MUST show the same button.
+- **FR-GH-019**: The app MUST keep each GitHub token on the phone for as short a time as possible, as an approved exception to Principle III, rule 3: (a) delete the old account token as soon as its list is read; (b) delete the new account token when the summary shows, on Switch, and on Delete all; (c) never save the refresh token GitHub sends. GitHub's sign-out is Switch on a step, or Delete all. Because the token stays valid on GitHub until it runs out (8 hours after sign-in), the summary MUST say so in one line with a button that opens GitHub's page where the user removes Magpie's access. The To step after Switch and Settings next to Delete all MUST show the same button.
 - **FR-GH-020**: The To sign-in MUST ask only for the scopes of the kinds picked at that moment (all kinds except gists when the old list is not read yet), and never for gists. The app MUST read the scopes GitHub actually granted. A kind without its scope MUST show greyed out with an "Allow" button, MUST NOT be moved, and MUST NOT count as failed. "Allow" MUST sign in to the same new account again, asking for the granted scopes plus that kind's scope. The rest of the move MUST work without it.
 - **FR-GH-013**: GitHub tokens MUST be stored only in the phone's secure storage and deleted on sign-out and on Delete all. Delete all MUST remove every GitHub account, token, list, and progress.
 - **FR-GH-014**: The app MUST keep only what the move needs: account ID, username, picture, item IDs, item names and pictures, and progress. It MUST NOT log tokens, codes, usernames, emails, or item lists.
@@ -363,7 +365,7 @@ Private stars and private star lists of the old account are not read, because re
 - About 5,000 requests per hour per signed-in user.
 - Adds (content-creating requests) are capped at about 80 per minute and 500 per hour, counted across the web and the API. GitHub says these limits change without notice and offers no way to check them in advance. When hit, GitHub answers 403 or 429, sometimes with a wait time.
 - GitHub's Acceptable Use Policies forbid "rank abuse, such as automated starring or following" and name "starring and/or following accounts or repositories in large volume in a short period of time" as disrupting other users. FR-GH-010 keeps the pace low for this reason.
-- Classic OAuth tokens do not run out on their own and come with no refresh token. They stay valid until the user removes Magpie's access on GitHub.
+- With "Expire user access tokens" on, a token runs out after 28,800 seconds (8 hours) and comes with a refresh token (confirmed by the access check, 2026-11-14). The app never saves the refresh token. A move longer than 8 hours, across pauses, needs one more sign-in.
 - Cancelling a token needs the client secret. Users remove an app's access in GitHub Settings, Applications, Authorized OAuth Apps. FR-GH-019 lists the approved safeguards.
 
 **Redirect back to the app**: none. The device code flow does not redirect. The user returns to the app on their own, and the app checks for the result.
@@ -394,7 +396,7 @@ Private stars and private star lists of the old account are not read, because re
 
 These steps need your GitHub account and cannot be done by an agent. They block the plan's sign-in work, not this spec.
 
-1. **Create one OAuth app** at <https://github.com/settings/applications/new>, named "Magpie". Set the homepage URL and the callback URL to the repository page (the app never uses the callback). Tick **Enable Device Flow**.
+1. **Create one OAuth app** at <https://github.com/settings/applications/new>, named "Magpie". Set the homepage URL and the callback URL to the repository page (the app never uses the callback). Tick **Enable Device Flow**, and keep **Expire user access tokens** ticked.
 2. **Client ID**: copy the Client ID into your local `.env` as `EXPO_PUBLIC_GITHUB_CLIENT_ID`, and into the EAS environment variables. It is public, so this is safe. **Do not generate a client secret.** The app does not use one.
 3. **Access test**: run the access test in the plan's quickstart, step 0, with this Client ID.
 4. **Test accounts**: have two GitHub accounts ready, one that stars and follows a few items and one new.

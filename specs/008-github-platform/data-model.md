@@ -118,9 +118,9 @@ Rows older than 1 hour are deleted on each write. The pacer reads this table (re
 | Token | Where | Deleted |
 | --- | --- | --- |
 | Old account | Memory only | As soon as the old list is read. |
-| New account | `expo-secure-store`, key `github.new`, value `{ token, accountId, scopes }` | Summary shows, Switch, or Delete all. An "Allow" sign-in replaces it. |
+| New account | `expo-secure-store`, key `github.new`, value `{ token, accountId, scopes, expiresAt }` | Summary shows, Switch, Delete all, or `expiresAt` passed. An "Allow" sign-in replaces it. |
 
-Classic tokens have no expiry and no refresh token. `granted` is rebuilt from the saved `scopes` when a progress opens.
+Tokens run out after 8 hours (`expires_in` 28800). The refresh token is never saved. `granted` is rebuilt from the saved `scopes` when a progress opens.
 
 ### What Delete all removes
 

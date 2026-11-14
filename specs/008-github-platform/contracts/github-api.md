@@ -9,7 +9,7 @@ One classic OAuth app (research R1). Client ID: `EXPO_PUBLIC_GITHUB_CLIENT_ID`.
 | Step | Call | Fields used | Checked before use |
 | --- | --- | --- | --- |
 | Get a code | `POST github.com/login/device/code` with `client_id` and `scope` | `device_code`, `user_code`, `verification_uri`, `expires_in`, `interval` | See research R2. |
-| Wait | `POST github.com/login/oauth/access_token` with `client_id`, `device_code`, `grant_type` | `access_token`, `scope`, or `error` | `access_token` and `scope` are strings. Granted kinds come from `scope`. |
+| Wait | `POST github.com/login/oauth/access_token` with `client_id`, `device_code`, `grant_type` | `access_token`, `scope`, `expires_in`, or `error` | `access_token` and `scope` are strings, `expires_in` is a number. Granted kinds come from `scope`. `refresh_token` is ignored. |
 | Who signed in | `GET /user` | `id`, `login`, `name`, `avatar_url` | `id` is a number, `login` a string. |
 
 Scope per sign-in: old account `""`. New account: the union of `public_repo` (stars), `user:follow` (people), `user` (lists, includes follow), `gist` (gists) for the kinds asked, plus the scopes already granted on an "Allow" sign-in.
