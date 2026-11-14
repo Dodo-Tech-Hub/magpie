@@ -157,7 +157,7 @@ Every pull request written by an agent MUST include proof, so a reviewer does no
 - screenshots or a screen recording for any UI change, on both Android and iOS where behavior differs;
 - a short risk note: the tier (Trunk or Leaf), how to undo the change, and the agent's confidence.
 
-Pull requests MUST use the repository pull request template. The description MUST be shorter than the diff.
+The pull request description MUST be shorter than the diff.
 
 ### Independent Review
 
