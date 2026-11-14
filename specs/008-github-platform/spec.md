@@ -83,7 +83,7 @@ sequenceDiagram
     and App waits for the user
         loop Every few seconds, until the user taps Allow or the code expires
             App->>API: Did the user allow this code yet?
-            API-->>App: Not yet
+            API-->>App: Error authorization_pending (user has not tapped Allow, no token yet)
         end
     end
     App->>API: Did the user allow this code yet?
