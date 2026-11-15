@@ -21,10 +21,10 @@ The work has two parts and one check before Part B.
 Technical approach:
 
 - **Platform driver** ([contracts/platform-driver.md](contracts/platform-driver.md)): one object per platform with sign in, sign out, read old, check new, add one item, and words. `flows.ts`, `mover.ts`, the screens, and Settings stop importing Google and YouTube modules and call the driver of the open platform.
-- **Store** ([data-model.md](data-model.md)): a version 1 schema with `platform` on `progress`, `kind`, `data`, and `reason` on items, the state `tomorrow` renamed `later`, a new state `not_available`, and a small `add_log` table for the pace. One migration, tested with a version 0 database.
+- **Store** ([data-model.md](data-model.md)): a version 1 schema with `platform` on `progress`, `kind`, `data`, and `reason` on items, the state `tomorrow` renamed `later`, and a small `add_log` table for the pace. One migration, tested with a version 0 database.
 - **Sign-in**: device code flow with no secret (R2). The old account asks for no scope. The new account asks only for the scopes of the picked kinds, never `gist`; an "Allow" button on a greyed kind signs in again for that scope too. The app reads the granted scopes from GitHub's answer. The driver calls back with the code; the account card shows it in place, copies it, and opens `github.com/login/device` in the browser. No new screen. After sign-in the driver reads `GET /user` and the flow refuses the same account on both steps (R4).
-- **Tokens** (R5): old account token in memory, dropped after the read. New account token in `expo-secure-store`, deleted at the summary, on Switch, and on Delete all. Tokens run out 8 hours after sign-in ("Expire user access tokens" is on); the refresh token is never saved. The summary says access ends within 8 hours and shows a button to GitHub's page to remove it now.
-- **Pick**: one section per kind with a heading, built as header rows in the existing list. A kind without a granted scope is greyed out with an "Allow" button. Private repositories show "Not available" (R7).
+- **Tokens** (R5): old account token in memory, dropped after the read. New account token in `expo-secure-store`, deleted at the summary, on Sign out, and on Delete all. Tokens run out 8 hours after sign-in ("Expire user access tokens" is on); the refresh token is never saved. The summary says access ends within 8 hours and shows a button to GitHub's page to remove it now.
+- **Pick**: one section per kind with a heading, built as header rows in the existing list. A kind without a granted scope is greyed out with an "Allow" button.
 - **Move** ([contracts/github-api.md](contracts/github-api.md)): one REST call per star, follow, and gist; star lists through GraphQL, last, sending the union of list IDs so nothing on the new account is removed (R8). A pacer keeps 20 per minute and 300 per hour and turns GitHub's wait answers into a short sleep or "Later" with a reminder (R9).
 
 ## Technical Context
@@ -51,7 +51,7 @@ Technical approach:
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-Checked against `.specify/memory/constitution.md` v1.5.0.
+Checked against `.specify/memory/constitution.md` v1.5.1.
 
 | Principle / rule | How the plan complies | Status |
 | --- | --- | --- |
@@ -73,7 +73,7 @@ Checked against `.specify/memory/constitution.md` v1.5.0.
 | III.11 Dependencies | Two Expo SDK modules. Lockfile committed. | Pass |
 | IV. One home per thing | Drivers in `src/platforms/`. GitHub calls in `src/api/github.ts`, sign-in in `src/auth/github.ts`, pacer in `src/move/`. No new folder. | Pass |
 | IV. Extend, do not patch | No `if (platform === 'github')` in shared code. Shared code reads the driver. | Pass |
-| IV. Simplest solution first | `fetch` and `Linking` (built in), `expo-secure-store` and `expo-clipboard` (Expo SDK, the first is required by III.3), no new HTTP, state, or navigation library. The driver has two real users (YouTube, GitHub), not a hypothetical one. Known shortcuts carry a `// ponytail:` comment: the pace numbers are fixed constants, and "Not available" uses only the `private` flag (R7). | Pass |
+| IV. Simplest solution first | `fetch` and `Linking` (built in), `expo-secure-store` and `expo-clipboard` (Expo SDK, the first is required by III.3), no new HTTP, state, or navigation library. The driver has two real users (YouTube, GitHub), not a hypothetical one. Known shortcuts carry a `// ponytail:` comment: the pace numbers are fixed constants. | Pass |
 | IV. Restructure instead of forcing it | The feature reshapes many modules, so the restructure (Part A) is proposed here, is its own change, and is done and tested before Part B. Approved by the owner on 2026-11-14. | Pass |
 | V. Platform rules | Official API only. Pace far under GitHub's limits. No scripted taps. Official, unmodified logo. | Pass |
 
@@ -94,23 +94,24 @@ specs/008-github-platform/
 │   ├── platform-driver.md   # What every platform driver provides
 │   └── github-api.md        # Every GitHub call and how answers map to row states
 ├── checklists/
-│   └── requirements.md      # From the specify step
-└── tasks.md                 # From /speckit-tasks (not created yet)
+│   ├── requirements.md      # From the specify step
+│   └── security.md          # Reviewer checklist
+└── tasks.md                 # Ordered tasks
 ```
 
 ### Source Code (repository root)
 
 ```text
 App.tsx                          # A: show the steps for any open platform
-app.config.ts                    # B: expo-secure-store plugin
+app.config.ts                    # B: config plugin only if a module's docs need one
 .env.example                     # B: GitHub client ID
-assets/platforms/github.png      # B: official mark, from the owner
+assets/platforms/github.png      # B: official mark (github-white.png for the dark look)
 src/
 ├── api/
 │   ├── youtube.ts               # A: Outcome and ApiError move to the driver contract
 │   └── github.ts                # B: new. Read, add, answer-to-outcome table
 ├── auth/
-│   ├── google.ts                # unchanged
+│   ├── google.ts                # A: signIn returns its own account type
 │   ├── github.ts                # B: new. Device code sign-in, answer checks
 │   └── githubTokens.ts          # B: new. Memory and secure-store token, granted scopes
 ├── move/
@@ -124,7 +125,7 @@ src/
 │   └── githubDriver.ts          # B: new. Wraps auth/github, api/github, tokens
 ├── reminders/reminder.ts        # A: reminder text from the driver's words
 ├── state/
-│   ├── AppState.tsx             # A: items, signInCode, granted
+│   ├── AppState.tsx             # A: items. B: signInCode, granted
 │   └── flows.ts                 # A: calls the driver. B: Allow sign-in, token drop at summary
 ├── store/progressStore.ts       # A: schema version 1, migration. B: add_log
 ├── strings.ts                   # A: words per platform. B: GitHub texts
@@ -136,7 +137,7 @@ src/
     └── SettingsView.tsx         # A: Delete all signs out of every driver
 tests/
 ├── unit/                        # A: migration, youtubeDriver. B: github api, auth, tokens, pacer, driver
-├── components/                  # B: githubSignIn, githubPick, githubMove, githubSignOut
+├── components/                  # B: githubSignIn, githubPick, githubMove, githubPace, githubSignOut, githubShare
 └── mocks/                       # B: expoSecureStore, expoClipboard
 ```
 
@@ -147,7 +148,7 @@ tests/
 Order matters: each step keeps the tests green.
 
 1. `src/platforms/driver.ts`: the types from the contract.
-2. Store: version 1 schema, migration, `NewItem` and `StoredItem`, `handle`, `later`, `not_available`, `reason`. Old function names are renamed (`getChannels` to `getItems`, and so on).
+2. Store: version 1 schema, migration, `NewItem` and `StoredItem`, `handle`, `later`, `reason`. Old function names are renamed (`getChannels` to `getItems`, and so on).
 3. `youtubeDriver.ts`: wraps the Google and YouTube modules. `add` returns `later` with a resume time.
 4. `mover.ts`: takes `add` from the driver and an optional pacer. `wait`, `later`, and `stop` outcomes handled once here.
 5. `flows.ts`, `App.tsx`, `SettingsView.tsx`, `reminder.ts`: use the driver of the open platform. `openProgress()` reads the platform from the saved progress.
@@ -162,7 +163,7 @@ Done when: every existing test passes with renames only, the migration test pass
 3. `move/pacer.ts` and `add_log` (R9).
 4. `githubDriver.ts` and the entry in `platforms.ts`, the logo, the client ID.
 5. Account card: code panel, copy, open browser, hint. Flow: same-account refusal, scopes per picked kind, "Allow" sign-in.
-6. Pick: section headers, time left, "Allow" on kinds without a scope, "Not available", reasons on rows.
+6. Pick: section headers, time left, "Allow" on kinds without a scope, reasons on rows.
 7. Token drop at the summary, the line that Magpie can still use the account with the remove-access button, Delete all.
 8. Texts, including "Magpie is not made by or linked with GitHub" in Settings.
 
@@ -177,7 +178,7 @@ Done when: every existing test passes with renames only, the migration test pass
 | GitHub calls | Paging, shape checks, each row of the answer-to-outcome table, list union never drops a list | Unit |
 | Pacer | 3 seconds apart, 300 per hour, resume time, time-left text | Unit |
 | Sign-in on the step | Code shown and copied, browser opened, hint on second sign-in, same account refused, code ran out | Component |
-| Pick | Sections, one kind has no heading, search and All across sections, kinds without a scope greyed until allowed, gists never asked first, "Not available" | Component |
+| Pick | Sections, one kind has no heading, search and All across sections, kinds without a scope greyed until allowed, gists never asked first | Component |
 | Move | Rows change in place, pause shows "Later" and the break text, Continue moves only the rest, summary skips kinds without access | Component |
 | Sign-out | Remove-access line and button, Delete all leaves no GitHub data | Component |
 | YouTube | All existing tests | Existing |
@@ -185,13 +186,14 @@ Done when: every existing test passes with renames only, the migration test pass
 ## What the project owner needs to do
 
 1. ~~Approve the restructure (Part A)~~: approved on 2026-11-14.
-2. **Create the OAuth app and run the access check** (spec, "What the project owner needs to do"; [quickstart.md](quickstart.md), step 0) and paste the output. Needed before Part B, not Part A.
-3. Add the official GitHub mark at `assets/platforms/github.png`.
+2. ~~Create the OAuth app and run the access check~~: passed on 2026-11-14.
+3. ~~Add the official GitHub mark~~: in `assets/platforms/`.
+4. Set `EXPO_PUBLIC_GITHUB_CLIENT_ID` in `.env` and in the EAS environment variables before Part B.
 
 ## Complexity Tracking
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 | --- | --- | --- |
 | III.1: `public_repo` (stars), `user` (lists), and `gist` (gists) allow more than Magpie uses | GitHub has no narrower scope for these actions, and a GitHub App cannot star most repositories. Approved by the owner on 2026-11-14. Safeguards: each sign-in asks only for the picked kinds, `gist` only on request, the user can untick scopes, and the app moves only kinds it was granted (FR-GH-020). | GitHub Apps cannot star repositories where they are not installed. |
-| III.3: tokens are deleted but not cancelled | GitHub cancels a token only with the client secret, which a phone app cannot hold. Tokens run out 8 hours after sign-in. Approved by the owner on 2026-11-13. Safeguards: old token dropped after the read, new token deleted at the summary, on Switch, and on Delete all, refresh token never saved, and a line with a button to GitHub's remove-access page (FR-GH-019). | A server that holds the secret breaks III.5 (no own backend). |
+| III.3: tokens are deleted but not cancelled | GitHub cancels a token only with the client secret, which a phone app cannot hold. Tokens run out 8 hours after sign-in. Approved by the owner on 2026-11-13. Safeguards: old token dropped after the read, new token deleted at the summary, on Sign out, and on Delete all, refresh token never saved, and a line with a button to GitHub's remove-access page (FR-GH-019). | A server that holds the secret breaks III.5 (no own backend). |
 | IV: many existing modules reshaped | The flow, mover, store, and screens are tied to YouTube today. A second Automatic platform cannot plug in without a driver. | `if (platform === 'github')` branches in shared code break IV ("Extend, do not patch"). A copied flow breaks FR-GH-002. |

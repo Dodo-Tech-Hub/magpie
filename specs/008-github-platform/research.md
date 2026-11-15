@@ -42,7 +42,7 @@ GitHub's docs site was not reachable when the plan was first written; R1, R2, an
 
 ## R5. Tokens
 
-- **Decision**: Old account token: kept in memory only, dropped as soon as the list is read. New account token: kept in `expo-secure-store` under one fixed key with the account ID and the granted scopes. An "Allow" sign-in replaces it with the new token, which holds the old scopes plus the new one. Deleted when the summary shows, on Switch, and on Delete all.
+- **Decision**: Old account token: kept in memory only, dropped as soon as the list is read. New account token: kept in `expo-secure-store` under one fixed key with the account ID and the granted scopes. An "Allow" sign-in replaces it with the new token, which holds the old scopes plus the new one. Deleted when the summary shows, on Sign out, and on Delete all.
 - **Rationale**: FR-GH-019 and Principle III, rule 3. A paused move needs the token after an app restart, so memory alone is not enough. The token runs out after 8 hours, and the refresh token is never saved. The summary line and button to GitHub's remove-access page (`https://github.com/settings/applications`) let the user end access sooner.
 - **When the token stops working** (the user removed access on GitHub): the next call answers 401, the To step shows signed out with "Your sign-in ran out. Sign in again to keep going." (existing text). The saved progress keeps the expected new account, as YouTube does.
 - **Alternatives considered**: Keep the token after the summary for a later move: longer access on the phone for no user benefit.
@@ -51,13 +51,13 @@ GitHub's docs site was not reachable when the plan was first written; R1, R2, an
 
 - **Decision**: REST with 100 items per page: `GET /user/starred`, `GET /user/following`, `GET /gists/starred`. Star lists through GraphQL on the same host: `viewer { lists { nodes { id name description isPrivate items { nodes { ... on Repository { id } } } } } }`, paged by cursor. The app shows a loading line while pages load.
 - **Rationale**: These are the endpoints the spec names. GitHub's June 2026 change limits who can list a repository's stargazers and watchers ([changelog](https://github.blog/changelog/2026-06-30-upcoming-access-restrictions-to-public-api-endpoints-and-ui-views/)). It does not touch a user's own starred list.
-- **Private repositories**: the old account token has no scope, so private stars and private lists are not in the list at all. FR-GH-016 still covers a private repository that shows up.
+- **Private repositories**: the old account token has no scope, so private stars and private lists are not in the list at all. So no "Not available" state is needed (FR-GH-016 removed on 2026-11-15).
 
-## R7. "Already there" and "Not available"
+## R7. "Already there"
 
-- **Decision**: After the To sign-in, read the new account's stars, follows, lists, and starred gists, for the kinds it has a scope for, with the same calls as R6. An item in both lists is "Already there". A starred repository marked `private` in the old list is "Not available" with the reason "Private. Your new account can't use it here." No extra request per repository.
-- **Rationale**: FR-GH-016 asks for a read-only check per repository. Public repositories are visible to every account, and deleted ones are not in the old list, so the only case left is private. One request per repository would spend the hourly limit on large lists for no gain. A repository whose owner blocked the new account fails at move time with its reason (FR-GH-017).
-- **Spec note**: FR-GH-016 was updated on 2026-11-14 to use the `private` flag, so spec and plan agree.
+- **Decision**: After the To sign-in, read the new account's stars, follows, lists, and starred gists, for the kinds it has a scope for, with the same calls as R6. An item in both lists is "Already there". A person who is the new account is "Already there" too. No extra request per item.
+- **Rationale**: Public repositories are visible to every account, and deleted ones are not in the old list. One request per repository would spend the hourly limit on large lists for no gain. A repository whose owner blocked the new account fails at move time with its reason (FR-GH-017).
+- **Spec note**: FR-GH-016 was removed on 2026-11-15, because the old list never holds a private repository.
 
 ## R8. Adding items
 
@@ -71,7 +71,8 @@ GitHub's docs site was not reachable when the plan was first written; R1, R2, an
 | Star list | GraphQL `createUserList`, then `updateUserListsForItem` per repository | No `errors` field | New account |
 
 - **Lists replace, not add**: `updateUserListsForItem` sets the full set of lists for a repository. To obey FR-GH-009 (never remove anything on the new account), the app first reads which lists each repository is already in on the new account and sends the union. A list with the same name is reused (FR-GH-018).
-- **Lists run last** so their repositories are already Moved or Already there. Each `updateUserListsForItem` counts as one add for the pace in R9.
+- **Lists run last** so their repositories are already Moved or Already there. The list create and each `updateUserListsForItem` count as one add each for the pace in R9.
+- **Pick order and move order differ**: Pick headings run Stars, Lists, Gists, People. Items move as Stars, People, Gists, Lists, because a list needs its repositories moved first.
 - **Rationale**: REST status codes map cleanly to row states. Lists exist only in GraphQL.
 - **Alternatives considered**: GraphQL `addStar` and `followUser` for everything: one endpoint, but errors come back as 200 with a list, which is harder to map to reasons.
 
@@ -80,7 +81,8 @@ GitHub's docs site was not reachable when the plan was first written; R1, R2, an
 - **Decision**: A small pacer in `src/move/`. Before each add it checks the times of earlier adds for this new account (kept in the app's database, last hour only). Under 3 seconds since the last add: sleep the rest. 300 adds in the last hour: stop with "Later", resume time = oldest add in the window + 1 hour.
 - **GitHub says wait** (403 or 429 with `retry-after`, or `x-ratelimit-remaining: 0` with `x-ratelimit-reset`): 60 seconds or less: sleep and retry once. Longer: stop with "Later" at that time. No header: GitHub asks for at least one minute, so sleep 60 seconds once, then stop with "Later" in 1 hour if it happens again.
 - **Account flagged**: three 403 answers in a row that are not rate limits: stop, save, show "GitHub paused your account's activity. Try again later." No retry loop.
-- **Time left (FR-GH-011)**: picked items times 3 seconds. Over 300 items: "More than one session".
+- **One owner for the count**: `pacer.beforeAdd()` records an add each time it lets one go, and nothing else records adds. The mover calls it once per item (the star, follow, gist star, or list create). For a list, the driver calls it again before each repository add. If it answers "Later" in the middle of a list, the driver returns `later`, and Continue runs the whole list again. This is safe because each repository add sends the union of lists.
+- **Time left (FR-GH-011)**: the adds the picked items need (one per item, plus one per repository of each picked list) times 3 seconds. Over 300 adds: "More than one session".
 - **Rationale**: FR-GH-010 and FR-GH-012. GitHub's secondary limits are about 80 content-creating requests per minute and 500 per hour, and they change without notice, so the app's own numbers are constants in one file.
 - **Alternatives considered**: Derive the pace from row timestamps: list membership adds are not rows.
 

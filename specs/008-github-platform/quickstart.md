@@ -47,7 +47,7 @@ Setup: two test GitHub accounts. The old one stars 5 repositories, follows 3 peo
 | 8b | Start again with only People picked, then sign in on To and untick nothing. | GitHub asks only for follow access. Stars, Lists, Gists are greyed. | US5.1, US5.5 |
 | 9 | Let a code run out (wait 15 minutes, or use the dev switch). | "Sign-in didn't finish. Try again." | US2.5 |
 | 10 | Set `EXPO_PUBLIC_SIMULATE_QUOTA_AFTER=6` and move 10 items. | After 6: rest say "Later", the break message shows, the app asks about a reminder. Close the app, tap the reminder, Continue moves only the rest. | US3.3, US3.4 |
-| 11 | At the summary, after Switch, and in Settings. | The line saying Magpie can still use the account, and the button to remove access, show. The button opens GitHub's settings page. | US4.3, FR-GH-019 |
+| 11 | At the summary, after Sign out, and in Settings. | The line saying Magpie can still use the account, and the button to remove access, show. The button opens GitHub's settings page. | US4.3, FR-GH-019 |
 | 12 | Delete all. | No GitHub account, progress, or token is left. A new sign-in is needed. | US4.2 |
 | 13 | Run the YouTube flow once. | Works as before. | SC-003 |
 

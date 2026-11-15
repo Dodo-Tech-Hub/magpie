@@ -33,16 +33,16 @@ GitHub is feasible. Unlike YouTube and Spotify, it has no test-user cap, no app 
 
 ## What GitHub supports
 
-This table answers "which items can be moved". The plan MUST check each row against GitHub's current documentation, because the docs site was not reachable when this spec was written.
+This table answers "which items can be moved". Rows were checked against GitHub's docs and the access check on 2026-11-14.
 
 | Item | Read from old account | Add to new account | Access needed | Verdict |
 | --- | --- | --- | --- | --- |
 | Starred repositories | Yes | Yes | `public_repo` | In scope |
 | Followed people | Yes | Yes | `user:follow` | In scope |
-| Star lists (named groups of stars) | Yes, public lists, through GitHub's newer query API | Yes, create list and add items | `user` (plan to confirm with the access test) | In scope |
+| Star lists (named groups of stars) | Yes, public lists, through GitHub's newer query API | Yes, create list and add items | `user` (confirmed by the access check) | In scope |
 | Watched repositories | Yes | Yes, with the `notifications` scope | `notifications` | Out of scope. Not one of the four kinds the owner chose. |
 | Starred gists | Yes | Yes | `gist` (there is no smaller level) | In scope |
-| Followed organizations | Plan to confirm | Plan to confirm | `user:follow` | Out of scope until the plan confirms the API. |
+| Followed organizations | Not checked | Not checked | `user:follow` | Out of scope. Not one of the four kinds the owner chose. |
 | Starred topics | No API | No API | None | Not possible |
 | Sponsorships | Yes | No. They involve payment. | None | Not possible |
 | Organization and team membership, repository access | Yes | No. An owner must invite the new account. | None | Not possible |
@@ -172,7 +172,7 @@ A user has an old GitHub account and a new one. They open the app, tap the GitHu
 **Acceptance Scenarios**:
 
 1. **Given** the GitHub card is on Home, **When** the user taps it, **Then** the top bar shows From, Pick, and To, and the steps work in any order, as for YouTube.
-2. **Given** the user signs in to the old account, **When** Pick opens, **Then** it lists every starred repository and followed person, grouped by kind, each with a picture and a name, all picked by default.
+2. **Given** the user signs in to the old account, **When** Pick opens, **Then** it lists every starred repository, star list, starred gist, and followed person, grouped by kind, each with a picture and a name, all picked by default.
 3. **Given** the new account already has some of those items, **When** both accounts are signed in, **Then** those rows show "Already there" and cannot be picked.
 4. **Given** items are picked and both accounts are signed in, **When** the user taps "Move N items", **Then** each row changes in place to Moving, then Moved or Couldn't move, and a summary shows at the end.
 5. **Given** a move ran, **When** the user checks the old account, **Then** nothing on it has changed.
@@ -225,9 +225,9 @@ The user signs out of a GitHub account or uses Delete all. The app deletes its G
 
 **Acceptance Scenarios**:
 
-1. **Given** a GitHub account is signed in, **When** the user taps Switch on that step (GitHub's sign-out), **Then** its token is deleted from the phone and the step shows signed out.
+1. **Given** a GitHub account is signed in, **When** the user taps Sign out on that step, **Then** its token is deleted from the phone and the step shows signed out.
 2. **Given** the user uses Delete all, **When** it ends, **Then** every GitHub account, token, list, and progress is gone from the phone.
-3. **Given** the app deleted the new account token (at the summary or on Switch), **When** the To step shows, **Then** it shows a short line, for example "Magpie's access ends on its own within 8 hours. To end it now, open GitHub settings.", with a button that opens that GitHub page in the system browser. Settings shows the same button next to Delete all.
+3. **Given** the app deleted the new account token (at the summary or on Sign out), **When** the To step shows, **Then** it shows a short line, for example "Magpie's access ends on its own within 8 hours. To end it now, open GitHub settings.", with a button that opens that GitHub page in the system browser. Settings shows the same button next to Delete all.
 4. **Given** the old account's list is read, **When** Pick shows it, **Then** the app holds no token for the old account.
 5. **Given** a move ends, **When** the summary shows, **Then** the app holds no token for the new account. Continue after a pause uses the saved token only while the move is unfinished.
 
@@ -255,16 +255,16 @@ Each kind needs its own access on the new account, and some access is broad: sta
 ### Edge Cases
 
 - The old account stars and follows nothing: Pick says "This account doesn't follow anything yet" and Move is not offered.
-- A starred repository is private and the new account cannot see it, or was deleted: after the To sign-in, its row shows greyed out as "Not available" with the reason, and cannot be picked (FR-GH-016).
+- A starred repository was deleted or made private after the list was read, or its owner blocked the new account: the add fails and the row shows "Couldn't move" with the reason (FR-GH-017). The old account's list never holds private repositories, because the old sign-in asks for no scope.
 - A followed person deleted their account or blocked the new account: the row shows "Couldn't move" with the reason, and the rest go on (FR-GH-017).
-- The old account follows the new account, or the new account would follow itself: the app leaves that row out, because an account cannot follow itself.
+- The old account follows the new account: after the To sign-in, that row shows "Already there" and cannot be picked, because an account cannot follow itself.
 - The old account has thousands of stars: the list loads in parts, shows a loading line, and stays searchable when it ends. The time-left line shows that the move takes more than one session.
 - The token runs out (8 hours after sign-in) or the user removes Magpie's access on GitHub during a move: the next add fails with a sign-in error, the step shows signed out, the progress is saved, and the user signs in again to continue.
 - GitHub flags the new account for unusual activity: the next add fails, the app stops, saves the progress, and shows "GitHub paused your account's activity. Try again later." It does not retry in a loop.
 - The internet drops during a move: the move pauses, unfinished rows go back to waiting, and the user sees "No internet. Try again when you're online."
 - The user closes the app during a move: on return, moved items stay Moved and the rest are waiting.
 - The user switches to the browser during sign-in and the app goes to the background: when they return, the app goes on checking until sign-in ends or the code runs out.
-- GitHub changes or removes an API the app uses: the affected kind of item fails with "Couldn't move", and the other kinds still work.
+- GitHub changes or removes an API the app uses: the affected kind of item fails with "Couldn't move", and the other kinds still work. If reading one kind from the old account fails, Pick shows the other kinds with the line "Some items couldn't load. The rest can still move."
 
 ## Requirements *(mandatory)*
 
@@ -277,14 +277,14 @@ Each kind needs its own access on the new account, and some access is broad: sta
 - **FR-GH-003**: When the old account has more than one kind of item, Pick MUST split the list into one section per kind, each under a short heading ("Stars", "Lists", "Gists", "People"). A kind with no items MUST NOT show a section. With only one kind, Pick MUST show a plain list with no heading. Search, All, and the counter MUST work across all sections.
 - **FR-GH-004**: All user-facing text MUST say "items" or the kind name (for example "Move 12 items", "12 of 340 picked") instead of "channels" in the GitHub flow, and MUST live with the other app text.
 - **FR-GH-018**: Moving a star list MUST create a list with the same name and description on the new account, or reuse one with the same name, and add to it every repository of the list that is Moved or Already there. Repositories of the list that are not picked or fail MUST be left out of the list, and the list row MUST say how many were left out. Picking a list MUST NOT pick its repositories on its own. Moving a list MUST NOT take a repository out of any list it is already in on the new account.
-- **FR-GH-016**: After the To sign-in, a starred repository that GitHub marks as private in the old account's list MUST show greyed out as "Not available" with a short reason, and MUST NOT be pickable. Public repositories are visible to every account, so the app MUST NOT spend a request per repository on this check. A repository the new account still cannot star fails at move time with its reason (FR-GH-017).
+- **FR-GH-016**: Removed on 2026-11-15. The old sign-in asks for no scope, so the old account's list holds only public repositories, and any account can star a public repository. The app MUST NOT spend a request per repository to check this before the move. A repository the new account cannot star fails at move time with its reason (FR-GH-017).
 - **FR-GH-017**: When an item fails during the move, its "Couldn't move" row MUST show the actual reason in simple words (for example "Account was deleted"), never a raw error.
 
 **Accounts and sign-in**
 
-- **FR-GH-005**: Users MUST be able to sign in to a GitHub account on From and on To. Each step MUST show the account's picture and username, and a Switch button.
-- **FR-GH-006**: Sign-in MUST show a short code in large text, copy it, and open GitHub's sign-in page in the system browser. The app MUST check for the result on its own and finish sign-in without an extra tap when the user returns. If the code runs out, the step MUST stay signed out with "Sign-in didn't finish. Try again." If the user taps Cancel on GitHub's page, the app MUST stop checking, and the step MUST stay signed out with no error line.
-- **FR-GH-007**: Before the second sign-in, the app MUST show a one-line hint on how to switch account in the browser. The app MUST refuse the same GitHub account on From and To, with a simple message.
+- **FR-GH-005**: Users MUST be able to sign in to a GitHub account on From and on To. Each step MUST show the account's picture and username, and a Sign out button (YouTube keeps its Switch button).
+- **FR-GH-006**: Sign-in MUST show a short code in large text, copy it, and open GitHub's sign-in page in the system browser. The app MUST check for the result on its own and finish sign-in without an extra tap when the user returns. If the code runs out, the step MUST stay signed out with "Sign-in didn't finish. Try again." If the user taps Cancel on GitHub's page, the app MUST stop checking, and the step MUST stay signed out with no error line. The code panel MUST have a Cancel button that stops the wait and leaves the step signed out. The code stays on the clipboard after sign-in; this is accepted, because a code is useless once it is used or has run out.
+- **FR-GH-007**: When the other step already has an account, in either order, the app MUST show a one-line hint with the sign-in code on how to switch account in the browser. The app MUST refuse the same GitHub account on From and To, with a simple message.
 - **FR-GH-008**: The app MUST ask for no scope on the old account beyond public info, and on the new account only for the scopes of the kinds the user picked (FR-GH-020). The exact scope per kind is in the GitHub section below.
 - **FR-GH-009**: The move MUST only add items to the new account. It MUST NOT change or remove anything on the old account, and MUST NOT remove anything on the new account.
 
@@ -292,15 +292,15 @@ Each kind needs its own access on the new account, and some access is broad: sta
 
 - **FR-GH-010**: The app MUST add items one at a time, at no more than 20 per minute and 300 per hour per new account, to stay well under GitHub's limits and its rule against large-volume starring or following. The plan MAY tune these numbers after testing, but MUST keep them under GitHub's published limits with a margin. Each add of a repository to a star list counts as one add.
 - **FR-GH-011**: Pick MUST show the expected time left for the picked items at that pace before the user taps Move.
-- **FR-GH-012**: When GitHub asks the app to wait for 60 seconds or less, the app MUST wait and go on without a message. When GitHub asks for a longer wait, or the hourly pace in FR-GH-010 is reached, the app MUST stop, mark the rest "Later", save the progress, show "GitHub needs a break. We'll remind you when you can move the rest.", and ask for reminders as YouTube does at the daily limit. When GitHub asks the app to wait but gives no time, the app MUST wait 60 seconds once, then stop as for a long wait if GitHub asks again. The reminder MUST be set for the time GitHub gave, or the time the hourly pace allows the next add, or 1 hour later when GitHub gave no time, whichever is latest.
+- **FR-GH-012**: When GitHub asks the app to wait for 60 seconds or less, or gives no time (then the app waits 60 seconds), the app MUST wait and try the same item again without a message. When GitHub asks for a longer wait, asks again to wait for the same item, or the hourly pace in FR-GH-010 is reached, the app MUST stop, mark the rest "Later", save the progress, show "GitHub needs a break. We'll remind you when you can move the rest.", and ask for reminders as YouTube does at the daily limit. The reminder MUST be set for the time GitHub gave, or the time the hourly pace allows the next add, or 1 hour later when GitHub gave no time, whichever is latest.
 
 **Data, security, and both phone types**
 
-- **FR-GH-019**: The app MUST keep each GitHub token on the phone for as short a time as possible, as an approved exception to Principle III, rule 3: (a) delete the old account token as soon as its list is read; (b) delete the new account token when the summary shows, on Switch, and on Delete all; (c) never save the refresh token GitHub sends. GitHub's sign-out is Switch on a step, or Delete all. Because the token stays valid on GitHub until it runs out (8 hours after sign-in), the summary MUST say so in one line with a button that opens GitHub's page where the user removes Magpie's access. The To step after Switch and Settings next to Delete all MUST show the same button.
+- **FR-GH-019**: The app MUST keep each GitHub token on the phone for as short a time as possible, as an approved exception to Principle III, rule 3: (a) delete the old account token as soon as its list is read; (b) delete the new account token when the summary shows, on Sign out, and on Delete all; (c) never save the refresh token GitHub sends. GitHub's sign-out is Sign out on a step, or Delete all. Because the token stays valid on GitHub until it runs out (8 hours after sign-in), the summary MUST say so in one line with a button that opens GitHub's page where the user removes Magpie's access. The To step after Sign out and Settings next to Delete all MUST show the same button.
 - **FR-GH-020**: The To sign-in MUST ask only for the scopes of the kinds picked at that moment (all kinds except gists when the old list is not read yet), and never for gists. The app MUST read the scopes GitHub actually granted. A kind without its scope MUST show greyed out with an "Allow" button, MUST NOT be moved, and MUST NOT count as failed. "Allow" MUST sign in to the same new account again, asking for the granted scopes plus that kind's scope. The rest of the move MUST work without it.
-- **FR-GH-013**: GitHub tokens MUST be stored only in the phone's secure storage and deleted on sign-out and on Delete all. Delete all MUST remove every GitHub account, token, list, and progress.
-- **FR-GH-014**: The app MUST keep only what the move needs: account ID, username, picture, item IDs, item names and pictures, and progress. It MUST NOT log tokens, codes, usernames, emails, or item lists.
-- **FR-GH-015**: The app MUST talk to GitHub only on the hosts listed in the GitHub section below, over HTTPS. The GitHub logo MUST be the official mark, unmodified, used only to name the platform. The feature MUST work the same way on Android and iOS.
+- **FR-GH-013**: GitHub tokens MUST be stored only in the phone's secure storage, and deleted at the moments in FR-GH-019. Delete all MUST remove every GitHub account, token, list, and progress.
+- **FR-GH-014**: The app MUST keep only what the move needs: account ID, username, picture, item IDs, item names and pictures, progress, and the times of recent adds for the pace (FR-GH-010, deleted after 1 hour). It MUST NOT log tokens, codes, usernames, emails, or item lists.
+- **FR-GH-015**: The app MUST talk to GitHub only on the hosts listed in the GitHub section below, over HTTPS. The GitHub logo MUST be the official mark, unmodified, used only to name the platform. Settings MUST say that Magpie is not made by or linked with GitHub. The feature MUST work the same way on Android and iOS.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -327,12 +327,11 @@ erDiagram
 | Moving | Moving… | Yes |
 | Moved | Moved | Yes |
 | Paused by limit | Later | No. YouTube says "Tomorrow" because its limit resets daily. GitHub's wait is about an hour. |
-| Not reachable by the new account | Not available, with the reason | No. Same state as spec 007 planned, for repositories the To check could not see (FR-GH-016). |
 | Failed | Couldn't move, with the reason | Yes, plus the reason (FR-GH-017). |
 
 ## GitHub section *(platform-specific)*
 
-These details come from GitHub's docs (checked 2026-11-14), changelog, and policy pages. Star list scopes are not in the docs; the plan's access test confirms them.
+These details come from GitHub's docs (checked 2026-11-14), changelog, and policy pages. Star list scopes are not in the docs; the access check confirmed `user` (research R1).
 
 **App type**: one classic OAuth app. GitHub's docs say starring needs "Metadata" read access to the repository, and a GitHub App has repository access only on accounts where it is installed, so a GitHub App cannot star most repositories. A classic OAuth app has no install step and stars any public repository, but only with the broad `public_repo` scope. The owner approved this (Clarifications, 2026-11-14).
 
@@ -344,7 +343,7 @@ These details come from GitHub's docs (checked 2026-11-14), changelog, and polic
 | Authorization Code with PKCE | Partly | GitHub added PKCE in July 2025, but the code-for-token step still needs the client secret. A phone app cannot keep a secret, and the app has no server. |
 | Device code flow | Yes | Needs no secret. Must be turned on in the app settings. |
 
-The app MUST check the device code response shape before use, and MUST stop checking when the code runs out. The plan MUST confirm that GitHub has not made the secret optional for PKCE; if it has, the plan MUST switch to PKCE with `prompt=select_account`, which forces GitHub's account chooser.
+The app MUST check the device code response shape before use, and MUST stop checking when the code runs out. Research R2 found no source that makes the secret optional for PKCE. If GitHub makes it optional later, the app SHOULD switch to PKCE with `prompt=select_account`, which forces GitHub's account chooser.
 
 **Access per account (Principle III, rule 1)**: a classic OAuth app can ask for different scopes on each sign-in, and the user can untick scopes on GitHub's page. The token response lists the scopes actually granted.
 
@@ -375,7 +374,7 @@ Private stars and private star lists of the old account are not read, because re
 ### Measurable Outcomes
 
 - **SC-001**: A user can move 50 starred repositories and followed people from one GitHub account to another in under 5 minutes, from tapping the GitHub card to seeing the summary.
-- **SC-002**: After a move, the new account stars or follows 100% of the picked items that did not show "Couldn't move" or "Not available", and the old account is unchanged.
+- **SC-002**: After a move, the new account stars or follows 100% of the picked items that did not show "Couldn't move", and the old account is unchanged.
 - **SC-003**: The YouTube flow passes all its existing tests with no change to what they check.
 - **SC-004**: Adding GitHub needs no change to Home beyond the new entry in the list of platforms (spec 004, SC-003).
 - **SC-005**: In testing, a second sign-in never silently reuses the first account: 10 out of 10 tries end with the account the user picked, or with the same-account refusal.
@@ -396,7 +395,7 @@ Private stars and private star lists of the old account are not read, because re
 
 These steps need your GitHub account and cannot be done by an agent. They block the plan's sign-in work, not this spec.
 
-1. **Create one OAuth app** at <https://github.com/settings/applications/new>, named "Magpie". Set the homepage URL and the callback URL to the repository page (the app never uses the callback). Tick **Enable Device Flow**, and keep **Expire user access tokens** ticked.
+1. **Create one OAuth app** in the organisation at <https://github.com/organizations/Dodo-Tech-Hub/settings/applications/new>, named "Magpie". Set the homepage URL and the callback URL to the repository page (the app never uses the callback). Tick **Enable Device Flow**, and keep **Expire user access tokens** ticked. Delete the empty Redirect URI row if GitHub accepts it.
 2. **Client ID**: copy the Client ID into your local `.env` as `EXPO_PUBLIC_GITHUB_CLIENT_ID`, and into the EAS environment variables. It is public, so this is safe. **Do not generate a client secret.** The app does not use one.
-3. **Access test**: run the access test in the plan's quickstart, step 0, with this Client ID.
+3. **Access test**: done on 2026-11-14 (passed).
 4. **Test accounts**: have two GitHub accounts ready, one that stars and follows a few items and one new.

@@ -39,7 +39,7 @@ Unique: (`platform`, `old_account_id`, `new_account_id`). One progress per accou
 | data | text or null | JSON that only the driver reads, checked on read. Holds what the add call needs. YouTube: null. |
 | picked | integer | As today. |
 | status | text | See states below. Checked in TypeScript, not by a table rule, so a new state needs no table rebuild. |
-| reason | text or null | Short plain text for `couldnt_move`, `not_available`, and the left-out count of a list. |
+| reason | text or null | Short plain text for `couldnt_move` and the left-out count of a list. |
 | updated_at | integer | As today. |
 
 Key: (`progress_id`, `item_id`). Order: by kind (driver order), then title.
@@ -50,7 +50,6 @@ Key: (`progress_id`, `item_id`). Order: by kind (driver order), then title.
 stateDiagram-v2
     [*] --> waiting
     waiting --> already_there: new account has it
-    waiting --> not_available: new account cannot use it
     waiting --> moving: move starts this item
     moving --> moved: platform said yes
     moving --> couldnt_move: platform said no, with a reason
@@ -60,10 +59,9 @@ stateDiagram-v2
     later --> waiting: Continue
     moved --> [*]
     already_there --> [*]
-    not_available --> [*]
 ```
 
-`later` is today's `tomorrow`. The label comes from the platform: "Tomorrow" for YouTube, "Later" for GitHub. `not_available` is new and is never picked. `moved`, `already_there`, and `not_available` are final.
+`later` is today's `tomorrow`. The label comes from the platform: "Tomorrow" for YouTube, "Later" for GitHub. `moved` and `already_there` are final.
 
 ### Types in code
 
@@ -72,7 +70,7 @@ stateDiagram-v2
 | `AccountInfo { id, email, name, photoUrl }` | `AccountInfo { id, handle, name, photoUrl }` |
 | `NewChannel { channelId, title, thumbnailUrl }` | `NewItem { itemId, kind, title, thumbnailUrl, data }` |
 | `StoredChannel` | `StoredItem = NewItem & { picked, status, reason }` |
-| `Status` with `tomorrow` | `Status` with `later` and `not_available` |
+| `Status` with `tomorrow` | `Status` with `later` |
 
 ### App state (reducer)
 
@@ -90,7 +88,7 @@ stateDiagram-v2
 
 | Kind | Heading | Scope | `item_id` | `data` | Row picture |
 | --- | --- | --- | --- | --- | --- |
-| `repo` | Stars | `public_repo` | `repo:<id>` | `{ fullName, nodeId, private }` | Owner's picture |
+| `repo` | Stars | `public_repo` | `repo:<id>` | `{ fullName, nodeId }` | Owner's picture |
 | `person` | People | `user:follow` (or `user`) | `person:<id>` | `{ login }` | The person's picture |
 | `gist` | Gists | `gist` | `gist:<id>` | `{ gistId }` | Owner's picture |
 | `list` | Lists | `user` | `list:<node id>` | `{ description, isPrivate, repoItemIds: string[] }` | None (icon) |
@@ -99,8 +97,8 @@ Title: `owner/name` for a repository, the username for a person, the description
 
 Rules:
 
-- A person whose ID equals the new account's ID is left out (spec, Edge Cases).
-- A `repo` with `private: true` becomes `not_available` after the To sign-in (research R7).
+- A person whose ID equals the new account's ID is returned by `checkNew` and shows "Already there". The new account ID is known only after the To sign-in, so `listOld` cannot leave it out (spec, Edge Cases).
+- The old list holds only public repositories (no scope), so there is no "Not available" state (FR-GH-016 removed).
 - A row whose kind is not in `granted` is greyed out and not movable, with the section's "Allow" button (FR-GH-020). Gists are never asked for on the first To sign-in. This is shown from state, not saved as a status, so the row is ready the moment access is given.
 - A `list` moves after its repositories. Its `reason` says how many repositories were left out (FR-GH-018).
 
@@ -118,7 +116,7 @@ Rows older than 1 hour are deleted on each write. The pacer reads this table (re
 | Token | Where | Deleted |
 | --- | --- | --- |
 | Old account | Memory only | As soon as the old list is read. |
-| New account | `expo-secure-store`, key `github.new`, value `{ token, accountId, scopes, expiresAt }` | Summary shows, Switch, Delete all, or `expiresAt` passed. An "Allow" sign-in replaces it. |
+| New account | `expo-secure-store`, key `github.new`, value `{ token, accountId, scopes, expiresAt }` | Summary shows, Sign out, Delete all, or `expiresAt` passed. An "Allow" sign-in replaces it. |
 
 Tokens run out after 8 hours (`expires_in` 28800). The refresh token is never saved. `granted` is rebuilt from the saved `scopes` when a progress opens.
 
