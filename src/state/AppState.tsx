@@ -24,6 +24,8 @@ export type State = {
   granted: string[];
   // The old list is being read.
   loading: boolean;
+  // The new account's token was deleted from the phone (summary or Sign out), so the remove-access note shows.
+  accessEnded: boolean;
 };
 
 export type Action =
@@ -42,6 +44,7 @@ export type Action =
   | { type: 'setSignInCode'; code: State['signInCode'] }
   | { type: 'setGranted'; kinds: string[] }
   | { type: 'setLoading'; loading: boolean }
+  | { type: 'setAccessEnded'; ended: boolean }
   | { type: 'reset' };
 
 export const initialState: State = {
@@ -58,6 +61,7 @@ export const initialState: State = {
   signInCode: null,
   granted: [],
   loading: false,
+  accessEnded: false,
 };
 
 export function reducer(state: State, action: Action): State {
@@ -84,7 +88,12 @@ export function reducer(state: State, action: Action): State {
         notice: null,
       };
     case 'setNew':
-      return { ...state, newAccount: action.account, notice: null };
+      return {
+        ...state,
+        newAccount: action.account,
+        accessEnded: action.account ? false : state.accessEnded,
+        notice: null,
+      };
     case 'setProgress':
       return { ...state, progressId: action.progressId, items: action.items, moveState: 'idle' };
     case 'setItems':
@@ -99,6 +108,8 @@ export function reducer(state: State, action: Action): State {
       return { ...state, signInCode: action.code };
     case 'setGranted':
       return { ...state, granted: action.kinds };
+    case 'setAccessEnded':
+      return { ...state, accessEnded: action.ended };
     case 'setLoading':
       return { ...state, loading: action.loading };
     case 'reset':

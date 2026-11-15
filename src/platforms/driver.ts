@@ -64,6 +64,8 @@ export type Driver = {
   removeAccessUrl?: string;
   // The Switch button becomes Sign out.
   switchSignsOut?: boolean;
+  // The new account's sign-in is kept for an unfinished move, so Continue needs no new sign-in.
+  resumesNew?: boolean;
 
   // kinds: what the new account needs access for. Abort = the user tapped Cancel.
   signIn(

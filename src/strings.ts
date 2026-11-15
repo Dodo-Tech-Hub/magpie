@@ -8,6 +8,8 @@ export const strings = {
   oldTitle: 'Old account',
   newTitle: 'New account',
   switchAccount: 'Switch',
+  signOut: 'Sign out',
+  openAccessPage: 'Open GitHub settings',
   loading: 'Loading your list…',
   loadPartial: "Some items couldn't load. The rest can still move.",
   copyCode: 'Copy code',
@@ -52,6 +54,12 @@ export const continueLeft = (n: number) => `Continue: ${n} left`;
 export const continueLabel = (name: string, n: number) => `Continue ${name}, ${n} left`;
 export const signInTo = (handle: string) => `Sign in to ${handle} to keep going.`;
 export const wrongAccount = (handle: string) => `This one needs ${handle}. Pick that account.`;
+// How long the picked adds take at the pace of the platform (FR-GH-011).
+export const timeLeftText = (seconds: number, adds: number) => {
+  if (adds > 300) return 'More than one session';
+  const minutes = Math.ceil(seconds / 60);
+  return seconds < 60 ? 'Less than a minute' : `About ${minutes} minute${minutes === 1 ? '' : 's'}`;
+};
 export const pickedCounter = (picked: number, total: number) => `${picked} of ${total} picked`;
 export const itemsLeft = (oldHandle: string, newHandle: string, left: number) =>
   `${oldHandle.split('@')[0]} → ${newHandle.split('@')[0]} · ${left} left`;

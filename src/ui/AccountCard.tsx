@@ -18,10 +18,13 @@ type Props = {
   // The code a sign-in is waiting on. Shown in place of the Sign in button.
   code?: { code: string; hint: string | null } | null;
   onCancel?: () => void;
+  // The Switch button signs out instead (the platform cannot switch in place).
+  signsOut?: boolean;
+  onSwitch?: () => void;
   disabled?: boolean;
 };
 
-export function AccountCard({ title, words, hint, account, onSignIn, code, onCancel, disabled }: Props) {
+export function AccountCard({ title, words, hint, account, onSignIn, code, onCancel, signsOut, onSwitch, disabled }: Props) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   if (account) {
@@ -41,13 +44,13 @@ export function AccountCard({ title, words, hint, account, onSignIn, code, onCan
         <Pressable
           style={[styles.button, disabled && styles.off]}
           accessibilityRole="button"
-          accessibilityLabel={`${strings.switchAccount} ${title}`}
+          accessibilityLabel={`${signsOut ? strings.signOut : strings.switchAccount} ${title}`}
           accessibilityState={{ disabled: !!disabled }}
           disabled={disabled}
-          onPress={onSignIn}
+          onPress={onSwitch ?? onSignIn}
         >
-          <Ionicons name="swap-horizontal" size={18} color={colors.text} />
-          <Text style={styles.buttonText}>{strings.switchAccount}</Text>
+          <Ionicons name={signsOut ? 'log-out-outline' : 'swap-horizontal'} size={18} color={colors.text} />
+          <Text style={styles.buttonText}>{signsOut ? strings.signOut : strings.switchAccount}</Text>
         </Pressable>
       </View>
     );

@@ -6,6 +6,7 @@ import { PLATFORMS } from '@/platforms/platforms';
 import { useApp } from '@/state/AppState';
 import { deleteAll, listUnfinished } from '@/store/progressStore';
 import { strings } from '@/strings';
+import { AccessNote } from '@/ui/AccessNote';
 import { useTheme, type Colors, type ThemeChoice } from '@/theme/theme';
 
 type Icon = keyof typeof Ionicons.glyphMap;
@@ -74,6 +75,11 @@ export function SettingsView() {
           <Text style={styles.deleteText}>{strings.deleteAll}</Text>
         </Pressable>
       </View>
+      {PLATFORMS.filter((p) => p.ready && p.driver.removeAccessUrl).map((p) => (
+        <View key={p.id} style={styles.block}>
+          <AccessNote driver={p.driver} />
+        </View>
+      ))}
       <View style={styles.block}>
         {PLATFORMS.filter((p) => p.ready).map((p) => (
           <Text key={p.id} style={styles.notice}>

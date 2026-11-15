@@ -1,10 +1,11 @@
 import React from 'react';
 import { Text, View } from 'react-native';
-import { cancelSignIn, signInNew } from '@/state/flows';
+import { cancelSignIn, switchAccount, signInNew } from '@/state/flows';
 import { driverFor } from '@/platforms/platforms';
 import { useApp } from '@/state/AppState';
 import { strings } from '@/strings';
 import { useTheme } from '@/theme/theme';
+import { AccessNote } from '@/ui/AccessNote';
 import { AccountCard } from '@/ui/AccountCard';
 
 export function ToStep() {
@@ -22,7 +23,10 @@ export function ToStep() {
         onSignIn={() => void signInNew(state, dispatch)}
         code={state.signInCode?.role === 'new' ? state.signInCode : null}
         onCancel={cancelSignIn}
+        signsOut={driver.switchSignsOut}
+        onSwitch={() => void switchAccount(state, dispatch, 'new')}
       />
+      {state.accessEnded && !state.newAccount && <AccessNote driver={driver} />}
       {state.notice && <Text style={{ color: colors.danger, paddingHorizontal: 14 }}>{state.notice}</Text>}
     </View>
   );

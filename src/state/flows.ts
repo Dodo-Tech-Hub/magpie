@@ -166,6 +166,30 @@ async function checkNew(progressId: string, driver: Driver, items: StoredItem[])
   return have;
 }
 
+// A move ended with nothing left: the platform drops what it holds for the new account.
+async function endMove(driver: Driver, dispatch: D) {
+  if (!driver.endMove) return;
+  await driver.endMove();
+  dispatch({ type: 'setAccessEnded', ended: true });
+}
+
+// The Switch button. A platform whose sign-in cannot be switched in place signs out instead (US4).
+export async function switchAccount(state: State, dispatch: D, role: Role): Promise<void> {
+  const driver = driverOf(state);
+  if (!driver.switchSignsOut) {
+    await (role === 'old' ? signInOld(state, dispatch) : signInNew(state, dispatch));
+    return;
+  }
+  await driver.signOut(role);
+  if (role === 'new') {
+    dispatch({ type: 'setNew', account: null });
+    dispatch({ type: 'setGranted', kinds: [] });
+    dispatch({ type: 'setAccessEnded', ended: true });
+  } else {
+    dispatch({ type: 'setOld', account: null, items: [] });
+  }
+}
+
 export async function togglePick(state: State, dispatch: D, ids: string[], picked: boolean) {
   const movable = new Set(
     state.items.filter((c) => c.status !== 'already_there' && hasAccess(state, c)).map((c) => c.itemId),
@@ -194,6 +218,7 @@ export async function startMove(state: State, dispatch: D): Promise<void> {
   const movable = state.items.filter((c) => isMovable(c) && hasAccess(state, c)).length;
   if (movable === 0) {
     if (state.items.some((c) => c.status === 'already_there')) {
+      await endMove(driver, dispatch);
       dispatch({ type: 'setMoveState', moveState: 'done' });
     } else {
       dispatch({ type: 'setNotice', notice: driver.words.needPick });
@@ -230,6 +255,7 @@ export async function startMove(state: State, dispatch: D): Promise<void> {
     }
   } else if (result === 'done') {
     await cancelReminder(progressId);
+    await endMove(driver, dispatch);
   }
   dispatch({ type: 'setMoveState', moveState: result === 'done' ? 'done' : result });
 }
@@ -245,6 +271,15 @@ export async function openProgress(dispatch: D, progressId: string): Promise<voi
   dispatch({ type: 'openPlatform', platform: platform.id as PlatformId });
   dispatch({ type: 'setOld', account: saved.oldAccount, items });
   dispatch({ type: 'setProgress', progressId, items });
+  const driver = platform.driver;
+  // A paused move keeps its sign-in on the phone (FR-GH-019), so it can go on at once.
+  if (driver.resumesNew && (await driver.canAct('new', saved.newAccount.id))) {
+    dispatch({ type: 'setNew', account: saved.newAccount });
+    dispatch({ type: 'setGranted', kinds: await driver.granted() });
+    dispatch({ type: 'setExpectedNew', account: null });
+    dispatch({ type: 'setStep', step: 'pick' });
+    return;
+  }
   dispatch({ type: 'setNew', account: null });
   dispatch({ type: 'setExpectedNew', account: saved.newAccount });
   dispatch({ type: 'setStep', step: 'to' });

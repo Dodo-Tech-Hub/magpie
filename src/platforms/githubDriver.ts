@@ -99,6 +99,7 @@ export const githubDriver: Driver = {
   },
   removeAccessUrl: 'https://github.com/settings/applications',
   switchSignsOut: true,
+  resumesNew: true,
 
   async signIn(role, kinds, onCode, signal) {
     // The old account asks for no scope. The new one asks only for the picked kinds (FR-GH-020).

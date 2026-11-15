@@ -5,8 +5,10 @@ import { driverFor } from '@/platforms/platforms';
 import { useApp } from '@/state/AppState';
 import type { StoredItem } from '@/store/progressStore';
 import { isMovable, startMove, togglePick } from '@/state/flows';
-import { pickedCounter, strings, summary } from '@/strings';
+import { timeLeft } from '@/move/pacer';
+import { pickedCounter, strings, summary, timeLeftText } from '@/strings';
 import { useTheme, type Colors } from '@/theme/theme';
+import { AccessNote } from '@/ui/AccessNote';
 import { ItemRow, ROW_HEIGHT } from '@/ui/ItemRow';
 
 type Row = { item: StoredItem } | { heading: string; key: string };
@@ -26,6 +28,7 @@ export function PickStep() {
   );
 
   const movable = items.filter(isMovable).length;
+  const adds = driver.pace?.adds(items.filter(isMovable)) ?? 0;
   const moving = moveState === 'moving';
   const resume = moveState === 'limit' || moveState === 'offline' || moveState === 'auth' || moveState === 'stopped';
   const counts = {
@@ -40,14 +43,14 @@ export function PickStep() {
     ? items.filter((c) => c.title.toLowerCase().includes(query.toLowerCase()))
     : items;
   // One section per kind when there is more than one kind. A kind with no items has none (FR-GH-003).
-  const rows = useMemo(() => {
-    const kinds = driver.kinds.filter((k) => shown.some((c) => c.kind === k.id));
-    if (kinds.length < 2) return shown.map((item) => ({ item }) as Row);
-    return kinds.flatMap((k) => [
-      { heading: k.heading, key: `h:${k.id}` } as Row,
-      ...shown.filter((c) => c.kind === k.id).map((item) => ({ item }) as Row),
-    ]);
-  }, [shown, driver]);
+  const kinds = driver.kinds.filter((k) => shown.some((c) => c.kind === k.id));
+  const rows: Row[] =
+    kinds.length < 2
+      ? shown.map((item) => ({ item }))
+      : kinds.flatMap((k) => [
+          { heading: k.heading, key: `h:${k.id}` },
+          ...shown.filter((c) => c.kind === k.id).map((item) => ({ item })),
+        ]);
   const shownPickable = shown.filter((c) => c.status !== 'already_there' && c.status !== 'moved');
   const allPicked = shownPickable.length > 0 && shownPickable.every((c) => c.picked);
 
@@ -108,8 +111,12 @@ export function PickStep() {
         ListEmptyComponent={<Text style={styles.empty}>{words.noItems}</Text>}
       />
       <View style={styles.bar}>
+        {driver.pace && !moving && !showSummary && movable > 0 && (
+          <Text style={styles.timeLeft}>{timeLeftText(timeLeft(adds), adds)}</Text>
+        )}
         {showSummary && <Text style={styles.summary}>{summary(counts)}</Text>}
         {moveState === 'limit' && <Text style={styles.note}>{words.limitReached}</Text>}
+        {moveState === 'done' && <AccessNote driver={driver} />}
         {state.notice && <Text style={styles.error}>{state.notice}</Text>}
         {!(moveState === 'done' && movable === 0) && items.length > 0 && (
           <Pressable
@@ -145,6 +152,7 @@ const makeStyles = (c: Colors) =>
     empty: { padding: 24, textAlign: 'center', color: c.muted },
     bar: { padding: 12, borderTopWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     summary: { fontSize: 14, marginBottom: 8, color: c.success },
+    timeLeft: { fontSize: 13, color: c.muted, marginBottom: 8 },
     note: { fontSize: 13, color: c.warning, marginBottom: 8 },
     error: { fontSize: 13, color: c.danger, marginBottom: 8 },
     move: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 44, borderRadius: 8, backgroundColor: c.primary },

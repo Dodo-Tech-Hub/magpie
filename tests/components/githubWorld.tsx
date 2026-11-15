@@ -142,7 +142,7 @@ export async function signInBoth(w: ReturnType<typeof githubWorld>, newScope = F
 }
 
 // Answer the question about reminders right away.
-export function answerReminder(text: 'Yes' | 'No') {
+export function answerReminder(text: string) {
   return jest
     .spyOn(Alert, 'alert')
     .mockImplementation((_t: unknown, _m: unknown, buttons?: unknown) =>
