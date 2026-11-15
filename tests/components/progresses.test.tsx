@@ -4,11 +4,11 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import App from '../../App';
 import { GoogleSignin, mockUser, signInAs } from '../mocks/googleSignin';
 import {
-  getChannels,
+  getItems,
   getOrCreateProgress,
   initStore,
   listUnfinished,
-  saveChannels,
+  saveItems,
   setStatus,
 } from '@/store/progressStore';
 import { answerAlert, ch, listMock, NEW, nextSignIn, OLD, renderApp, resetWorld, subMock } from './helpers';
@@ -21,15 +21,15 @@ jest.mock('@/api/youtube', () => ({
 
 const acct = (u: { id: string; email: string; name: string; photo: string | null }) => ({
   id: u.id,
-  email: u.email,
+  handle: u.email,
   name: u.name,
   photoUrl: u.photo,
 });
 
 async function seed(old = OLD, nu = NEW, ids = ['a', 'b']) {
   await initStore();
-  const pid = await getOrCreateProgress(acct(old), acct(nu));
-  await saveChannels(pid, ids.map((id) => ({ channelId: id, title: id.toUpperCase(), thumbnailUrl: null })));
+  const pid = await getOrCreateProgress('youtube', acct(old), acct(nu));
+  await saveItems(pid, ids.map((id) => ({ itemId: id, kind: 'channel', title: id.toUpperCase(), thumbnailUrl: null, data: null })));
   return pid;
 }
 
@@ -120,7 +120,7 @@ describe('saved progresses', () => {
     expect(Notifications.cancelScheduledNotificationAsync).toHaveBeenCalledTimes(2);
     expect(GoogleSignin.revokeAccess).toHaveBeenCalled();
     expect(subMock).not.toHaveBeenCalled();
-    expect(await getChannels('x')).toEqual([]);
+    expect(await getItems('x')).toEqual([]);
     // Settings closes, From shows signed out, and the look is back to Auto.
     expect(screen.queryByText('Look')).toBeNull();
     await fireEvent.press(screen.getByLabelText('Settings'));

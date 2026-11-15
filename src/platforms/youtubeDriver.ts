@@ -1,7 +1,7 @@
-import { listMySubscriptions, subscribe } from '@/api/youtube';
+import { ApiError, listMySubscriptions, subscribe } from '@/api/youtube';
 import { getAccessToken, signedInAccountId, signIn, signOut } from '@/auth/google';
 import { nextQuotaReset } from '@/move/quotaReset';
-import type { Driver, Outcome } from '@/platforms/driver';
+import { DriverError, type Driver, type Outcome } from '@/platforms/driver';
 import { youtubeWords } from '@/strings';
 
 // Wraps today's Google sign-in and YouTube calls. No behavior change (spec 008, Part A).
@@ -24,7 +24,14 @@ async function add(channelId: string): Promise<Outcome> {
 }
 
 async function readAll() {
-  return listMySubscriptions(await getAccessToken());
+  try {
+    return await listMySubscriptions(await getAccessToken());
+  } catch (e) {
+    if (e instanceof ApiError) {
+      throw new DriverError(e.kind === 'retry' ? 'retry' : e.kind === 'tomorrow' ? 'later' : 'auth');
+    }
+    throw e;
+  }
 }
 
 export const youtubeDriver: Driver = {

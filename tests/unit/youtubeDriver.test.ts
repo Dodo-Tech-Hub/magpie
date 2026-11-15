@@ -1,11 +1,16 @@
 import { youtubeDriver } from '@/platforms/youtubeDriver';
 import { nextQuotaReset } from '@/move/quotaReset';
-import { subscribe, listMySubscriptions } from '@/api/youtube';
+import { ApiError, subscribe, listMySubscriptions } from '@/api/youtube';
+import { DriverError } from '@/platforms/driver';
 import { getAccessToken, signIn, signedInAccountId, signOut } from '@/auth/google';
 import { youtubeWords } from '@/strings';
 import type { StoredItem } from '@/store/progressStore';
 
-jest.mock('@/api/youtube', () => ({ subscribe: jest.fn(), listMySubscriptions: jest.fn() }));
+jest.mock('@/api/youtube', () => ({
+  ...jest.requireActual('@/api/youtube'),
+  subscribe: jest.fn(),
+  listMySubscriptions: jest.fn(),
+}));
 jest.mock('@/auth/google', () => ({
   getAccessToken: jest.fn(),
   signIn: jest.fn(),
@@ -75,6 +80,13 @@ describe('reading and signing in', () => {
       items: [{ itemId: 'UC1', kind: 'channel', title: 'One', thumbnailUrl: 'u', data: null }],
       missing: [],
     });
+  });
+
+  it('turns a failed read into a driver error', async () => {
+    list.mockRejectedValue(new ApiError('retry'));
+    await expect(youtubeDriver.listOld()).rejects.toEqual(new DriverError('retry'));
+    list.mockRejectedValue(new ApiError('tomorrow'));
+    await expect(youtubeDriver.listOld()).rejects.toEqual(new DriverError('later'));
   });
 
   it('checks the new account by the channels it follows', async () => {

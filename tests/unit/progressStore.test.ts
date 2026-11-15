@@ -17,7 +17,7 @@ import {
 } from '@/store/progressStore';
 
 const acct = (id: string) => ({ id, handle: `${id}@x.com`, name: id, photoUrl: null });
-const ch = (id: string, kind = 'channel') => ({ itemId: id, kind, title: `T-${id}`, thumbnailUrl: null, data: null });
+const ch = (id: string) => ({ itemId: id, kind: 'channel', title: `T-${id}`, thumbnailUrl: null, data: null });
 
 async function seed(oldId = 'o1', newId = 'n1', ids = ['a', 'b', 'c']) {
   const pid = await getOrCreateProgress('youtube', acct(oldId), acct(newId));
