@@ -207,7 +207,7 @@ Done when: the new tests in the table below pass, all existing tests pass, and t
 1. ~~Approve the restructure (Part A)~~: approved on 2026-11-14.
 2. ~~Create the OAuth app and run the access check~~: passed on 2026-11-14.
 3. ~~Add the official GitHub mark~~: in `assets/platforms/`.
-4. Set `EXPO_PUBLIC_GITHUB_CLIENT_ID` in `.env` and in the EAS environment variables before Part B.
+4. Set `EXPO_PUBLIC_GITHUB_CLIENT_ID` in the local `.env` before Part B. Builds are local, so no EAS variable is needed.
 
 ## Complexity Tracking
 

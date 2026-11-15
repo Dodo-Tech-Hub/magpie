@@ -11,7 +11,9 @@ import { useTheme, type Colors } from '@/theme/theme';
 import { AccessNote } from '@/ui/AccessNote';
 import { ItemRow, ROW_HEIGHT } from '@/ui/ItemRow';
 
-type Row = { item: StoredItem } | { heading: string; key: string; kind: string; locked: boolean; count: number };
+type Row =
+  | { item: StoredItem }
+  | { heading: string; key: string; kind: string; locked: boolean; count: number; pickable: string[]; allPicked: boolean };
 
 const LOCKED_HEIGHT = 130;
 const heightOf = (r: Row) => ('item' in r ? ROW_HEIGHT : r.locked ? LOCKED_HEIGHT : ROW_HEIGHT);
@@ -64,8 +66,18 @@ export function PickStep() {
           const inKind = shown.filter((c) => c.kind === k.id);
           // A search shows every section that has a match (FR-GH-023).
           const hidden = !query && collapsed.has(k.id);
+          // The section's own All covers the same rows as the list's All, for this kind only (FR-GH-024).
+          const canPick = inKind.filter((c) => c.status !== 'already_there' && c.status !== 'moved');
           return [
-            { heading: k.heading, key: `h:${k.id}`, kind: k.id, locked: noAccess(k.id), count: inKind.length },
+            {
+              heading: k.heading,
+              key: `h:${k.id}`,
+              kind: k.id,
+              locked: noAccess(k.id),
+              count: inKind.length,
+              pickable: canPick.map((c) => c.itemId),
+              allPicked: canPick.length > 0 && canPick.every((c) => c.picked),
+            },
             ...(hidden ? [] : inKind.map((item) => ({ item }))),
           ];
         });
@@ -124,17 +136,31 @@ export function PickStep() {
             <ItemRow item={r.item} laterLabel={words.later} greyed={noAccess(r.item.kind)} onToggle={onToggle} />
           ) : (
             <View style={r.locked ? styles.lockedSection : styles.sectionBox}>
-              <Pressable
-                style={styles.sectionRow}
-                accessibilityRole="button"
-                accessibilityLabel={`${r.heading}, ${r.count}`}
-                accessibilityState={{ expanded: isOpen(r.kind) }}
-                onPress={() => toggleKind(r.kind)}
-              >
-                <Ionicons name={isOpen(r.kind) ? 'chevron-down' : 'chevron-forward'} size={20} color={colors.text} />
-                <Text style={styles.section}>{r.heading}</Text>
-                <Text style={styles.sectionCount}>{r.count}</Text>
-              </Pressable>
+              <View style={styles.sectionLine}>
+                <Pressable
+                  style={styles.sectionRow}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${r.heading}, ${r.count}`}
+                  accessibilityState={{ expanded: isOpen(r.kind) }}
+                  onPress={() => toggleKind(r.kind)}
+                >
+                  <Ionicons name={isOpen(r.kind) ? 'chevron-down' : 'chevron-forward'} size={20} color={colors.text} />
+                  <Text style={styles.section}>{r.heading}</Text>
+                  <Text style={styles.sectionCount}>{r.count}</Text>
+                </Pressable>
+                {!r.locked && r.pickable.length > 0 && (
+                  <Pressable
+                    style={styles.sectionAll}
+                    accessibilityRole="checkbox"
+                    accessibilityLabel={`${strings.all} ${r.heading}`}
+                    accessibilityState={{ checked: r.allPicked }}
+                    onPress={() => void togglePick(state, dispatch, r.pickable, !r.allPicked)}
+                  >
+                    <Text style={styles.sectionCount}>{strings.all}</Text>
+                    <Ionicons name={r.allPicked ? 'checkbox' : 'square-outline'} size={24} color={colors.primary} />
+                  </Pressable>
+                )}
+              </View>
               {r.locked && (
                 <>
                   <Text style={styles.lockedText}>{needAccess(r.heading)}</Text>
@@ -192,7 +218,9 @@ const makeStyles = (c: Colors) =>
     all: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     sectionBox: { height: ROW_HEIGHT, justifyContent: 'center' },
     lockedSection: { height: LOCKED_HEIGHT, justifyContent: 'center', gap: 6, opacity: 1 },
-    sectionRow: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10 },
+    sectionLine: { flexDirection: 'row', alignItems: 'center' },
+    sectionRow: { flex: 1, minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10 },
+    sectionAll: { minHeight: 48, minWidth: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8, paddingHorizontal: 12 },
     // The same text style as the section headings on Home.
     section: { color: c.text, fontSize: 18, fontWeight: '600' },
     sectionCount: { fontSize: 13, color: c.muted },

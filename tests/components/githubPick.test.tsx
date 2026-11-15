@@ -123,6 +123,45 @@ describe('collapsible sections (FR-GH-023)', () => {
   });
 });
 
+describe('All per section (FR-GH-024)', () => {
+  const all = (name: string) => screen.getByRole('checkbox', { name });
+
+  it('picks and unpicks only the items of its section, and does not collapse it', async () => {
+    fill();
+    await renderGithub();
+    await signInBoth(w);
+    expect(all('All Stars').props.accessibilityState.checked).toBe(true);
+    await fireEvent.press(all('All Stars'));
+    expect(checked('o/r1')).toBe(false);
+    expect(checked('o/r2')).toBe(false);
+    expect(checked('bob')).toBe(true);
+    expect(screen.getByText('3 of 5 picked')).toBeTruthy();
+    expect(all('All Stars').props.accessibilityState.checked).toBe(false);
+    expect(heading('Stars, 2').props.accessibilityState.expanded).toBe(true);
+    await fireEvent.press(all('All Stars'));
+    expect(screen.getByText('5 of 5 picked')).toBeTruthy();
+  });
+
+  it('is unchecked when one item of the section is unpicked, and works while collapsed', async () => {
+    fill();
+    await renderGithub();
+    await signInBoth(w);
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'o/r1' }));
+    expect(all('All Stars').props.accessibilityState.checked).toBe(false);
+    await fireEvent.press(heading('Stars, 2'));
+    await fireEvent.press(all('All Stars'));
+    expect(screen.getByText('5 of 5 picked')).toBeTruthy();
+  });
+
+  it('shows no section All for a kind without access', async () => {
+    fill();
+    await renderGithub();
+    await signInBoth(w, 'user');
+    expect(screen.queryByRole('checkbox', { name: 'All Stars' })).toBeNull();
+    expect(all('All People')).toBeTruthy();
+  });
+});
+
 describe('already there', () => {
   it('marks what the new account has and cannot pick it, including the new account itself', async () => {
     w.data.old.stars = [repo(1), repo(2)];

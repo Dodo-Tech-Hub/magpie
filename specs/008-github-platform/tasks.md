@@ -194,7 +194,7 @@ description: "Task list for the GitHub platform"
 - [X] T062 [P] Edit `specs/008-github-platform/research.md` R8: add one line that Pick headings run Stars, Lists, Gists, People while items move as Stars, People, Gists, Lists, because lists need their repositories moved first.
 - [X] T063 [P] Write `tests/components/settings.test.tsx` additions for the not-affiliated lines (YouTube and GitHub each show their own line) if T022 did not already cover them, and for Delete all signing out of both drivers.
 - [X] T064 Run `npm test`, `npm run typecheck`, `npm run lint`, and `npm audit`; all pass with no high or critical issue (constitution III.11, Development Workflow). Run `grep -rn "console\.\|log(" src/auth/github.ts src/api/github.ts src/platforms/githubDriver.ts` and confirm nothing logs tokens, codes, usernames, or item lists (constitution III.7).
-- [ ] T065 Run the full quickstart.md "Part B check" (checks 1 to 13) with the two test GitHub accounts and the client ID in `.env`, and note each result in the pull request. Set `EXPO_PUBLIC_GITHUB_CLIENT_ID` in the EAS environment variables.
+- [X] T065 Run the full quickstart.md "Part B check" (checks 1 to 13) with the two test GitHub accounts and the client ID in `.env`, and note each result in the pull request. (Builds are local, so the client ID stays in the local `.env`; no EAS variable.)
 - [ ] T066 Open the Part B pull request with the suggested description "Add GitHub as an Automatic platform: code sign-in, stars, lists, gists, people, pace limits, access per picked kind." After the owner merges it, set the `**Status**:` line in `specs/008-github-platform/spec.md` to `Implemented` (AGENTS.md).
 
 ---
@@ -224,13 +224,21 @@ description: "Task list for the GitHub platform"
 - [X] T078 `src/state/flows.ts` (needs T075 to T077): `signInOld` creates or reopens the progress and saves the list; `signInNew` uses `attachNew` (or the pair when From is already done); `togglePick` always writes to the store (remove the in-memory branch); `openProgress` handles a null new account; keep the running move's `AbortController`; add `openPlatformCard(state, dispatch, platform, progressId?)` with the question and Save, Don't save, Cancel (R13). Makes T072 pass.
 - [X] T079 `src/ui/HomeView.tsx`, `src/ui/FromStep.tsx`, `src/strings.ts` (needs T078): card body and Continue note call `openPlatformCard`; "New account not chosen yet" in the From list; texts "Save your {platform} progress?", "Save", "Don't save", "Cancel", and the not-chosen line. Makes T071 pass.
 - [X] T080 [P] `src/ui/PickStep.tsx`: heading row as a `Pressable` with the Home heading style (18 point, weight 600), count, `chevron-down` or `chevron-forward`, `accessibilityRole="button"` and `accessibilityState={{ expanded }}`, collapsed kinds in local state, rows left out unless search has text, Allow kept in the locked heading (R14). Makes T073 pass.
-- [ ] T081 Run `npm test`, `npm run typecheck`, and `npm run lint`; all pass. Install on a phone and run quickstart.md checks 13 to 18. Note results in the pull request.
+- [X] T081 Run `npm test`, `npm run typecheck`, and `npm run lint`; all pass. Install on a phone and run quickstart.md checks 13 to 18. Note results in the pull request.
 
 ---
 
 ## Phase 11: Convergence
 
 - [X] T082 In `src/state/flows.ts` `openProgress`, set the move state to `moving` when the opened progress is the one in `running`, so returning to a move kept running by Save (Continue note, From list) shows Moving rows and no idle Move button; add a case to `tests/components/platformSwitch.test.tsx` (start a move, go Home, Save on another card, Continue on the first card: rows show Moving and the summary shows when the move ends) per FR-GH-022 (partial)
+
+---
+
+## Phase 12: All per section (2026-11-15)
+
+- [X] T083 Add to `tests/components/githubPick.test.tsx`: "All Stars" picks and unpicks only the stars and leaves the section open; it is unchecked when one star is unpicked and works while collapsed; a kind without access has no section All (FR-GH-024).
+- [X] T084 `src/ui/PickStep.tsx`: a checkbox at the end of each heading row, next to the heading button, that toggles the kind's pickable rows through `togglePick`. Makes T083 pass.
+- [ ] T085 On a phone, run quickstart.md check 19.
 
 ---
 
