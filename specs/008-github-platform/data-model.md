@@ -26,7 +26,7 @@ The database gets a version number (`PRAGMA user_version`). Version 0 is today's
 | limit_hit_at | integer or null | As today. |
 | resume_at | integer or null | When a paused move can go on. Set with `limit_hit_at`. Used for the reminder. |
 
-Unique: (`platform`, `old_account_id`, `new_account_id`). One progress per account pair per platform (spec, Key Entities).
+Unique: (`platform`, `old_account_id`, `new_account_id`). One progress per account pair per platform (spec, Key Entities). Version 2 makes the new account optional (Part C).
 
 ### progress_item
 
@@ -119,6 +119,50 @@ Rows older than 1 hour are deleted on each write. The pacer reads this table (re
 | New account | `expo-secure-store`, key `github.new`, value `{ token, accountId, scopes, expiresAt }` | Summary shows, Sign out, Delete all, or `expiresAt` passed. An "Allow" sign-in replaces it. |
 
 Tokens run out after 8 hours (`expires_in` 28800). The refresh token is never saved. `granted` is rebuilt from the saved `scopes` when a progress opens.
+
+## Part C. Progress from the old sign-in (2026-11-15)
+
+Research R12 and R13. Spec FR-GH-021 and FR-GH-022.
+
+### Migration to version 2
+
+Version 1 to 2 rebuilds `progress` in one transaction: rename it, create the version 2 table, copy every row, drop the old one. `progress_item` rows keep their `progress_id`. A fresh install creates version 2 directly, and a version 0 database runs 0 to 1, then 1 to 2.
+
+| Change | Rule |
+| --- | --- |
+| `new_account_id`, `new_handle`, `new_name` | Nullable. All three are null together, or none is. |
+| `UNIQUE (platform, old_account_id, new_account_id)` | Kept. SQLite treats nulls as distinct, so it applies only to pairs. |
+| New index `progress_no_new` | `UNIQUE (platform, old_account_id) WHERE new_account_id IS NULL`. At most one progress with no new account per old account per platform. |
+
+### Progress lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> NoNew: old list read, To not signed in
+    [*] --> Pair: old list read, To already signed in
+    NoNew --> NoNew: old account signs in again (re-read, keep picks)
+    NoNew --> Pair: new account signs in, no progress for the pair
+    NoNew --> [*]: new account signs in, pair progress exists (this one is deleted, that one opens)
+    Pair --> [*]: nothing picked is left, or Don't save, or Delete all
+    NoNew --> [*]: Don't save, or Delete all
+```
+
+### Store functions
+
+| Function | Change |
+| --- | --- |
+| `getOrCreateProgress(platform, old, new or null)` | `new` may be null. With null, finds or creates the progress with no new account. |
+| `attachNew(progressId, new)` | New. Sets the new account. If the pair already has a progress, deletes this one and returns the pair's ID. |
+| `saveItems(progressId, items)` | Also deletes `waiting` rows whose item is no longer in `items`, so a re-read drops items the old account no longer has. Other states stay. |
+| `UnfinishedProgress.newAccount` | `AccountInfo` or `null`. The From list shows "New account not chosen yet" for null. |
+
+### App state (reducer)
+
+| Field or action | Change |
+| --- | --- |
+| `flowPlatform: PlatformId or null` | New. The platform of the flow in the reducer, kept while Home shows. |
+| `startFlow(platform)` | New action. Resets every flow field to its start value, sets `platform` and `flowPlatform`. |
+| `setItems`, `setProgress`, `setMoveState` from a move | Carry `progressId`. The reducer ignores them when it is not the open `progressId`. |
 
 ### What Delete all removes
 

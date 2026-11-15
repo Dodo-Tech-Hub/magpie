@@ -199,6 +199,35 @@ description: "Task list for the GitHub platform"
 
 ---
 
+## Phase 10: Part C - device test changes (2026-11-15)
+
+**Goal**: Progress starts at the old sign-in, switching platforms asks to save, and Pick sections are larger and collapsible (FR-GH-021, FR-GH-022, FR-GH-003, FR-GH-023). Applies to every Automatic platform.
+
+**Independent Test**: quickstart.md checks 14 to 18.
+
+### Tests for Part C (write first, they must fail)
+
+- [ ] T067 [P] Add to `tests/unit/migrate.test.ts`: a version 1 database with one progress and its items opens as version 2 with the same rows; a fresh database opens at version 2; a version 0 database reaches version 2.
+- [ ] T068 [P] Add to `tests/unit/progressStore.test.ts`: `getOrCreateProgress` with no new account returns the same ID for the same old account and platform; `attachNew` sets the new account; `attachNew` when the pair already has a progress deletes the one with no new account and returns the pair's ID; `saveItems` drops `waiting` rows that are gone and keeps `moved` and `already_there` rows; `listUnfinished` returns a progress with `newAccount` null.
+- [ ] T069 [P] Add to `tests/unit/appState.test.ts`: `startFlow` resets the flow fields and sets the platform; `goHome` keeps `flowPlatform`; `setItems` and `setMoveState` with another `progressId` change nothing.
+- [ ] T070 [P] Add to `tests/unit/mover.test.ts`: an aborted `signal` stops before the next item and returns `stopped`; the item in progress finishes its own status.
+- [ ] T071 [P] Write `tests/components/platformSwitch.test.tsx`: same card resumes the step and list; a different card with an unfinished progress shows the question (mock `Alert.alert` and press each button); Save opens the other platform at From and keeps the first platform's Continue note; Don't save deletes the progress, signs out of both roles, and removes the note; Cancel stays on Home; no question with nothing unfinished; the Continue note of a different card asks too; a reminder opens its progress with no question; a move kept running by Save does not change the other platform's rows.
+- [ ] T072 [P] Write `tests/components/draftProgress.test.tsx`: after the From sign-in only, unticked picks survive going Home and back and a store reopen; From's list shows "New account not chosen yet"; signing in to the same old account again keeps picks, adds new items picked, and drops gone items; opening a progress with no new account goes to Pick with no sign-in line.
+- [ ] T073 [P] Add to `tests/components/githubPick.test.tsx`: headings show the kind and count; tapping a heading hides and shows its rows and sets its expanded state; search text opens matching collapsed sections and clearing restores; All and the counter include collapsed rows; a greyed kind's Allow stays visible when collapsed; one kind still shows no heading.
+
+### Implementation for Part C
+
+- [ ] T074 Store version 2 in `src/store/migrate.ts` (data model Part C): nullable new account columns, the `progress_no_new` partial unique index, the 1 to 2 rebuild in one transaction, fresh install at version 2. Makes T067 pass.
+- [ ] T075 Store functions in `src/store/progressStore.ts`: optional new account in `getOrCreateProgress`, `attachNew`, `saveItems` drops gone `waiting` rows, nullable `newAccount` in `UnfinishedProgress` and `toProgress`. Update callers for the nullable type. Makes T068 pass.
+- [ ] T076 [P] `src/state/AppState.tsx`: `flowPlatform`, `startFlow`, `progressId` on `setItems`, `setProgress`, and `setMoveState`, and the guard. Update dispatch callers. Makes T069 pass.
+- [ ] T077 [P] `src/move/mover.ts`: optional `signal` in `MoveOptions`, checked before each item. Makes T070 pass.
+- [ ] T078 `src/state/flows.ts` (needs T075 to T077): `signInOld` creates or reopens the progress and saves the list; `signInNew` uses `attachNew` (or the pair when From is already done); `togglePick` always writes to the store (remove the in-memory branch); `openProgress` handles a null new account; keep the running move's `AbortController`; add `openPlatformCard(state, dispatch, platform, progressId?)` with the question and Save, Don't save, Cancel (R13). Makes T072 pass.
+- [ ] T079 `src/ui/HomeView.tsx`, `src/ui/FromStep.tsx`, `src/strings.ts` (needs T078): card body and Continue note call `openPlatformCard`; "New account not chosen yet" in the From list; texts "Save your {platform} progress?", "Save", "Don't save", "Cancel", and the not-chosen line. Makes T071 pass.
+- [ ] T080 [P] `src/ui/PickStep.tsx`: heading row as a `Pressable` with the Home heading style (18 point, weight 600), count, `chevron-down` or `chevron-forward`, `accessibilityRole="button"` and `accessibilityState={{ expanded }}`, collapsed kinds in local state, rows left out unless search has text, Allow kept in the locked heading (R14). Makes T073 pass.
+- [ ] T081 Run `npm test`, `npm run typecheck`, and `npm run lint`; all pass. Install on a phone and run quickstart.md checks 13 to 18. Note results in the pull request.
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
@@ -209,6 +238,7 @@ description: "Task list for the GitHub platform"
 - **US2 (Phase 4)** then **US1 (Phase 5)**: US1 needs sign-in. After Phase 5 the MVP works.
 - **US3, US4, US5 (Phases 6 to 8)**: each needs US1 and US2, and can run in any order after them (US3 edits `PickStep.tsx` and `flows.ts` like US1, US4, and US5, so run them one at a time or merge carefully).
 - **Polish (Phase 9)**: after the stories you want to ship.
+- **Part C (Phase 10)**: after Phase 9 code tasks, before T065 and T066. T074 before T075; T075 to T077 before T078; T078 before T079. T080 needs only its test (T073).
 
 ### Order inside Part A (each test task before its code task)
 
