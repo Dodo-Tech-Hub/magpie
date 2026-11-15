@@ -58,7 +58,7 @@ description: "Task list for the GitHub platform"
 - [X] T024 Edit `App.tsx`: show the From, Pick, and To steps for any open platform (`state.platform !== null`) instead of only `'youtube'`. The Home, Settings, and back-button rules are unchanged.
 - [X] T025 Run `npm test`, `npm run typecheck`, and `npm run lint`. All pass, with the same number of existing tests as T005. Run `grep -rn "auth/google\|api/youtube" src` and confirm only the two modules and `src/platforms/youtubeDriver.ts` appear.
 - [X] T026 Manual Part A check from quickstart.md ("Part A check"): on a phone with a saved YouTube progress from the old build, update the app, open it, and confirm the Continue note, the list, and "Tomorrow" rows are as before. This proves the migration on real data.
-- [ ] T027 Commit Part A on its own branch `feature/platform-driver`, started from `main` only, so the 008 spec, plan, and tasks stay out of the restructure (Principle IV). Open a pull request titled "refactor: put YouTube behind a platform driver" with the description "No change for users. Store gets a version number and a migration. Every existing test passes.", and wait for the owner to merge it.
+- [X] T027 Commit Part A on its own branch `feature/platform-driver`, started from `main` only, so the 008 spec, plan, and tasks stay out of the restructure (Principle IV). Open a pull request titled "refactor: put YouTube behind a platform driver" with the description "No change for users. Store gets a version number and a migration. Every existing test passes.", and wait for the owner to merge it.
 
 **Checkpoint**: The flow, store, mover, and screens know no platform by name. YouTube works as before.
 
