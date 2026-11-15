@@ -8,6 +8,8 @@ export const strings = {
   oldTitle: 'Old account',
   newTitle: 'New account',
   switchAccount: 'Switch',
+  loading: 'Loading your list…',
+  loadPartial: "Some items couldn't load. The rest can still move.",
   copyCode: 'Copy code',
   waitingForYou: 'Waiting for you to allow it in the browser…',
   signInFailed: "Sign-in didn't finish. Try again.",

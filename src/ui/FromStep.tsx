@@ -47,6 +47,7 @@ export function FromStep() {
         code={state.signInCode?.role === 'old' ? state.signInCode : null}
         onCancel={cancelSignIn}
       />
+      {state.loading && <Text style={styles.heading}>{strings.loading}</Text>}
       {state.notice && <Text style={styles.error}>{state.notice}</Text>}
       {items.length > 0 && (
         <View>

@@ -1,8 +1,8 @@
 // A fake `fetch` for GitHub. Routes are "METHOD url" (no query), "METHOD url?query" for an exact match, or "METHOD url*" for a prefix.
 // An answer is { status, headers, json }, a function of the request, or a list used one by one (the last repeats).
 // Any host other than GitHub's three is refused, so a test cannot reach the real internet.
-export type Req = { method: string; url: string; auth: string | null; body: unknown; headers: Record<string, string> };
-export type Answer = { status?: number; headers?: Record<string, string>; json?: unknown };
+export type Req = { at: number; method: string; url: string; auth: string | null; body: unknown; headers: Record<string, string> };
+export type Answer = { delay?: number; status?: number; headers?: Record<string, string>; json?: unknown };
 type Route = Answer | ((req: Req) => Answer) | Answer[];
 
 const HOSTS = ['github.com', 'api.github.com', 'avatars.githubusercontent.com'];
@@ -28,7 +28,7 @@ export function mockGithub(routes: Record<string, Route> = {}) {
         // keep the text
       }
     }
-    const req: Req = { method, url, auth: headers.authorization ?? null, body, headers };
+    const req: Req = { at: Date.now(), method, url, auth: headers.authorization ?? null, body, headers };
     calls.push(req);
 
     const bare = url.split('?')[0];
@@ -44,7 +44,9 @@ export function mockGithub(routes: Record<string, Route> = {}) {
       used.set(key, n + 1);
       route = route[Math.min(n, route.length - 1)];
     }
-    return reply(typeof route === 'function' ? route(req) : route);
+    const answer = typeof route === 'function' ? route(req) : route;
+    if (answer.delay) await new Promise((r) => setTimeout(r, answer.delay));
+    return reply(answer);
   }) as unknown as typeof fetch;
 
   return {

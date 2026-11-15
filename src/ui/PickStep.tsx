@@ -3,10 +3,13 @@ import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-na
 import { Ionicons } from '@expo/vector-icons';
 import { driverFor } from '@/platforms/platforms';
 import { useApp } from '@/state/AppState';
+import type { StoredItem } from '@/store/progressStore';
 import { isMovable, startMove, togglePick } from '@/state/flows';
 import { pickedCounter, strings, summary } from '@/strings';
 import { useTheme, type Colors } from '@/theme/theme';
 import { ItemRow, ROW_HEIGHT } from '@/ui/ItemRow';
+
+type Row = { item: StoredItem } | { heading: string; key: string };
 
 export function PickStep() {
   const { state, dispatch } = useApp();
@@ -16,6 +19,7 @@ export function PickStep() {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const [query, setQuery] = useState('');
 
+  const driver = driverFor(state.platform!);
   const onToggle = useCallback(
     (id: string, picked: boolean) => void togglePick(state, dispatch, [id], picked),
     [state, dispatch],
@@ -35,6 +39,15 @@ export function PickStep() {
   const shown = query
     ? items.filter((c) => c.title.toLowerCase().includes(query.toLowerCase()))
     : items;
+  // One section per kind when there is more than one kind. A kind with no items has none (FR-GH-003).
+  const rows = useMemo(() => {
+    const kinds = driver.kinds.filter((k) => shown.some((c) => c.kind === k.id));
+    if (kinds.length < 2) return shown.map((item) => ({ item }) as Row);
+    return kinds.flatMap((k) => [
+      { heading: k.heading, key: `h:${k.id}` } as Row,
+      ...shown.filter((c) => c.kind === k.id).map((item) => ({ item }) as Row),
+    ]);
+  }, [shown, driver]);
   const shownPickable = shown.filter((c) => c.status !== 'already_there' && c.status !== 'moved');
   const allPicked = shownPickable.length > 0 && shownPickable.every((c) => c.picked);
 
@@ -80,10 +93,18 @@ export function PickStep() {
         </View>
       </View>
       <FlatList
-        data={shown}
-        keyExtractor={(c) => c.itemId}
+        data={rows}
+        keyExtractor={(r) => ('item' in r ? r.item.itemId : r.key)}
         getItemLayout={(_, i) => ({ length: ROW_HEIGHT, offset: ROW_HEIGHT * i, index: i })}
-        renderItem={({ item }) => <ItemRow item={item} laterLabel={words.later} onToggle={onToggle} />}
+        renderItem={({ item: r }) =>
+          'item' in r ? (
+            <ItemRow item={r.item} laterLabel={words.later} onToggle={onToggle} />
+          ) : (
+            <Text style={styles.section} accessibilityRole="header">
+              {r.heading}
+            </Text>
+          )
+        }
         ListEmptyComponent={<Text style={styles.empty}>{words.noItems}</Text>}
       />
       <View style={styles.bar}>
@@ -118,6 +139,7 @@ const makeStyles = (c: Colors) =>
     input: { flex: 1, fontSize: 15, color: c.text },
     allRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     all: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    section: { height: ROW_HEIGHT, textAlignVertical: 'center', paddingHorizontal: 14, fontSize: 13, color: c.muted },
     counter: { fontSize: 13, color: c.muted },
     locked: { alignItems: 'center', padding: 32, gap: 8 },
     empty: { padding: 24, textAlign: 'center', color: c.muted },

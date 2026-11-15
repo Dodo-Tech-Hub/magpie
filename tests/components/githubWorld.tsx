@@ -1,4 +1,4 @@
-import { Linking } from 'react-native';
+import { Alert, Linking, type AlertButton } from 'react-native';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import * as Clipboard from 'expo-clipboard';
 import App from '../../App';
@@ -101,7 +101,8 @@ export async function resetGithub() {
   await dropNew();
   await closeStore();
   (Clipboard.setStringAsync as jest.Mock).mockClear();
-  jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+  answerReminder('No');
+  jest.spyOn(Linking, 'openURL').mockImplementation(async () => undefined as never);
 }
 
 // The GitHub card is hidden until the feature is ready (Phase 8). Tests show it.
@@ -121,3 +122,30 @@ export const seconds = (n: number) =>
   act(async () => {
     await jest.advanceTimersByTimeAsync(n * 1000);
   });
+
+// A move runs on fake time. Wait for text while the clock moves on.
+export const eventually = (text: string | RegExp) =>
+  screen.findByText(text, {}, { timeout: 600_000, interval: 1000 });
+
+const FOLLOWS_ONLY = 'public_repo,user,gist';
+
+// Sign in to the old account, then the new one, and land on Pick. Everything granted unless told.
+export async function signInBoth(w: ReturnType<typeof githubWorld>, newScope = FOLLOWS_ONLY) {
+  w.signIn('old');
+  w.signIn('new', { scope: newScope });
+  await fireEvent.press(screen.getByLabelText('Sign in with GitHub: Old account'));
+  await seconds(2);
+  await fireEvent.press(screen.getByRole('tab', { name: 'To' }));
+  await fireEvent.press(screen.getByLabelText('Sign in with GitHub: New account'));
+  await seconds(2);
+  await screen.findByRole('checkbox', { name: 'All' });
+}
+
+// Answer the question about reminders right away.
+export function answerReminder(text: 'Yes' | 'No') {
+  return jest
+    .spyOn(Alert, 'alert')
+    .mockImplementation((_t: unknown, _m: unknown, buttons?: unknown) =>
+      (buttons as AlertButton[] | undefined)?.find((b) => b.text === text)?.onPress?.(),
+    );
+}

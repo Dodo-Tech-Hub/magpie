@@ -22,6 +22,8 @@ export type State = {
   signInCode: { role: 'old' | 'new'; code: string; hint: string | null } | null;
   // Kinds the new account has access for, from the platform.
   granted: string[];
+  // The old list is being read.
+  loading: boolean;
 };
 
 export type Action =
@@ -39,6 +41,7 @@ export type Action =
   | { type: 'setNotice'; notice: string | null }
   | { type: 'setSignInCode'; code: State['signInCode'] }
   | { type: 'setGranted'; kinds: string[] }
+  | { type: 'setLoading'; loading: boolean }
   | { type: 'reset' };
 
 export const initialState: State = {
@@ -54,6 +57,7 @@ export const initialState: State = {
   notice: null,
   signInCode: null,
   granted: [],
+  loading: false,
 };
 
 export function reducer(state: State, action: Action): State {
@@ -95,6 +99,8 @@ export function reducer(state: State, action: Action): State {
       return { ...state, signInCode: action.code };
     case 'setGranted':
       return { ...state, granted: action.kinds };
+    case 'setLoading':
+      return { ...state, loading: action.loading };
     case 'reset':
       // Delete all keeps the user where they are (FR-010, research R1).
       return { ...initialState, platform: state.platform };

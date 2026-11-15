@@ -4,6 +4,7 @@ import * as Clipboard from 'expo-clipboard';
 import { DriverError, type Driver, type Role, type SignInResult } from '@/platforms/driver';
 import { driverFor, PLATFORMS, type PlatformId } from '@/platforms/platforms';
 import { recoverInterrupted, runMove } from '@/move/mover';
+import { createPacer } from '@/move/pacer';
 import { askOnce, cancelReminder, scheduleReminder } from '@/reminders/reminder';
 import {
   findProgressForPair,
@@ -23,6 +24,11 @@ type D = Dispatch<Action>;
 
 export const isMovable = (c: StoredItem) =>
   c.picked && (c.status === 'waiting' || c.status === 'later');
+
+// A kind the new account has no access for is not moved and not counted (FR-GH-020).
+// Before the new account signs in, nothing is known, so nothing is held back.
+export const hasAccess = (state: State, c: StoredItem) =>
+  !state.newAccount || state.granted.includes(c.kind);
 
 const driverOf = (state: State): Driver => driverFor(state.platform!);
 const pickOrder = (driver: Driver) => driver.kinds.map((k) => k.id);
@@ -92,8 +98,9 @@ export async function signInOld(state: State, dispatch: D): Promise<void> {
     dispatch({ type: 'setNotice', notice: strings.sameAsNew });
     return;
   }
+  dispatch({ type: 'setLoading', loading: true });
   try {
-    const { items } = await driver.listOld();
+    const { items, missing } = await driver.listOld();
     const stored: StoredItem[] = items.map((c) => ({ ...c, picked: true, status: 'waiting', reason: null }));
     dispatch({ type: 'setOld', account: res.account, items: stored });
     // A platform may hold only one account at a time. Then the new account signs in again.
@@ -101,8 +108,11 @@ export async function signInOld(state: State, dispatch: D): Promise<void> {
       dispatch({ type: 'setNew', account: null });
     }
     dispatch({ type: 'setStep', step: 'pick' });
+    if (missing.length > 0) dispatch({ type: 'setNotice', notice: strings.loadPartial });
   } catch (e) {
     dispatch({ type: 'setNotice', notice: noticeFor(e, driver) });
+  } finally {
+    dispatch({ type: 'setLoading', loading: false });
   }
 }
 
@@ -127,6 +137,7 @@ export async function signInNew(state: State, dispatch: D): Promise<void> {
     return;
   }
   dispatch({ type: 'setNew', account: res.account });
+  dispatch({ type: 'setGranted', kinds: await driver.granted() });
   dispatch({ type: 'setExpectedNew', account: null });
   if (!old) return;
   try {
@@ -137,6 +148,9 @@ export async function signInNew(state: State, dispatch: D): Promise<void> {
       const unpicked = state.items.filter((c) => !c.picked).map((c) => c.itemId);
       await setPicked(progressId, unpicked, false);
     }
+    // A kind without access is not picked, so it is never moved and never counted (FR-GH-020).
+    const granted = await driver.granted();
+    await setPicked(progressId, state.items.filter((c) => !granted.includes(c.kind)).map((c) => c.itemId), false);
     await markAlreadyThere(progressId, await checkNew(progressId, driver, state.items));
     dispatch({ type: 'setProgress', progressId, items: await getItems(progressId, pickOrder(driver)) });
     dispatch({ type: 'setStep', step: 'pick' });
@@ -153,7 +167,9 @@ async function checkNew(progressId: string, driver: Driver, items: StoredItem[])
 }
 
 export async function togglePick(state: State, dispatch: D, ids: string[], picked: boolean) {
-  const movable = new Set(state.items.filter((c) => c.status !== 'already_there').map((c) => c.itemId));
+  const movable = new Set(
+    state.items.filter((c) => c.status !== 'already_there' && hasAccess(state, c)).map((c) => c.itemId),
+  );
   const target = ids.filter((id) => movable.has(id));
   if (state.progressId) {
     await setPicked(state.progressId, target, picked);
@@ -175,7 +191,7 @@ export async function startMove(state: State, dispatch: D): Promise<void> {
     dispatch({ type: 'setNotice', notice: strings.needNewAccount });
     return;
   }
-  const movable = state.items.filter(isMovable).length;
+  const movable = state.items.filter((c) => isMovable(c) && hasAccess(state, c)).length;
   if (movable === 0) {
     if (state.items.some((c) => c.status === 'already_there')) {
       dispatch({ type: 'setMoveState', moveState: 'done' });
@@ -195,6 +211,7 @@ export async function startMove(state: State, dispatch: D): Promise<void> {
   let stopNotice: string | null = null;
   const result = await runMove(progressId, {
     add: (item, all, pacer) => driver.add(item, all, pacer),
+    pacer: driver.pace ? createPacer(`${driver.id}:${newAccount.id}`) : undefined,
     kindOrder: driver.moveOrder ?? pickOrder(driver),
     onUpdate: () => void reload(progressId, driver, dispatch),
     onStop: (notice) => (stopNotice = notice),
