@@ -36,9 +36,9 @@ function Screen() {
       <View style={styles.flex}>
         {state.settingsOpen && <SettingsView />}
         {!state.settingsOpen && state.platform === null && <HomeView />}
-        {!state.settingsOpen && state.platform === 'youtube' && state.step === 'from' && <FromStep />}
-        {!state.settingsOpen && state.platform === 'youtube' && state.step === 'pick' && <PickStep />}
-        {!state.settingsOpen && state.platform === 'youtube' && state.step === 'to' && <ToStep />}
+        {!state.settingsOpen && state.platform !== null && state.step === 'from' && <FromStep />}
+        {!state.settingsOpen && state.platform !== null && state.step === 'pick' && <PickStep />}
+        {!state.settingsOpen && state.platform !== null && state.step === 'to' && <ToStep />}
       </View>
     </View>
   );

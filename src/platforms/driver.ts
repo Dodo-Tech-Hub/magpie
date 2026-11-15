@@ -21,6 +21,13 @@ export type Pacer = {
   nextAt?(): Promise<number>;
 };
 
+// Thrown by listOld and checkNew. retry: no network. later: a limit. auth: the sign-in ran out.
+export class DriverError extends Error {
+  constructor(public kind: 'retry' | 'later' | 'auth') {
+    super(`Platform request failed: ${kind}`);
+  }
+}
+
 export type SignInCode = { code: string; url: string };
 
 export type SignInResult =

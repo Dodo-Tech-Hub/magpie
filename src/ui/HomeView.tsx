@@ -27,7 +27,7 @@ export function HomeView({ platforms = PLATFORMS }: { platforms?: Platform[] }) 
     return () => {
       live = false;
     };
-  }, [platforms, state.platform, state.moveState, state.progressId, state.channels]);
+  }, [platforms, state.platform, state.moveState, state.progressId, state.items]);
 
   const onContinue = (p: Platform) => {
     const { ids = [] } = unfinished[p.id] ?? {};

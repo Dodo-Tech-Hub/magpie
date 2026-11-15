@@ -3,7 +3,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import App from '../../App';
 import { PLATFORMS, type Platform } from '@/platforms/platforms';
 import { AppStateProvider, useApp } from '@/state/AppState';
-import { getOrCreateProgress, initStore, saveChannels, setStatus } from '@/store/progressStore';
+import { getOrCreateProgress, initStore, saveItems, setStatus } from '@/store/progressStore';
 import { ThemeProvider } from '@/theme/theme';
 import { HomeView } from '@/ui/HomeView';
 import { NEW, OLD, resetWorld } from './helpers';
@@ -18,7 +18,7 @@ beforeEach(resetWorld);
 
 const acct = (u: { id: string; email: string; name: string; photo: string | null }) => ({
   id: u.id,
-  email: u.email,
+  handle: u.email,
   name: u.name,
   photoUrl: u.photo,
 });
@@ -26,8 +26,8 @@ const other = { id: 'other-id', email: 'other.me@gmail.com', name: 'Other', phot
 
 async function seed(old: typeof OLD, ids: string[]) {
   await initStore();
-  const pid = await getOrCreateProgress(acct(old), acct(NEW));
-  await saveChannels(pid, ids.map((id) => ({ channelId: id, title: id, thumbnailUrl: null })));
+  const pid = await getOrCreateProgress('youtube', acct(old), acct(NEW));
+  await saveItems(pid, ids.map((id) => ({ itemId: id, kind: 'channel', title: id, thumbnailUrl: null, data: null })));
   return pid;
 }
 const idsOf = (n: number, p: string) => Array.from({ length: n }, (_, i) => `${p}${i}`);

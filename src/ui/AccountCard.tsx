@@ -1,19 +1,23 @@
 import React, { useMemo } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import type { Words } from '@/platforms/driver';
 import type { AccountInfo } from '@/store/progressStore';
 import { strings } from '@/strings';
 import { useTheme, type Colors } from '@/theme/theme';
 
+type IconName = keyof typeof Ionicons.glyphMap;
+
 type Props = {
   title: string;
+  words: Words;
   hint: string;
   account: AccountInfo | null;
   onSignIn: () => void;
   disabled?: boolean;
 };
 
-export function AccountCard({ title, hint, account, onSignIn, disabled }: Props) {
+export function AccountCard({ title, words, hint, account, onSignIn, disabled }: Props) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   if (account) {
@@ -23,12 +27,12 @@ export function AccountCard({ title, hint, account, onSignIn, disabled }: Props)
           <Image source={{ uri: account.photoUrl }} style={styles.avatar} />
         ) : (
           <View style={[styles.avatar, styles.fallback]}>
-            <Text style={styles.text}>{account.email[0].toUpperCase()}</Text>
+            <Text style={styles.text}>{account.handle[0].toUpperCase()}</Text>
           </View>
         )}
         <View style={styles.flex}>
           <Text style={styles.title}>{title}</Text>
-          <Text style={styles.hint}>{account.email}</Text>
+          <Text style={styles.hint}>{account.handle}</Text>
         </View>
         <Pressable
           style={[styles.button, disabled && styles.off]}
@@ -52,12 +56,12 @@ export function AccountCard({ title, hint, account, onSignIn, disabled }: Props)
         <Pressable
           style={[styles.signIn, disabled && styles.off]}
           accessibilityRole="button"
-          accessibilityLabel={`${strings.signIn}: ${title}`}
+          accessibilityLabel={`${words.signIn}: ${title}`}
           disabled={disabled}
           onPress={onSignIn}
         >
-          <Ionicons name="logo-google" size={18} color={colors.onPrimary} />
-          <Text style={styles.signInText}>{strings.signIn}</Text>
+          <Ionicons name={words.signInIcon as IconName} size={18} color={colors.onPrimary} />
+          <Text style={styles.signInText}>{words.signIn}</Text>
         </Pressable>
       </View>
     </View>
