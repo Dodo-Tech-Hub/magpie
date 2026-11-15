@@ -1,29 +1,23 @@
+import type { Words } from '@/platforms/driver';
+
 // Every user-facing text lives here. Simple words, like talking to a kid.
 export const strings = {
   stepFrom: 'From',
   stepPick: 'Pick',
   stepTo: 'To',
   oldTitle: 'Old account',
-  oldHint: 'Where your channels are now',
   newTitle: 'New account',
-  newHint: 'Where your channels should go',
-  signIn: 'Sign in with Google',
   switchAccount: 'Switch',
   signInFailed: "Sign-in didn't finish. Try again.",
   sameAsOld: 'This is your old account. Pick a different one.',
   sameAsNew: 'This is your new account. Pick a different one.',
   pickLocked: 'Sign in to your old account first',
-  noChannels: "This account doesn't follow any channels yet",
-  searchPlaceholder: 'Search channels',
   all: 'All',
   needNewAccount: 'Sign in to your new account first',
-  needPick: 'Pick at least 1 channel',
   moving: 'Moving…',
   moved: 'Moved',
   couldntMove: "Couldn't move",
-  tomorrow: 'Tomorrow',
   alreadyThere: 'Already there',
-  limitReached: "Daily limit reached. We'll remind you when you can move the rest.",
   offline: "No internet. Try again when you're online.",
   signInAgain: 'Your sign-in ran out. Sign in again to keep going.',
   continueMove: 'Continue',
@@ -34,7 +28,6 @@ export const strings = {
   cancel: 'Cancel',
   reminderAsk: 'Can we remind you when you can move the rest?',
   reminderTitle: 'Magpie',
-  reminderBody: 'You can move the rest of your channels now.',
   yes: 'Yes',
   no: 'No',
   settings: 'Settings',
@@ -48,17 +41,15 @@ export const strings = {
   light: 'Light',
   dark: 'Dark',
   auto: 'Auto',
-  notAffiliated: 'Magpie is not made by or linked with YouTube or Google. YouTube is a trademark of Google LLC.',
 } as const;
 
 export const continueLeft = (n: number) => `Continue: ${n} left`;
 export const continueLabel = (name: string, n: number) => `Continue ${name}, ${n} left`;
-export const signInTo = (email: string) => `Sign in to ${email} to keep going.`;
-export const wrongAccount = (email: string) => `This one needs ${email}. Pick that account.`;
-export const moveButton = (n: number) => `Move ${n} channel${n === 1 ? '' : 's'}`;
+export const signInTo = (handle: string) => `Sign in to ${handle} to keep going.`;
+export const wrongAccount = (handle: string) => `This one needs ${handle}. Pick that account.`;
 export const pickedCounter = (picked: number, total: number) => `${picked} of ${total} picked`;
-export const channelsLeft = (oldEmail: string, newEmail: string, left: number) =>
-  `${oldEmail.split('@')[0]} → ${newEmail.split('@')[0]} · ${left} left`;
+export const itemsLeft = (oldHandle: string, newHandle: string, left: number) =>
+  `${oldHandle.split('@')[0]} → ${newHandle.split('@')[0]} · ${left} left`;
 
 export function summary(s: {
   moved: number;
@@ -72,3 +63,19 @@ export function summary(s: {
   if (s.waiting) parts.push(`${s.waiting} waiting`);
   return parts.join(' · ');
 }
+
+// Words of the platforms. YouTube's are the texts the app always had.
+export const youtubeWords: Words = {
+  signIn: 'Sign in with Google',
+  signInIcon: 'logo-google',
+  oldHint: 'Where your channels are now',
+  newHint: 'Where your channels should go',
+  searchPlaceholder: 'Search channels',
+  noItems: "This account doesn't follow any channels yet",
+  needPick: 'Pick at least 1 channel',
+  later: 'Tomorrow',
+  limitReached: "Daily limit reached. We'll remind you when you can move the rest.",
+  reminderBody: 'You can move the rest of your channels now.',
+  moveButton: (n) => `Move ${n} channel${n === 1 ? '' : 's'}`,
+  notAffiliated: 'Magpie is not made by or linked with YouTube or Google. YouTube is a trademark of Google LLC.',
+};
