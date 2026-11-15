@@ -235,6 +235,22 @@ export async function getProgress(id: string): Promise<UnfinishedProgress | null
   return row ? toProgress(row) : null;
 }
 
+// The times of recent adds, for the pace (FR-GH-010). Rows older than 1 hour go on every write.
+export async function recordAdd(accountKey: string, at: number) {
+  const db = await initStore();
+  await db.runAsync('DELETE FROM add_log WHERE at < ?', [now() - 3_600_000]);
+  await db.runAsync('INSERT INTO add_log (account_key, at) VALUES (?, ?)', [accountKey, at]);
+}
+
+export async function addsSince(accountKey: string, since: number): Promise<number[]> {
+  const db = await initStore();
+  const rows = await db.getAllAsync<{ at: number }>(
+    'SELECT at FROM add_log WHERE account_key = ? AND at >= ? ORDER BY at',
+    [accountKey, since],
+  );
+  return rows.map((r) => r.at);
+}
+
 export async function deleteProgress(id: string) {
   const db = await initStore();
   await db.runAsync('DELETE FROM progress WHERE id = ?', [id]);

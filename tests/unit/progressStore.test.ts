@@ -1,4 +1,6 @@
 import {
+  addsSince,
+  recordAdd,
   closeStore,
   deleteAll,
   deleteProgress,
@@ -169,5 +171,29 @@ describe('deleting', () => {
     await seed('o2', 'n2');
     await deleteAll();
     expect(await listUnfinished()).toEqual([]);
+  });
+});
+
+describe('pace log', () => {
+  it('stores adds per account key and returns those since a time, in order', async () => {
+    const t = Date.now();
+    await recordAdd('github:1', t + 20);
+    await recordAdd('github:1', t + 10);
+    await recordAdd('github:2', t + 15);
+    expect(await addsSince('github:1', t)).toEqual([t + 10, t + 20]);
+    expect(await addsSince('github:1', t + 15)).toEqual([t + 20]);
+    expect(await addsSince('github:2', t)).toEqual([t + 15]);
+  });
+
+  it('deletes rows older than 1 hour on each write', async () => {
+    await recordAdd('github:1', Date.now() - 2 * 3_600_000);
+    await recordAdd('github:1', Date.now());
+    expect(await addsSince('github:1', 0)).toHaveLength(1);
+  });
+
+  it('is emptied by delete all', async () => {
+    await recordAdd('github:1', Date.now());
+    await deleteAll();
+    expect(await addsSince('github:1', 0)).toEqual([]);
   });
 });
