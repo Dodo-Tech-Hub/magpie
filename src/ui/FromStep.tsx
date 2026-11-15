@@ -55,7 +55,7 @@ export function FromStep() {
         <View>
           <Text style={styles.heading}>{strings.unfinished}</Text>
           {items.map((p) => {
-            const label = itemsLeft(p.oldAccount.handle, p.newAccount.handle, p.left);
+            const label = itemsLeft(p.oldAccount.handle, p.newAccount?.handle ?? null, p.left);
             return (
               <View key={p.id} style={styles.row}>
                 <Pressable

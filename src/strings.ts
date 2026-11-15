@@ -34,6 +34,9 @@ export const strings = {
   deleteAll: 'Delete all my data',
   deleteAllAsk: 'This removes everything the app saved on this phone. It cannot be undone.',
   cancel: 'Cancel',
+  save: 'Save',
+  saveProgressTitle: (platform: string) => `Save your ${platform} progress?`,
+  notChosenYet: 'New account not chosen yet',
   reminderAsk: 'Can we remind you when you can move the rest?',
   reminderTitle: 'Magpie',
   yes: 'Yes',
@@ -64,8 +67,9 @@ export const timeLeftText = (seconds: number, adds: number) => {
 };
 export const needAccess = (heading: string) => `Magpie needs extra access to move ${heading.toLowerCase()}.`;
 export const pickedCounter = (picked: number, total: number) => `${picked} of ${total} picked`;
-export const itemsLeft = (oldHandle: string, newHandle: string, left: number) =>
-  `${oldHandle.split('@')[0]} → ${newHandle.split('@')[0]} · ${left} left`;
+export const dontSave = "Don't save";
+export const itemsLeft = (oldHandle: string, newHandle: string | null, left: number) =>
+  `${oldHandle.split('@')[0]} → ${newHandle ? newHandle.split('@')[0] : strings.notChosenYet} · ${left} left`;
 
 export function summary(s: {
   moved: number;

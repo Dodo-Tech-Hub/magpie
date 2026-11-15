@@ -17,7 +17,7 @@ describe('platform field', () => {
 
   it('openPlatform sets the platform, closes Settings, and keeps the rest', () => {
     const next = reducer(busy, { type: 'openPlatform', platform: 'youtube' });
-    expect(next).toEqual({ ...busy, platform: 'youtube', settingsOpen: false });
+    expect(next).toEqual({ ...busy, platform: 'youtube', flowPlatform: 'youtube', settingsOpen: false });
   });
 
   it('goHome shows Home, closes Settings, and keeps the rest', () => {
@@ -54,5 +54,26 @@ describe('sign-in code and granted kinds', () => {
 describe('move state', () => {
   it('can be stopped, when the platform paused the account', () => {
     expect(reducer(busy, { type: 'setMoveState', moveState: 'stopped' }).moveState).toBe('stopped');
+  });
+});
+
+describe('flow per platform (FR-GH-022)', () => {
+  it('goHome keeps the platform of the flow, so the same card can resume it', () => {
+    const open = reducer(busy, { type: 'openPlatform', platform: 'github' });
+    const home = reducer(open, { type: 'goHome' });
+    expect(home.platform).toBeNull();
+    expect(home.flowPlatform).toBe('github');
+    expect(home.progressId).toBe('p1');
+  });
+
+  it('startFlow clears the old flow and opens the platform at the start', () => {
+    const next = reducer({ ...busy, flowPlatform: 'github' }, { type: 'startFlow', platform: 'youtube' });
+    expect(next).toEqual({ ...initialState, platform: 'youtube', flowPlatform: 'youtube' });
+  });
+
+  it('forProgress applies only while that progress is the open one', () => {
+    const act = { type: 'setMoveState', moveState: 'done' } as const;
+    expect(reducer(busy, { type: 'forProgress', progressId: 'p1', action: act }).moveState).toBe('done');
+    expect(reducer(busy, { type: 'forProgress', progressId: 'other', action: act })).toBe(busy);
   });
 });

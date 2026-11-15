@@ -48,7 +48,8 @@ describe('top bar', () => {
   });
 
   it('still works when the user signs in to the new account first', async () => {
-    listMock.mockResolvedValueOnce([ch('a')]);
+    // The new account's list is read when both accounts are known.
+    listMock.mockResolvedValueOnce([ch('a')]).mockResolvedValueOnce([]);
     await renderApp();
     await fireEvent.press(screen.getByRole('tab', { name: 'To' }));
     nextSignIn('new');

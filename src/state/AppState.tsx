@@ -8,6 +8,8 @@ export type MoveState = 'idle' | 'moving' | 'limit' | 'done' | 'offline' | 'auth
 export type State = {
   // null shows Home. A platform id shows that platform's flow.
   platform: PlatformId | null;
+  // The platform the flow fields below belong to. Stays while Home shows, so the same card resumes it (FR-GH-022).
+  flowPlatform: PlatformId | null;
   step: Step;
   settingsOpen: boolean;
   oldAccount: AccountInfo | null;
@@ -31,6 +33,10 @@ export type State = {
 export type Action =
   | { type: 'openPlatform'; platform: PlatformId }
   | { type: 'goHome' }
+  // A fresh flow for this platform: every flow field back to its start.
+  | { type: 'startFlow'; platform: PlatformId }
+  // A running move reports through this. It is dropped when its progress is no longer the open one.
+  | { type: 'forProgress'; progressId: string; action: Action }
   | { type: 'setStep'; step: Step }
   | { type: 'openSettings' }
   | { type: 'closeSettings' }
@@ -49,6 +55,7 @@ export type Action =
 
 export const initialState: State = {
   platform: null,
+  flowPlatform: null,
   step: 'from',
   settingsOpen: false,
   oldAccount: null,
@@ -67,7 +74,11 @@ export const initialState: State = {
 export function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'openPlatform':
-      return { ...state, platform: action.platform, settingsOpen: false };
+      return { ...state, platform: action.platform, flowPlatform: action.platform, settingsOpen: false };
+    case 'startFlow':
+      return { ...initialState, platform: action.platform, flowPlatform: action.platform };
+    case 'forProgress':
+      return state.progressId === action.progressId ? reducer(state, action.action) : state;
     case 'goHome':
       return { ...state, platform: null, settingsOpen: false };
     case 'setStep':
@@ -114,7 +125,7 @@ export function reducer(state: State, action: Action): State {
       return { ...state, loading: action.loading };
     case 'reset':
       // Delete all keeps the user where they are (FR-010, research R1).
-      return { ...initialState, platform: state.platform };
+      return { ...initialState, platform: state.platform, flowPlatform: state.flowPlatform };
   }
 }
 

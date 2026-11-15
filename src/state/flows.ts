@@ -1,5 +1,5 @@
 import type { Dispatch } from 'react';
-import { Linking } from 'react-native';
+import { Alert, Linking } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { DriverError, type Driver, type Role, type SignInResult } from '@/platforms/driver';
 import { driverFor, PLATFORMS, type PlatformId } from '@/platforms/platforms';
@@ -7,6 +7,8 @@ import { recoverInterrupted, runMove } from '@/move/mover';
 import { createPacer } from '@/move/pacer';
 import { askOnce, cancelReminder, scheduleReminder } from '@/reminders/reminder';
 import {
+  attachNew,
+  deleteProgress,
   findProgressForPair,
   getItems,
   getOrCreateProgress,
@@ -17,7 +19,7 @@ import {
   setPicked,
   type StoredItem,
 } from '@/store/progressStore';
-import { signInCodeHint, signInTo, strings, wrongAccount } from '@/strings';
+import { dontSave, signInCodeHint, signInTo, strings, wrongAccount } from '@/strings';
 import type { Action, State } from '@/state/AppState';
 
 type D = Dispatch<Action>;
@@ -44,6 +46,9 @@ function noticeFor(e: unknown, driver: Driver): string {
 async function reload(progressId: string, driver: Driver, dispatch: D) {
   dispatch({ type: 'setItems', items: await getItems(progressId, pickOrder(driver)) });
 }
+
+// The move that is running, so "Don't save" can stop it and a second Move cannot start beside it.
+let running: { progressId: string; abort: AbortController; done: Promise<unknown> } | null = null;
 
 // The sign-in that is waiting for the user, so Cancel can stop it.
 let waiting: AbortController | null = null;
@@ -102,11 +107,15 @@ export async function signInOld(state: State, dispatch: D): Promise<void> {
   try {
     const { items, missing } = await driver.listOld();
     const stored: StoredItem[] = items.map((c) => ({ ...c, picked: true, status: 'waiting', reason: null }));
-    dispatch({ type: 'setOld', account: res.account, items: stored });
     // A platform may hold only one account at a time. Then the new account signs in again.
-    if (state.newAccount && !(await driver.canAct('new', state.newAccount.id))) {
-      dispatch({ type: 'setNew', account: null });
-    }
+    const keepNew = state.newAccount && (await driver.canAct('new', state.newAccount.id)) ? state.newAccount : null;
+    // The progress starts here, with or without a new account (FR-GH-021). Old picks stay, new items are picked.
+    const progressId = await getOrCreateProgress(driver.id, res.account, keepNew);
+    await saveItems(progressId, stored);
+    dispatch({ type: 'setOld', account: res.account, items: stored });
+    if (state.newAccount && !keepNew) dispatch({ type: 'setNew', account: null });
+    if (keepNew) await openPair(driver, dispatch, progressId);
+    else dispatch({ type: 'setProgress', progressId, items: await getItems(progressId, pickOrder(driver)) });
     dispatch({ type: 'setStep', step: 'pick' });
     if (missing.length > 0) dispatch({ type: 'setNotice', notice: strings.loadPartial });
   } catch (e) {
@@ -143,21 +152,32 @@ export async function signInNew(state: State, dispatch: D): Promise<void> {
   if (!old) return;
   try {
     const existed = (await findProgressForPair(driver.id, old.id, res.account.id)) !== null;
-    const progressId = await getOrCreateProgress(driver.id, old, res.account);
+    // The open progress gets its new account. If this pair already has a progress, that one opens instead (FR-GH-021).
+    const open = state.progressId ? await getProgress(state.progressId) : null;
+    const progressId =
+      open && open.newAccount === null
+        ? await attachNew(open.id, res.account)
+        : await getOrCreateProgress(driver.id, old, res.account);
     await saveItems(progressId, state.items);
     if (!existed) {
       const unpicked = state.items.filter((c) => !c.picked).map((c) => c.itemId);
       await setPicked(progressId, unpicked, false);
     }
-    // A kind without access is not picked, so it is never moved and never counted (FR-GH-020).
-    const granted = await driver.granted();
-    await setPicked(progressId, state.items.filter((c) => !granted.includes(c.kind)).map((c) => c.itemId), false);
-    await markAlreadyThere(progressId, await checkNew(progressId, driver, state.items));
-    dispatch({ type: 'setProgress', progressId, items: await getItems(progressId, pickOrder(driver)) });
+    await openPair(driver, dispatch, progressId);
     dispatch({ type: 'setStep', step: 'pick' });
   } catch (e) {
     dispatch({ type: 'setNotice', notice: noticeFor(e, driver) });
   }
+}
+
+// Both accounts are known: hold back kinds without access and mark what the new account already has.
+async function openPair(driver: Driver, dispatch: D, progressId: string) {
+  // A kind without access is not picked, so it is never moved and never counted (FR-GH-020).
+  const granted = await driver.granted();
+  const items = await getItems(progressId, pickOrder(driver));
+  await setPicked(progressId, items.filter((c) => !granted.includes(c.kind)).map((c) => c.itemId), false);
+  await markAlreadyThere(progressId, await checkNew(progressId, driver, items));
+  dispatch({ type: 'setProgress', progressId, items: await getItems(progressId, pickOrder(driver)) });
 }
 
 // "Already there": items the new account has already (research R6, R7).
@@ -226,16 +246,10 @@ export async function togglePick(state: State, dispatch: D, ids: string[], picke
     state.items.filter((c) => c.status !== 'already_there' && hasAccess(state, c)).map((c) => c.itemId),
   );
   const target = ids.filter((id) => movable.has(id));
-  if (state.progressId) {
-    await setPicked(state.progressId, target, picked);
-    await reload(state.progressId, driverOf(state), dispatch);
-  } else {
-    const set = new Set(target);
-    dispatch({
-      type: 'setItems',
-      items: state.items.map((c) => (set.has(c.itemId) ? { ...c, picked } : c)),
-    });
-  }
+  // Picks are always saved, from the old sign-in on (FR-GH-021).
+  if (!state.progressId) return;
+  await setPicked(state.progressId, target, picked);
+  await reload(state.progressId, driverOf(state), dispatch);
 }
 
 export async function startMove(state: State, dispatch: D): Promise<void> {
@@ -262,23 +276,36 @@ export async function startMove(state: State, dispatch: D): Promise<void> {
     dispatch({ type: 'setNotice', notice: strings.needNewAccount });
     return;
   }
-  dispatch({ type: 'setMoveState', moveState: 'moving' });
+  // A move goes on when the user leaves the flow (Save in FR-GH-022). It reports only while its progress is open.
+  if (running?.progressId === progressId) return;
+  const d: D = (action) => dispatch({ type: 'forProgress', progressId, action });
+  const ctl = new AbortController();
+  d({ type: 'setMoveState', moveState: 'moving' });
   await releaseLater(progressId);
   let stopNotice: string | null = null;
-  const result = await runMove(progressId, {
+  const done = runMove(progressId, {
     add: (item, all, pacer) => driver.add(item, all, pacer),
     pacer: driver.pace ? createPacer(`${driver.id}:${newAccount.id}`) : undefined,
     kindOrder: driver.moveOrder ?? pickOrder(driver),
-    onUpdate: () => void reload(progressId, driver, dispatch),
+    onUpdate: () => void reload(progressId, driver, d),
     onStop: (notice) => (stopNotice = notice),
+    signal: ctl.signal,
   });
-  await reload(progressId, driver, dispatch);
-  if (result === 'auth') {
-    dispatch({ type: 'setNew', account: null });
-    dispatch({ type: 'setNotice', notice: strings.signInAgain });
+  running = { progressId, abort: ctl, done };
+  let result: Awaited<typeof done>;
+  try {
+    result = await done;
+  } finally {
+    running = null;
   }
-  if (result === 'offline') dispatch({ type: 'setNotice', notice: strings.offline });
-  if (result === 'stopped') dispatch({ type: 'setNotice', notice: stopNotice });
+  if (ctl.signal.aborted) return;
+  await reload(progressId, driver, d);
+  if (result === 'auth') {
+    d({ type: 'setNew', account: null });
+    d({ type: 'setNotice', notice: strings.signInAgain });
+  }
+  if (result === 'offline') d({ type: 'setNotice', notice: strings.offline });
+  if (result === 'stopped') d({ type: 'setNotice', notice: stopNotice });
   if (result === 'limit') {
     if (await askOnce()) {
       const resumeAt = (await getProgress(progressId))?.resumeAt ?? Date.now() + 3_600_000;
@@ -286,9 +313,9 @@ export async function startMove(state: State, dispatch: D): Promise<void> {
     }
   } else if (result === 'done') {
     await cancelReminder(progressId);
-    await endMove(driver, dispatch);
+    await endMove(driver, d);
   }
-  dispatch({ type: 'setMoveState', moveState: result === 'done' ? 'done' : result });
+  d({ type: 'setMoveState', moveState: result === 'done' ? 'done' : result });
 }
 
 // Open a saved progress. The old account and its items come from the phone.
@@ -299,10 +326,17 @@ export async function openProgress(dispatch: D, progressId: string): Promise<voi
   if (!saved || !platform) return;
   const items = await getItems(progressId, pickOrder(platform.driver));
   // A reminder or the Continue note opens the flow from Home or Settings (FR-009).
-  dispatch({ type: 'openPlatform', platform: platform.id as PlatformId });
+  dispatch({ type: 'startFlow', platform: platform.id as PlatformId });
   dispatch({ type: 'setOld', account: saved.oldAccount, items });
   dispatch({ type: 'setProgress', progressId, items });
   const driver = platform.driver;
+  // No new account yet: the user picks and signs in to the new account when ready (FR-GH-021).
+  if (!saved.newAccount) {
+    dispatch({ type: 'setNew', account: null });
+    dispatch({ type: 'setExpectedNew', account: null });
+    dispatch({ type: 'setStep', step: 'pick' });
+    return;
+  }
   // A paused move keeps its sign-in on the phone (FR-GH-019), so it can go on at once.
   if (driver.resumesNew && (await driver.canAct('new', saved.newAccount.id))) {
     const granted = await driver.granted();
@@ -316,4 +350,49 @@ export async function openProgress(dispatch: D, progressId: string): Promise<voi
   dispatch({ type: 'setExpectedNew', account: saved.newAccount });
   dispatch({ type: 'setStep', step: 'to' });
   dispatch({ type: 'setNotice', notice: signInTo(saved.newAccount.handle) });
+}
+
+const askToSave = (name: string) =>
+  new Promise<'save' | 'discard' | 'cancel'>((resolve) =>
+    Alert.alert(
+      strings.saveProgressTitle(name),
+      undefined,
+      [
+        { text: strings.save, onPress: () => resolve('save') },
+        { text: dontSave, style: 'destructive', onPress: () => resolve('discard') },
+        { text: strings.cancel, style: 'cancel', onPress: () => resolve('cancel') },
+      ],
+      { cancelable: true, onDismiss: () => resolve('cancel') },
+    ),
+  );
+
+// Call before opening a platform's flow from Home. The same platform resumes where the user left. Another
+// platform starts fresh, after asking whether to save an unfinished progress (FR-GH-022).
+// Returns false when the user cancels.
+export async function leaveFlowFor(state: State, dispatch: D, platform: PlatformId): Promise<boolean> {
+  const from = state.flowPlatform;
+  if (!from || from === platform) return true;
+  const left = state.progressId ? ((await getProgress(state.progressId))?.left ?? 0) : 0;
+  if (left > 0) {
+    const name = PLATFORMS.find((p) => p.id === from)?.name ?? '';
+    const choice = await askToSave(name);
+    if (choice === 'cancel') return false;
+    if (choice === 'discard') await discardFlow(state, from);
+  }
+  dispatch({ type: 'startFlow', platform });
+  return true;
+}
+
+// "Don't save": stop the move, delete the progress and the platform's sign-ins. Moved items stay moved.
+async function discardFlow(state: State, platform: PlatformId) {
+  const progressId = state.progressId!;
+  if (running?.progressId === progressId) {
+    running.abort.abort();
+    await running.done.catch(() => undefined);
+  }
+  await cancelReminder(progressId);
+  await deleteProgress(progressId);
+  const driver = driverFor(platform);
+  await driver.signOut('old');
+  await driver.signOut('new');
 }

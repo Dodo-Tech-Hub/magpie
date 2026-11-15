@@ -126,7 +126,7 @@ Research R12 and R13. Spec FR-GH-021 and FR-GH-022.
 
 ### Migration to version 2
 
-Version 1 to 2 rebuilds `progress` in one transaction: rename it, create the version 2 table, copy every row, drop the old one. `progress_item` rows keep their `progress_id`. A fresh install creates version 2 directly, and a version 0 database runs 0 to 1, then 1 to 2.
+Version 1 to 2 rebuilds `progress` in one transaction: rename it, create the version 2 table, copy every row, drop the old one. `progress_item` rows keep their `progress_id`. A fresh install creates version 2 directly, and a version 0 database goes to version 2 in one step (the 0 to 1 copy now writes the version 2 shape).
 
 | Change | Rule |
 | --- | --- |
@@ -162,7 +162,7 @@ stateDiagram-v2
 | --- | --- |
 | `flowPlatform: PlatformId or null` | New. The platform of the flow in the reducer, kept while Home shows. |
 | `startFlow(platform)` | New action. Resets every flow field to its start value, sets `platform` and `flowPlatform`. |
-| `setItems`, `setProgress`, `setMoveState` from a move | Carry `progressId`. The reducer ignores them when it is not the open `progressId`. |
+| `forProgress(progressId, action)` | New. A running move reports through it. The reducer applies `action` only while `progressId` is the open one. |
 
 ### What Delete all removes
 

@@ -54,11 +54,11 @@ async function seedV0(db: Db) {
 }
 
 describe('migrate', () => {
-  it('moves a version 0 database to version 1 with the same data', async () => {
+  it('moves a version 0 database to version 2 with the same data', async () => {
     const db = await open();
     await seedV0(db);
     await migrate(db);
-    expect(await version(db)).toBe(1);
+    expect(await version(db)).toBe(2);
 
     const p = await db.getFirstAsync<Record<string, unknown>>('SELECT * FROM progress');
     expect(p).toMatchObject({
@@ -96,14 +96,14 @@ describe('migrate', () => {
     expect((await db.getAllAsync('SELECT * FROM progress_item')).length).toBe(4);
   });
 
-  it('goes straight to version 1 on an empty database', async () => {
+  it('goes straight to version 2 on an empty database', async () => {
     const db = await open();
     await migrate(db);
-    expect(await version(db)).toBe(1);
+    expect(await version(db)).toBe(2);
     expect(await db.getAllAsync('SELECT * FROM progress')).toEqual([]);
   });
 
-  it('keeps the rules of version 1', async () => {
+  it('keeps the rules of version 2', async () => {
     const db = await open();
     await migrate(db);
     const add = (id: string, platform: string, o: string, n: string) =>
@@ -120,5 +120,55 @@ describe('migrate', () => {
     );
     await db.runAsync("DELETE FROM progress WHERE id = 'p1'");
     expect(await db.getAllAsync('SELECT * FROM progress_item')).toEqual([]);
+  });
+
+  it('moves a version 1 database to version 2 and keeps every row and its items', async () => {
+    const db = await open();
+    await db.execAsync(`
+      PRAGMA foreign_keys = ON;
+      CREATE TABLE progress (
+        id TEXT PRIMARY KEY NOT NULL, platform TEXT NOT NULL, old_account_id TEXT NOT NULL,
+        old_handle TEXT NOT NULL, old_name TEXT NOT NULL, old_photo_url TEXT,
+        new_account_id TEXT NOT NULL, new_handle TEXT NOT NULL, new_name TEXT NOT NULL, new_photo_url TEXT,
+        created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, limit_hit_at INTEGER, resume_at INTEGER,
+        UNIQUE (platform, old_account_id, new_account_id));
+      CREATE TABLE progress_item (
+        progress_id TEXT NOT NULL REFERENCES progress(id) ON DELETE CASCADE, item_id TEXT NOT NULL,
+        kind TEXT NOT NULL, title TEXT NOT NULL, thumbnail_url TEXT, data TEXT,
+        picked INTEGER NOT NULL DEFAULT 1, status TEXT NOT NULL DEFAULT 'waiting', reason TEXT,
+        updated_at INTEGER NOT NULL, PRIMARY KEY (progress_id, item_id));
+      CREATE TABLE setting (key TEXT PRIMARY KEY NOT NULL, value TEXT NOT NULL);
+      CREATE TABLE add_log (account_key TEXT NOT NULL, at INTEGER NOT NULL);
+      INSERT INTO progress VALUES ('p1','github','o','oh','On','http://o','n','nh','Nn',NULL,1,2,3,4);
+      INSERT INTO progress_item VALUES ('p1','repo:1','repo','R',NULL,'{}',1,'moved',NULL,5);
+      PRAGMA user_version = 1;`);
+    await migrate(db);
+    expect(await version(db)).toBe(2);
+    expect(await db.getFirstAsync('SELECT id, new_account_id, resume_at FROM progress')).toEqual({
+      id: 'p1',
+      new_account_id: 'n',
+      resume_at: 4,
+    });
+    expect(await db.getAllAsync('SELECT item_id, status FROM progress_item')).toEqual([
+      { item_id: 'repo:1', status: 'moved' },
+    ]);
+    // The items still follow their progress.
+    await db.runAsync("DELETE FROM progress WHERE id = 'p1'");
+    expect(await db.getAllAsync('SELECT * FROM progress_item')).toEqual([]);
+  });
+
+  it('allows one progress with no new account per old account and platform', async () => {
+    const db = await open();
+    await migrate(db);
+    const add = (id: string, platform: string, o: string) =>
+      db.runAsync(
+        `INSERT INTO progress (id, platform, old_account_id, old_handle, old_name, created_at, updated_at)
+         VALUES (?,?,?,'h','n',1,1)`,
+        [id, platform, o],
+      );
+    await add('p1', 'github', 'o');
+    await expect(add('p2', 'github', 'o')).rejects.toThrow();
+    await add('p3', 'github', 'o2');
+    await add('p4', 'youtube', 'o');
   });
 });

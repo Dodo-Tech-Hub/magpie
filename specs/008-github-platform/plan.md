@@ -174,7 +174,7 @@ Research R12 to R14, data model Part C. Order matters: each step keeps the tests
 
 1. `src/store/migrate.ts`: version 2 (nullable new account, `progress_no_new` index), 1 to 2 rebuild, fresh install at version 2.
 2. `src/store/progressStore.ts`: `getOrCreateProgress` with an optional new account, `attachNew`, `saveItems` drops gone `waiting` rows, `UnfinishedProgress.newAccount` nullable.
-3. `src/state/AppState.tsx`: `flowPlatform`, `startFlow`, `progressId` on move updates and the guard.
+3. `src/state/AppState.tsx`: `flowPlatform`, `startFlow`, `forProgress`.
 4. `src/move/mover.ts`: optional `signal` in `MoveOptions`, checked before each item, returns `stopped`.
 5. `src/state/flows.ts`: `signInOld` creates or reopens the progress; `signInNew` calls `attachNew`; `togglePick` always writes to the store; `openProgress` handles a progress with no new account (opens Pick, no sign-in line); new `openPlatformCard(state, dispatch, platform)` with the question and the three outcomes; keep the move's `AbortController` so Don't save can stop it.
 6. `src/ui/HomeView.tsx`: card body and Continue note call `openPlatformCard`. `src/ui/FromStep.tsx`: "New account not chosen yet" for a progress with no new account. `src/strings.ts`: the question, the three buttons, the not-chosen line.
