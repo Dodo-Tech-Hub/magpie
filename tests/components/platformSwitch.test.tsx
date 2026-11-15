@@ -2,7 +2,7 @@ import { Alert } from 'react-native';
 import { fireEvent, screen } from '@testing-library/react-native';
 import { listUnfinished } from '@/store/progressStore';
 import { answerAlert } from './helpers';
-import { githubWorld, person, renderGithub, repo, resetGithub, seconds, signInBoth } from './githubWorld';
+import { eventually, githubWorld, person, renderGithub, repo, resetGithub, seconds, signInBoth } from './githubWorld';
 
 let w: ReturnType<typeof githubWorld>;
 let alert: jest.SpyInstance;
@@ -106,6 +106,20 @@ describe('switching platforms (FR-GH-022)', () => {
     expect(screen.getByLabelText('Sign in with Google: Old account')).toBeTruthy();
     expect(screen.queryByText(/Moved/)).toBeNull();
     expect(await listUnfinished('github')).toEqual([]);
+  });
+
+  it('shows a move kept running by Save as Moving when its progress opens again', async () => {
+    await renderGithub();
+    await signInBoth(w);
+    await fireEvent.press(screen.getByLabelText('Move 3 items'));
+    await goHome();
+    answerAlert(alert, 'Save');
+    await fireEvent.press(screen.getByLabelText('YouTube'));
+    await goHome();
+    await fireEvent.press(screen.getByRole('button', { name: /Continue/ }));
+    expect(await screen.findByRole('button', { name: 'Moving…' })).toBeTruthy();
+    expect(screen.queryByLabelText(/^Move \d+ item/)).toBeNull();
+    expect(await eventually('3 moved')).toBeTruthy();
   });
 
   it("Don't save stops a running move before the next item and deletes the progress", async () => {

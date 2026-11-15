@@ -329,6 +329,8 @@ export async function openProgress(dispatch: D, progressId: string): Promise<voi
   dispatch({ type: 'startFlow', platform: platform.id as PlatformId });
   dispatch({ type: 'setOld', account: saved.oldAccount, items });
   dispatch({ type: 'setProgress', progressId, items });
+  // A move kept running by Save is still moving (FR-GH-022).
+  if (running?.progressId === progressId) dispatch({ type: 'setMoveState', moveState: 'moving' });
   const driver = platform.driver;
   // No new account yet: the user picks and signs in to the new account when ready (FR-GH-021).
   if (!saved.newAccount) {

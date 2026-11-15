@@ -228,6 +228,12 @@ description: "Task list for the GitHub platform"
 
 ---
 
+## Phase 11: Convergence
+
+- [X] T082 In `src/state/flows.ts` `openProgress`, set the move state to `moving` when the opened progress is the one in `running`, so returning to a move kept running by Save (Continue note, From list) shows Moving rows and no idle Move button; add a case to `tests/components/platformSwitch.test.tsx` (start a move, go Home, Save on another card, Continue on the first card: rows show Moving and the summary shows when the move ends) per FR-GH-022 (partial)
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
