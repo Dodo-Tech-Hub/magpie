@@ -26,6 +26,7 @@ No new screen is added to the app.
 ### Session 2026-11-15
 
 - Q: Where must the limits pages be served from, given the project repository is private? → A: From the project's repository. The owner makes the repository public when satisfied with the state of the app, before the public release.
+- Q: Must the popup and the reason line on Pick use the same sentence per platform, or two different texts? → A: The same sentence. Each platform has one reason sentence, shown in the popup and on Pick. The words "We'll remind you when you can move the rest" are removed from Pick.
 
 ## How it fits
 
@@ -53,8 +54,8 @@ A user taps Move. After some items, the platform's limit is reached and the move
 
 1. **Given** a YouTube move stops at the daily limit, **When** the reminder popup shows, **Then** it first says the reason (for example "YouTube lets Magpie move only some channels each day. Today's limit is reached.") and then asks "Can we remind you when you can move the rest?".
 2. **Given** a GitHub move stops because GitHub asked the app to wait or the hourly pace is reached, **When** the reminder popup shows, **Then** it first says the reason (for example "GitHub asked Magpie to slow down.") and then asks the same question.
-3. **Given** the popup shows, **When** the user taps Yes or No, **Then** the reminder is set or not set exactly as today, and Pick shows the paused rows, the reason line, and Continue as today.
-4. **Given** the user already answered the reminder question on an earlier stop, **When** a move stops at a limit again, **Then** no popup shows (as today) and the reason line on Pick still says why the move stopped.
+3. **Given** the popup shows, **When** the user taps Yes or No, **Then** the reminder is set or not set exactly as today, and Pick shows the paused rows, Continue, and a reason line with the same sentence as the popup.
+4. **Given** the user already answered the reminder question on an earlier stop, **When** a move stops at a limit again, **Then** no popup shows (as today) and the reason line on Pick says why the move stopped, with the platform's reason sentence.
 
 ---
 
@@ -109,8 +110,8 @@ The project owner finds that a limits page is unclear, or a platform changes its
 
 - **FR-001**: When a move stops at a platform limit and the app asks whether it may send a reminder, the popup MUST first show the reason for the stop in one short sentence, and then the reminder question. The reason MUST come from the platform of the move.
 - **FR-002**: The reason sentence MUST use simple, everyday words, MUST name the platform, and MUST NOT show a raw error, a number code, or technical words such as "quota" or "rate limit".
-- **FR-003**: The popup's choices, when it shows, and what each choice does MUST stay as they are today. This feature changes only the text.
-- **FR-004**: Every platform in the platform list that can stop at a limit MUST have a reason sentence, kept with the other app text. A new platform MUST supply its own sentence; shared code MUST NOT name a platform.
+- **FR-003**: The popup's choices, when it shows, and what each choice does MUST stay as they are today. This feature changes only the text of the popup and of the reason line on Pick.
+- **FR-004**: Every platform in the platform list that can stop at a limit MUST have exactly one reason sentence, kept with the other app text. The popup and the reason line on Pick MUST show this same sentence. The reason line on Pick MUST NOT promise a reminder, because the user may have answered No. A new platform MUST supply its own sentence; shared code MUST NOT name a platform.
 
 **The info button on a platform card**
 
@@ -129,14 +130,14 @@ The project owner finds that a limits page is unclear, or a platform changes its
 
 ### Key Entities
 
-- **Platform**: An entry in the existing platform list. It gains a reason sentence for the popup and the address of its limits page.
+- **Platform**: An entry in the existing platform list. Its reason sentence (today shown only on Pick) is reworded and also shown in the popup, and it gains the address of its limits page.
 - **Limits page**: One page per platform, outside the app, that explains that platform's limits. It holds no user data.
 
 ### Platform texts *(platform-specific)*
 
 The exact words are drafts. The plan may refine them, keeping the meaning.
 
-| Platform | Reason sentence in the popup | What the limits page explains |
+| Platform | Reason sentence (popup and Pick) | What the limits page explains |
 | --- | --- | --- |
 | YouTube | "YouTube lets Magpie move only some channels each day. Today's limit is reached." | The daily limit is shared by everyone who uses Magpie, about 200 channels per day in total, and it starts again once a day (spec 001). |
 | GitHub | "GitHub asked Magpie to slow down." | GitHub's rules forbid starring or following a lot in a short time, so Magpie moves at most 20 items per minute and 300 per hour, and waits when GitHub asks (spec 008, FR-GH-010 and FR-GH-012). |
@@ -149,7 +150,7 @@ The exact words are drafts. The plan may refine them, keeping the meaning.
 - **SC-002**: From Home, a user reaches a platform's limits page with one tap, and returns to the app with Home unchanged.
 - **SC-003**: A change to a limits page is visible to users within 10 minutes, with no app release.
 - **SC-004**: Adding a platform needs no change to Home or to the popup beyond that platform's own reason sentence and page address.
-- **SC-005**: All existing tests pass with no change to what they check, apart from the popup's text.
+- **SC-005**: All existing tests pass with no change to what they check, apart from the text of the popup and of the reason line on Pick.
 
 ## Assumptions
 
