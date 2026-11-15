@@ -32,6 +32,16 @@ beforeEach(async () => {
 });
 
 describe('runMove', () => {
+  it('stops before the next item when aborted and leaves the rest waiting', async () => {
+    const ctl = new AbortController();
+    add.mockImplementation(async () => {
+      ctl.abort();
+      return { kind: 'moved' };
+    });
+    expect(await run({ signal: ctl.signal })).toBe('stopped');
+    expect(await statuses()).toEqual({ a: 'moved', b: 'waiting', c: 'waiting' });
+  });
+
   it('moves only picked waiting channels', async () => {
     await setPicked(pid, ['b'], false);
     await setStatus(pid, 'c', 'moved');
@@ -110,7 +120,7 @@ describe('runMove', () => {
   });
 
   it('moves the kinds in the order given', async () => {
-    await saveItems(pid, [item('z', 'person')]);
+    await saveItems(pid, [item('a'), item('b'), item('c'), item('z', 'person')]);
     add.mockResolvedValue({ kind: 'moved' });
     await run({ kindOrder: ['person', 'channel'] });
     expect(ids()).toEqual(['z', 'a', 'b', 'c']);

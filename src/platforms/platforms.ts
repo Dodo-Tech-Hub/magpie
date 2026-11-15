@@ -1,12 +1,13 @@
 import type { Dispatch } from 'react';
 import type { ImageSourcePropType } from 'react-native';
 import type { Driver } from '@/platforms/driver';
+import { githubDriver } from '@/platforms/githubDriver';
 import { youtubeDriver } from '@/platforms/youtubeDriver';
 import type { Action } from '@/state/AppState';
 import { listUnfinished } from '@/store/progressStore';
 import { strings } from '@/strings';
 
-export type PlatformId = 'youtube';
+export type PlatformId = 'youtube' | 'github';
 export type Section = 'automatic' | 'guided';
 
 export type Platform = {
@@ -34,6 +35,20 @@ export const PLATFORMS: Platform[] = [
     open: (dispatch) => dispatch({ type: 'openPlatform', platform: 'youtube' }),
     unfinished: async () => {
       const list = await listUnfinished('youtube');
+      return { left: list.reduce((n, p) => n + p.left, 0), ids: list.map((p) => p.id) };
+    },
+  },
+  {
+    id: 'github',
+    name: strings.platformGithub,
+    logo: require('../../assets/platforms/github.png'),
+    logoDark: require('../../assets/platforms/github-white.png'),
+    section: 'automatic',
+    ready: true,
+    driver: githubDriver,
+    open: (dispatch) => dispatch({ type: 'openPlatform', platform: 'github' }),
+    unfinished: async () => {
+      const list = await listUnfinished('github');
       return { left: list.reduce((n, p) => n + p.left, 0), ids: list.map((p) => p.id) };
     },
   },

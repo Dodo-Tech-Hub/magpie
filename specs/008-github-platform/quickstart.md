@@ -52,3 +52,16 @@ Setup: two test GitHub accounts. The old one stars 5 repositories, follows 3 peo
 | 13 | Run the YouTube flow once. | Works as before. | SC-003 |
 
 Automated: the same cases as component and unit tests with a mocked `fetch` and a mocked secure store. No test calls GitHub (Principle II).
+
+## Part C check (2026-11-15 changes)
+
+Same setup as Part B.
+
+| # | Do | Expect | Covers |
+| --- | --- | --- | --- |
+| 14 | On GitHub, sign in on From only. Untick 2 items. Tap Home, then the GitHub card. | Pick shows the same list with the same 2 unticked. The GitHub card showed a Continue note while on Home. | FR-GH-021, FR-GH-022 |
+| 15 | Close the app fully and reopen it. Tap the Continue note on the GitHub card. | Pick shows the same list and picks. From's progress list says "New account not chosen yet". | FR-GH-021 |
+| 16 | From GitHub Pick, tap Home, then the YouTube card. Try each choice. | "Save your GitHub progress?" shows. Cancel stays on Home. Save opens YouTube at the start, and the GitHub card keeps its Continue note. Don't save opens YouTube at the start, and the GitHub card has no Continue note. | FR-GH-022 |
+| 17 | With a GitHub progress that has both accounts, sign in to the same new account on To. Then sign in on From with an old account that has an earlier progress with no new account, and sign in on To with the pair's new account. | Only one progress for the pair is left, with its earlier row states. | FR-GH-021 |
+| 18 | On Pick with several kinds, tap the "Stars" heading, then search for a starred repository's name, then clear the search. | Headings are as large as "Automatic" on Home and show a count. Stars collapse, open while the search matches, and collapse again after clearing. The counter and "Move N items" still include the collapsed stars. | FR-GH-003, FR-GH-023 |
+| 19 | On Pick with several kinds, tap "All" on the Stars heading twice. Collapse Stars and tap it again. | Only the stars are unpicked, then picked. The counter and Move follow. The section does not collapse or open from that tap, and it works while collapsed. | FR-GH-024 |

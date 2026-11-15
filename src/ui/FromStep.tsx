@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { cancelReminder } from '@/reminders/reminder';
 import { driverFor } from '@/platforms/platforms';
 import { useApp } from '@/state/AppState';
-import { openProgress, signInOld } from '@/state/flows';
+import { cancelSignIn, switchAccount, openProgress, signInOld } from '@/state/flows';
 import { deleteProgress, listUnfinished, type UnfinishedProgress } from '@/store/progressStore';
 import { itemsLeft, strings } from '@/strings';
 import { useTheme, type Colors } from '@/theme/theme';
@@ -44,13 +44,18 @@ export function FromStep() {
         account={state.oldAccount}
         disabled={busy}
         onSignIn={() => void signInOld(state, dispatch)}
+        code={state.signInCode?.role === 'old' ? state.signInCode : null}
+        onCancel={cancelSignIn}
+        signsOut={driver.switchSignsOut}
+        onSwitch={() => void switchAccount(state, dispatch, 'old')}
       />
+      {state.loading && <Text style={styles.heading}>{strings.loading}</Text>}
       {state.notice && <Text style={styles.error}>{state.notice}</Text>}
       {items.length > 0 && (
         <View>
           <Text style={styles.heading}>{strings.unfinished}</Text>
           {items.map((p) => {
-            const label = itemsLeft(p.oldAccount.handle, p.newAccount.handle, p.left);
+            const label = itemsLeft(p.oldAccount.handle, p.newAccount?.handle ?? null, p.left);
             return (
               <View key={p.id} style={styles.row}>
                 <Pressable

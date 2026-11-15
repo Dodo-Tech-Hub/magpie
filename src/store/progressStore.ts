@@ -20,7 +20,8 @@ export type UnfinishedProgress = {
   id: string;
   platform: string;
   oldAccount: AccountInfo;
-  newAccount: AccountInfo;
+  // null until the new account signs in (FR-GH-021).
+  newAccount: AccountInfo | null;
   left: number;
   limitHitAt: number | null;
   resumeAt: number | null;
@@ -59,12 +60,25 @@ export async function findProgressForPair(platform: string, oldId: string, newAc
   return row ? row.id : null;
 }
 
+// The progress with no new account yet for this old account, if any (FR-GH-021).
+async function findProgressNoNew(platform: string, oldId: string) {
+  const db = await initStore();
+  const row = await db.getFirstAsync<{ id: string }>(
+    'SELECT id FROM progress WHERE platform = ? AND old_account_id = ? AND new_account_id IS NULL',
+    [platform, oldId],
+  );
+  return row ? row.id : null;
+}
+
+// newA may be null: the progress then starts at the old sign-in and gets its new account later.
 export async function getOrCreateProgress(
   platform: string,
   oldA: AccountInfo,
-  newA: AccountInfo,
+  newA: AccountInfo | null,
 ): Promise<string> {
-  const existing = await findProgressForPair(platform, oldA.id, newA.id);
+  const existing = newA
+    ? await findProgressForPair(platform, oldA.id, newA.id)
+    : await findProgressNoNew(platform, oldA.id);
   if (existing) return existing;
   const db = await initStore();
   const id = newId();
@@ -73,16 +87,47 @@ export async function getOrCreateProgress(
     `INSERT INTO progress (id, platform, old_account_id, old_handle, old_name, old_photo_url,
        new_account_id, new_handle, new_name, new_photo_url, created_at, updated_at)
      VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
-    [id, platform, oldA.id, oldA.handle, oldA.name, oldA.photoUrl, newA.id, newA.handle, newA.name, newA.photoUrl, t, t],
+    [id, platform, oldA.id, oldA.handle, oldA.name, oldA.photoUrl, newA?.id ?? null, newA?.handle ?? null, newA?.name ?? null, newA?.photoUrl ?? null, t, t],
   );
   return id;
 }
 
-// Existing rows keep their pick and status; only new items are added.
+// The new account signed in. If its pair already has a progress, that one is kept and this one goes.
+export async function attachNew(progressId: string, newA: AccountInfo): Promise<string> {
+  const db = await initStore();
+  const row = await db.getFirstAsync<{ platform: string; old_account_id: string }>(
+    'SELECT platform, old_account_id FROM progress WHERE id = ?',
+    [progressId],
+  );
+  if (!row) throw new Error('No such progress');
+  const pair = await findProgressForPair(row.platform, row.old_account_id, newA.id);
+  if (pair && pair !== progressId) {
+    await deleteProgress(progressId);
+    return pair;
+  }
+  await db.runAsync(
+    'UPDATE progress SET new_account_id = ?, new_handle = ?, new_name = ?, new_photo_url = ?, updated_at = ? WHERE id = ?',
+    [newA.id, newA.handle, newA.name, newA.photoUrl, now(), progressId],
+  );
+  return progressId;
+}
+
+// Existing rows keep their pick and status; only new items are added. A waiting row the old account
+// no longer has is dropped (FR-GH-021).
 export async function saveItems(progressId: string, items: NewItem[]): Promise<void> {
   const db = await initStore();
   const t = now();
+  const keep = new Set(items.map((c) => c.itemId));
   await db.withTransactionAsync(async () => {
+    const waiting = await db.getAllAsync<{ item_id: string }>(
+      "SELECT item_id FROM progress_item WHERE progress_id = ? AND status = 'waiting'",
+      [progressId],
+    );
+    for (const r of waiting) {
+      if (!keep.has(r.item_id)) {
+        await db.runAsync('DELETE FROM progress_item WHERE progress_id = ? AND item_id = ?', [progressId, r.item_id]);
+      }
+    }
     for (const c of items) {
       await db.runAsync(
         `INSERT OR IGNORE INTO progress_item
@@ -199,7 +244,7 @@ type ProgressRow = {
   id: string;
   platform: string;
   old_account_id: string; old_handle: string; old_name: string; old_photo_url: string | null;
-  new_account_id: string; new_handle: string; new_name: string; new_photo_url: string | null;
+  new_account_id: string | null; new_handle: string | null; new_name: string | null; new_photo_url: string | null;
   limit_hit_at: number | null;
   resume_at: number | null;
   left: number;
@@ -209,7 +254,10 @@ const toProgress = (r: ProgressRow): UnfinishedProgress => ({
   id: r.id,
   platform: r.platform,
   oldAccount: { id: r.old_account_id, handle: r.old_handle, name: r.old_name, photoUrl: r.old_photo_url },
-  newAccount: { id: r.new_account_id, handle: r.new_handle, name: r.new_name, photoUrl: r.new_photo_url },
+  newAccount:
+    r.new_account_id === null
+      ? null
+      : { id: r.new_account_id, handle: r.new_handle ?? '', name: r.new_name ?? '', photoUrl: r.new_photo_url },
   left: r.left,
   limitHitAt: r.limit_hit_at,
   resumeAt: r.resume_at,
@@ -233,6 +281,22 @@ export async function getProgress(id: string): Promise<UnfinishedProgress | null
   const db = await initStore();
   const row = await db.getFirstAsync<ProgressRow>(`SELECT * FROM (${WITH_LEFT}) WHERE id = ?`, [id]);
   return row ? toProgress(row) : null;
+}
+
+// The times of recent adds, for the pace (FR-GH-010). Rows older than 1 hour go on every write.
+export async function recordAdd(accountKey: string, at: number) {
+  const db = await initStore();
+  await db.runAsync('DELETE FROM add_log WHERE at < ?', [now() - 3_600_000]);
+  await db.runAsync('INSERT INTO add_log (account_key, at) VALUES (?, ?)', [accountKey, at]);
+}
+
+export async function addsSince(accountKey: string, since: number): Promise<number[]> {
+  const db = await initStore();
+  const rows = await db.getAllAsync<{ at: number }>(
+    'SELECT at FROM add_log WHERE account_key = ? AND at >= ? ORDER BY at',
+    [accountKey, since],
+  );
+  return rows.map((r) => r.at);
 }
 
 export async function deleteProgress(id: string) {

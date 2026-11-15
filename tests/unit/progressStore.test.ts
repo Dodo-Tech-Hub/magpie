@@ -1,4 +1,7 @@
 import {
+  addsSince,
+  attachNew,
+  recordAdd,
   closeStore,
   deleteAll,
   deleteProgress,
@@ -146,7 +149,7 @@ describe('unfinished list', () => {
     expect(list).toHaveLength(1);
     expect(list[0]).toMatchObject({ id: p1, left: 1 });
     expect(list[0].oldAccount.handle).toBe('o1@x.com');
-    expect(list[0].newAccount.handle).toBe('n1@x.com');
+    expect(list[0].newAccount?.handle).toBe('n1@x.com');
   });
 
   it('records when the daily limit was hit', async () => {
@@ -169,5 +172,78 @@ describe('deleting', () => {
     await seed('o2', 'n2');
     await deleteAll();
     expect(await listUnfinished()).toEqual([]);
+  });
+});
+
+describe('pace log', () => {
+  it('stores adds per account key and returns those since a time, in order', async () => {
+    const t = Date.now();
+    await recordAdd('github:1', t + 20);
+    await recordAdd('github:1', t + 10);
+    await recordAdd('github:2', t + 15);
+    expect(await addsSince('github:1', t)).toEqual([t + 10, t + 20]);
+    expect(await addsSince('github:1', t + 15)).toEqual([t + 20]);
+    expect(await addsSince('github:2', t)).toEqual([t + 15]);
+  });
+
+  it('deletes rows older than 1 hour on each write', async () => {
+    await recordAdd('github:1', Date.now() - 2 * 3_600_000);
+    await recordAdd('github:1', Date.now());
+    expect(await addsSince('github:1', 0)).toHaveLength(1);
+  });
+
+  it('is emptied by delete all', async () => {
+    await recordAdd('github:1', Date.now());
+    await deleteAll();
+    expect(await addsSince('github:1', 0)).toEqual([]);
+  });
+});
+
+describe('progress with no new account (FR-GH-021)', () => {
+  it('returns the same progress for the same old account and platform', async () => {
+    const a = await getOrCreateProgress('github', acct('o1'), null);
+    expect(await getOrCreateProgress('github', acct('o1'), null)).toBe(a);
+    expect(await getOrCreateProgress('github', acct('o2'), null)).not.toBe(a);
+    expect(await getOrCreateProgress('youtube', acct('o1'), null)).not.toBe(a);
+  });
+
+  it('shows in the unfinished list with no new account', async () => {
+    const pid = await getOrCreateProgress('github', acct('o1'), null);
+    await saveItems(pid, [ch('a'), ch('b')]);
+    const [p] = await listUnfinished('github');
+    expect(p).toMatchObject({ id: pid, left: 2, newAccount: null });
+  });
+
+  it('attachNew sets the new account on the same progress', async () => {
+    const pid = await getOrCreateProgress('github', acct('o1'), null);
+    await saveItems(pid, [ch('a')]);
+    expect(await attachNew(pid, acct('n1'))).toBe(pid);
+    expect(await findProgressForPair('github', 'o1', 'n1')).toBe(pid);
+    expect((await listUnfinished('github'))[0].newAccount?.id).toBe('n1');
+  });
+
+  it('attachNew keeps the pair progress and deletes the one with no new account', async () => {
+    const pair = await seed('o1', 'n1', ['a']);
+    await setStatus(pair, 'a', 'moved');
+    const draft = await getOrCreateProgress('youtube', acct('o1'), null);
+    await saveItems(draft, [ch('a'), ch('b')]);
+    expect(await attachNew(draft, acct('n1'))).toBe(pair);
+    expect(await getItems(draft)).toEqual([]);
+    expect((await getItems(pair)).map((c) => [c.itemId, c.status])).toEqual([['a', 'moved']]);
+    expect(await listUnfinished('youtube')).toEqual([]);
+  });
+
+  it('saveItems drops waiting rows the old account no longer has and keeps finished ones', async () => {
+    const pid = await seed('o1', 'n1', ['a', 'b', 'c', 'd']);
+    await setStatus(pid, 'b', 'moved');
+    await setStatus(pid, 'c', 'already_there');
+    await setPicked(pid, ['d'], false);
+    await saveItems(pid, [ch('e')]);
+    const rows = await getItems(pid);
+    expect(rows.map((c) => [c.itemId, c.status]).sort()).toEqual([
+      ['b', 'moved'],
+      ['c', 'already_there'],
+      ['e', 'waiting'],
+    ]);
   });
 });

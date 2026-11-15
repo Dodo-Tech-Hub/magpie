@@ -16,6 +16,8 @@ export type MoveOptions = {
   // The order items move in (kind IDs). Default: the order they are stored in.
   kindOrder?: string[];
   onUpdate?: () => void;
+  // Aborted by "Don't save": the move stops before the next item (FR-GH-022).
+  signal?: AbortSignal;
   // The platform paused the account: the notice to show.
   onStop?: (notice: string) => void;
   sleep?: (ms: number) => Promise<void>;
@@ -61,6 +63,7 @@ export async function runMove(progressId: string, opts: MoveOptions): Promise<Mo
   };
 
   for (const item of todo) {
+    if (opts.signal?.aborted) return 'stopped';
     await put(item, 'moving');
     notify();
 

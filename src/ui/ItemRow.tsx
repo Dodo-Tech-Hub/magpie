@@ -15,19 +15,19 @@ const TAGS: Partial<Record<Status, { text: string; icon: keyof typeof Ionicons.g
 };
 
 // The text of the later row comes from the platform: "Tomorrow" for YouTube.
-type Props = { item: StoredItem; laterLabel: string; onToggle: (id: string, picked: boolean) => void };
+type Props = { item: StoredItem; laterLabel: string; greyed?: boolean; onToggle: (id: string, picked: boolean) => void };
 
-function Row({ item, laterLabel, onToggle }: Props) {
+function Row({ item, laterLabel, greyed, onToggle }: Props) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const tag =
     item.status === 'later'
       ? { text: laterLabel, icon: 'pause-outline' as const, color: 'warning' as const }
       : TAGS[item.status];
-  const locked = item.status === 'already_there' || item.status === 'moved';
+  const locked = greyed || item.status === 'already_there' || item.status === 'moved';
   return (
     <Pressable
-      style={styles.row}
+      style={[styles.row, greyed && styles.greyed]}
       accessibilityRole="checkbox"
       accessibilityLabel={item.title}
       accessibilityState={{ checked: item.picked, disabled: locked }}
@@ -74,6 +74,7 @@ const makeStyles = (c: Colors) =>
     avatar: { width: 30, height: 30, borderRadius: 15 },
     fallback: { backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
     flex: { flex: 1 },
+    greyed: { opacity: 0.5 },
     name: { fontSize: 15, color: c.text },
     reason: { fontSize: 12, color: c.muted },
     tag: { flexDirection: 'row', alignItems: 'center', gap: 3 },

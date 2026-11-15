@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import App from '../../App';
 import { PLATFORMS, type Platform } from '@/platforms/platforms';
 import { AppStateProvider, useApp } from '@/state/AppState';
@@ -14,7 +14,17 @@ jest.mock('@/api/youtube', () => ({
   subscribe: jest.fn(),
 }));
 
-beforeEach(resetWorld);
+// The phone's look, changeable from a test.
+let mockPhone: 'light' | 'dark' = 'light';
+jest.mock('react-native/Libraries/Utilities/useColorScheme', () => ({
+  __esModule: true,
+  default: () => mockPhone,
+}));
+
+beforeEach(async () => {
+  mockPhone = 'light';
+  await resetWorld();
+});
 
 const acct = (u: { id: string; email: string; name: string; photo: string | null }) => ({
   id: u.id,
@@ -31,6 +41,42 @@ async function seed(old: typeof OLD, ids: string[]) {
   return pid;
 }
 const idsOf = (n: number, p: string) => Array.from({ length: n }, (_, i) => `${p}${i}`);
+
+describe('GitHub card', () => {
+  const ready = PLATFORMS.map((p) => ({ ...p, ready: true }));
+  const renderHome = () =>
+    render(
+      <ThemeProvider>
+        <AppStateProvider>
+          <HomeView platforms={ready} />
+        </AppStateProvider>
+      </ThemeProvider>,
+    );
+
+  it('shows after YouTube, hides its logo from screen readers, and keeps the name if the logo fails', async () => {
+    await renderHome();
+    expect(screen.getByLabelText('GitHub')).toBeTruthy();
+    const logo = screen.getByTestId('logo-github', { includeHiddenElements: true });
+    expect(logo.props.accessibilityElementsHidden).toBe(true);
+    await act(async () => logo.props.onError());
+    expect(screen.queryByTestId('logo-github', { includeHiddenElements: true })).toBeNull();
+    expect(screen.getByText('GitHub')).toBeTruthy();
+  });
+
+  it('uses the white logo on the dark look', async () => {
+    mockPhone = 'dark';
+    await renderHome();
+    const src = () => screen.getByTestId('logo-github', { includeHiddenElements: true }).props.source;
+    await waitFor(() => expect(src()).toBe(PLATFORMS[1].logoDark));
+  });
+
+  it('shows on Home in the app after YouTube', async () => {
+    await render(<App />);
+    await screen.findByText('Automatic');
+    expect(screen.getByLabelText('GitHub')).toBeTruthy();
+    expect(screen.getByLabelText('YouTube')).toBeTruthy();
+  });
+});
 
 describe('Home sections', () => {
   it('shows the Automatic section with the YouTube card and no Guided section', async () => {

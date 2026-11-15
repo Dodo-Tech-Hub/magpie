@@ -8,6 +8,14 @@ export const strings = {
   oldTitle: 'Old account',
   newTitle: 'New account',
   switchAccount: 'Switch',
+  signOut: 'Sign out',
+  allow: 'Allow',
+  allowOtherAccount: 'Use your new account here too.',
+  openAccessPage: 'Open GitHub settings',
+  loading: 'Loading your list…',
+  loadPartial: "Some items couldn't load. The rest can still move.",
+  copyCode: 'Copy code',
+  waitingForYou: 'Waiting for you to allow it in the browser…',
   signInFailed: "Sign-in didn't finish. Try again.",
   sameAsOld: 'This is your old account. Pick a different one.',
   sameAsNew: 'This is your new account. Pick a different one.',
@@ -26,6 +34,9 @@ export const strings = {
   deleteAll: 'Delete all my data',
   deleteAllAsk: 'This removes everything the app saved on this phone. It cannot be undone.',
   cancel: 'Cancel',
+  save: 'Save',
+  saveProgressTitle: (platform: string) => `Save your ${platform} progress?`,
+  notChosenYet: 'New account not chosen yet',
   reminderAsk: 'Can we remind you when you can move the rest?',
   reminderTitle: 'Magpie',
   yes: 'Yes',
@@ -37,6 +48,7 @@ export const strings = {
   sectionAutomatic: 'Automatic',
   sectionGuided: 'Guided',
   platformYoutube: 'YouTube',
+  platformGithub: 'GitHub',
   look: 'Look',
   light: 'Light',
   dark: 'Dark',
@@ -47,9 +59,17 @@ export const continueLeft = (n: number) => `Continue: ${n} left`;
 export const continueLabel = (name: string, n: number) => `Continue ${name}, ${n} left`;
 export const signInTo = (handle: string) => `Sign in to ${handle} to keep going.`;
 export const wrongAccount = (handle: string) => `This one needs ${handle}. Pick that account.`;
+// How long the picked adds take at the pace of the platform (FR-GH-011).
+export const timeLeftText = (seconds: number, adds: number) => {
+  if (adds > 300) return 'More than one session';
+  const minutes = Math.ceil(seconds / 60);
+  return seconds < 60 ? 'Less than a minute' : `About ${minutes} minute${minutes === 1 ? '' : 's'}`;
+};
+export const needAccess = (heading: string) => `Magpie needs extra access to move ${heading.toLowerCase()}.`;
 export const pickedCounter = (picked: number, total: number) => `${picked} of ${total} picked`;
-export const itemsLeft = (oldHandle: string, newHandle: string, left: number) =>
-  `${oldHandle.split('@')[0]} → ${newHandle.split('@')[0]} · ${left} left`;
+export const dontSave = "Don't save";
+export const itemsLeft = (oldHandle: string, newHandle: string | null, left: number) =>
+  `${oldHandle.split('@')[0]} → ${newHandle ? newHandle.split('@')[0] : strings.notChosenYet} · ${left} left`;
 
 export function summary(s: {
   moved: number;
@@ -79,3 +99,27 @@ export const youtubeWords: Words = {
   moveButton: (n) => `Move ${n} channel${n === 1 ? '' : 's'}`,
   notAffiliated: 'Magpie is not made by or linked with YouTube or Google. YouTube is a trademark of Google LLC.',
 };
+
+export const githubWords: Words = {
+  signIn: 'Sign in with GitHub',
+  signInIcon: 'logo-github',
+  oldHint: 'Where your stars and follows are now',
+  newHint: 'Where your stars and follows should go',
+  searchPlaceholder: 'Search',
+  noItems: "This account doesn't follow anything yet",
+  needPick: 'Pick at least 1 item',
+  later: 'Later',
+  limitReached: "GitHub needs a break. We'll remind you when you can move the rest.",
+  reminderBody: 'You can move the rest now.',
+  moveButton: (n) => `Move ${n} item${n === 1 ? '' : 's'}`,
+  notAffiliated: 'Magpie is not made by or linked with GitHub. GitHub is a trademark of GitHub, Inc.',
+  accessNote: "Magpie's access ends on its own within 8 hours. To end it now, open GitHub settings.",
+};
+
+// The sign-in code panel. The hint is for the second sign-in, when the browser may remember the first account.
+export const signInCodeHint = (role: 'old' | 'new') =>
+  role === 'new'
+    ? "GitHub may show your old account. Tap your picture, then 'Switch account', to use your new one."
+    : "GitHub may show your new account. Tap your picture, then 'Switch account', to use your old one.";
+export const codeLabel = (code: string) =>
+  `Code ${code.split('').map((c) => (c === '-' ? 'dash' : c)).join(' ')}`;
