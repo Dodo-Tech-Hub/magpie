@@ -21,6 +21,12 @@ This feature adds two things, for every platform:
 
 No new screen is added to the app.
 
+## Clarifications
+
+### Session 2026-11-15
+
+- Q: Where must the limits pages be served from, given the project repository is private? → A: From the project's repository. The owner makes the repository public when satisfied with the state of the app, before the public release.
+
 ## How it fits
 
 ```mermaid
@@ -91,7 +97,7 @@ The project owner finds that a limits page is unclear, or a platform changes its
 - The phone has no browser, or the browser cannot open the link: the app stays on Home and shows a short line, for example "Couldn't open the page."
 - A move is running in the background when the user taps the info button: the move goes on, as when the user leaves the app for any other reason.
 - The user taps the info button on a card that has a Continue note: only the page opens. The progress does not open.
-- A limits page is missing or was moved: the browser shows the site's "not found" page. The owner fixes the page; the app needs no change.
+- A limits page is missing, was moved, or is not served yet because the repository is still private: the browser shows the site's "not found" page. The owner fixes the page; the app needs no change.
 - The font size is large or the screen is narrow: the info button stays inside the card, does not cover the name or the Continue note, and keeps its tap size.
 - A move stops for a reason that is not a platform limit (no internet, sign-in ran out, the platform paused the account): no reminder popup shows, as today, so this feature changes nothing there.
 
@@ -147,7 +153,7 @@ The exact words are drafts. The plan may refine them, keeping the meaning.
 
 ## Assumptions
 
-- The project's repository is public, so its pages can be served as plain web pages. If it is not, the owner decides in the plan where the pages are served from.
+- The project's repository is private today. The owner makes it public before the public release, and its page hosting serves the limits pages from then on. Until then the info button opens an address that shows the site's "not found" page. This is accepted for test builds, and the in-app parts (the popup reason and the info button) can be built and tested before the repository is public.
 - The pages are in English, like the app's text today.
 - The page opens in the system browser, as the "remove access" page of spec 008 does. The app does not fetch the page, so the page's host is not added to the list of hosts the app talks to (constitution, Principle III, rule 5). The plan confirms this in its Constitution Check.
 - The reminder question is still asked only once, as today. A later stop shows the reason on Pick, not in a popup.
@@ -156,5 +162,5 @@ The exact words are drafts. The plan may refine them, keeping the meaning.
 
 ## What the project owner needs to do
 
-1. Turn on the repository's page hosting, so the limits pages are served as plain web pages.
+1. Before the public release, make the repository public and turn on its page hosting, so the limits pages are served as plain web pages.
 2. Review the two limits pages before release, because they speak for the project in public.
