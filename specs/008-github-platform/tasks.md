@@ -195,7 +195,7 @@ description: "Task list for the GitHub platform"
 - [X] T063 [P] Write `tests/components/settings.test.tsx` additions for the not-affiliated lines (YouTube and GitHub each show their own line) if T022 did not already cover them, and for Delete all signing out of both drivers.
 - [X] T064 Run `npm test`, `npm run typecheck`, `npm run lint`, and `npm audit`; all pass with no high or critical issue (constitution III.11, Development Workflow). Run `grep -rn "console\.\|log(" src/auth/github.ts src/api/github.ts src/platforms/githubDriver.ts` and confirm nothing logs tokens, codes, usernames, or item lists (constitution III.7).
 - [X] T065 Run the full quickstart.md "Part B check" (checks 1 to 13) with the two test GitHub accounts and the client ID in `.env`, and note each result in the pull request. (Builds are local, so the client ID stays in the local `.env`; no EAS variable.)
-- [ ] T066 Open the Part B pull request with the suggested description "Add GitHub as an Automatic platform: code sign-in, stars, lists, gists, people, pace limits, access per picked kind." After the owner merges it, set the `**Status**:` line in `specs/008-github-platform/spec.md` to `Implemented` (AGENTS.md).
+- [X] T066 Open the Part B pull request with the suggested description "Add GitHub as an Automatic platform: code sign-in, stars, lists, gists, people, pace limits, access per picked kind." After the owner merges it, set the `**Status**:` line in `specs/008-github-platform/spec.md` to `Implemented` (AGENTS.md).
 
 ---
 
