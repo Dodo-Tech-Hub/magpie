@@ -1,4 +1,4 @@
-// A fake `fetch` for GitHub. Routes are "METHOD url" (no query) or "METHOD url?query" for an exact match.
+// A fake `fetch` for GitHub. Routes are "METHOD url" (no query), "METHOD url?query" for an exact match, or "METHOD url*" for a prefix.
 // An answer is { status, headers, json }, a function of the request, or a list used one by one (the last repeats).
 // Any host other than GitHub's three is refused, so a test cannot reach the real internet.
 export type Req = { method: string; url: string; auth: string | null; body: unknown; headers: Record<string, string> };
@@ -32,7 +32,11 @@ export function mockGithub(routes: Record<string, Route> = {}) {
     calls.push(req);
 
     const bare = url.split('?')[0];
-    const key = [`${method} ${url}`, `${method} ${bare}`].find((k) => k in table);
+    // A route ending in * matches by prefix. The longest prefix wins.
+    const wild = Object.keys(table)
+      .filter((k) => k.endsWith('*') && `${method} ${url}`.startsWith(k.slice(0, -1)))
+      .sort((a, b) => b.length - a.length)[0];
+    const key = [`${method} ${url}`, `${method} ${bare}`, wild].find((k) => k !== undefined && k in table);
     if (!key) return reply({ status: 404, json: { message: `no route for ${method} ${url}` } });
     let route = table[key];
     if (Array.isArray(route)) {

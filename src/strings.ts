@@ -8,6 +8,8 @@ export const strings = {
   oldTitle: 'Old account',
   newTitle: 'New account',
   switchAccount: 'Switch',
+  copyCode: 'Copy code',
+  waitingForYou: 'Waiting for you to allow it in the browser…',
   signInFailed: "Sign-in didn't finish. Try again.",
   sameAsOld: 'This is your old account. Pick a different one.',
   sameAsNew: 'This is your new account. Pick a different one.',
@@ -96,3 +98,11 @@ export const githubWords: Words = {
   notAffiliated: 'Magpie is not made by or linked with GitHub. GitHub is a trademark of GitHub, Inc.',
   accessNote: "Magpie's access ends on its own within 8 hours. To end it now, open GitHub settings.",
 };
+
+// The sign-in code panel. The hint is for the second sign-in, when the browser may remember the first account.
+export const signInCodeHint = (role: 'old' | 'new') =>
+  role === 'new'
+    ? "GitHub may show your old account. Tap your picture, then 'Switch account', to use your new one."
+    : "GitHub may show your new account. Tap your picture, then 'Switch account', to use your old one.";
+export const codeLabel = (code: string) =>
+  `Code ${code.split('').map((c) => (c === '-' ? 'dash' : c)).join(' ')}`;

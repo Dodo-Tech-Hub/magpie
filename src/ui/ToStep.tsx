@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, View } from 'react-native';
-import { signInNew } from '@/state/flows';
+import { cancelSignIn, signInNew } from '@/state/flows';
 import { driverFor } from '@/platforms/platforms';
 import { useApp } from '@/state/AppState';
 import { strings } from '@/strings';
@@ -20,6 +20,8 @@ export function ToStep() {
         account={state.newAccount}
         disabled={state.moveState === 'moving'}
         onSignIn={() => void signInNew(state, dispatch)}
+        code={state.signInCode?.role === 'new' ? state.signInCode : null}
+        onCancel={cancelSignIn}
       />
       {state.notice && <Text style={{ color: colors.danger, paddingHorizontal: 14 }}>{state.notice}</Text>}
     </View>

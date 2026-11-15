@@ -1,5 +1,7 @@
 import type { Dispatch } from 'react';
-import { DriverError, type Driver } from '@/platforms/driver';
+import { Linking } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
+import { DriverError, type Driver, type Role, type SignInResult } from '@/platforms/driver';
 import { driverFor, PLATFORMS, type PlatformId } from '@/platforms/platforms';
 import { recoverInterrupted, runMove } from '@/move/mover';
 import { askOnce, cancelReminder, scheduleReminder } from '@/reminders/reminder';
@@ -14,7 +16,7 @@ import {
   setPicked,
   type StoredItem,
 } from '@/store/progressStore';
-import { signInTo, strings, wrongAccount } from '@/strings';
+import { signInCodeHint, signInTo, strings, wrongAccount } from '@/strings';
 import type { Action, State } from '@/state/AppState';
 
 type D = Dispatch<Action>;
@@ -37,11 +39,50 @@ async function reload(progressId: string, driver: Driver, dispatch: D) {
   dispatch({ type: 'setItems', items: await getItems(progressId, pickOrder(driver)) });
 }
 
+// The sign-in that is waiting for the user, so Cancel can stop it.
+let waiting: AbortController | null = null;
+export const cancelSignIn = () => waiting?.abort();
+
+// One sign-in. A code (device sign-in) shows in place, is copied, and opens the browser.
+async function signInAs(state: State, dispatch: D, role: Role, kinds: string[]): Promise<SignInResult> {
+  const driver = driverOf(state);
+  const ctl = new AbortController();
+  waiting = ctl;
+  const other = role === 'old' ? state.newAccount : state.oldAccount;
+  try {
+    return await driver.signIn(
+      role,
+      kinds,
+      (c) => {
+        dispatch({
+          type: 'setSignInCode',
+          code: c ? { role, code: c.code, hint: other ? signInCodeHint(role) : null } : null,
+        });
+        if (c) {
+          void Clipboard.setStringAsync(c.code);
+          void Linking.openURL(c.url);
+        }
+      },
+      ctl.signal,
+    );
+  } finally {
+    if (waiting === ctl) waiting = null;
+  }
+}
+
+// The kinds the new account is asked for: the picked ones, never an optional one (FR-GH-020).
+function kindsToAsk(state: State, driver: Driver): string[] {
+  const optional = new Set(driver.kinds.filter((k) => k.optional).map((k) => k.id));
+  const picked = new Set(state.items.filter((c) => c.picked).map((c) => c.kind));
+  const all = driver.kinds.map((k) => k.id);
+  return (state.items.length ? all.filter((k) => picked.has(k)) : all).filter((k) => !optional.has(k));
+}
+
 // Old account: read-only. Its list is loaded once and kept (research R2).
 export async function signInOld(state: State, dispatch: D): Promise<void> {
   const driver = driverOf(state);
   dispatch({ type: 'setNotice', notice: null });
-  const res = await driver.signIn('old', [], () => undefined);
+  const res = await signInAs(state, dispatch, 'old', []);
   if (!res.ok) {
     if (res.reason === 'failed') dispatch({ type: 'setNotice', notice: strings.signInFailed });
     return;
@@ -69,7 +110,7 @@ export async function signInOld(state: State, dispatch: D): Promise<void> {
 export async function signInNew(state: State, dispatch: D): Promise<void> {
   const driver = driverOf(state);
   dispatch({ type: 'setNotice', notice: null });
-  const res = await driver.signIn('new', [], () => undefined);
+  const res = await signInAs(state, dispatch, 'new', kindsToAsk(state, driver));
   if (!res.ok) {
     if (res.reason === 'failed') dispatch({ type: 'setNotice', notice: strings.signInFailed });
     return;
