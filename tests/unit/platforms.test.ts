@@ -14,12 +14,11 @@ describe('platform list', () => {
   it('has YouTube first, ready, and GitHub after it in the Automatic section', () => {
     expect(PLATFORMS.map((p) => p.id)).toEqual(['youtube', 'github']);
     expect(PLATFORMS[0]).toMatchObject({ id: 'youtube', name: 'YouTube', section: 'automatic', ready: true });
-    expect(PLATFORMS[1]).toMatchObject({ id: 'github', name: 'GitHub', section: 'automatic' });
+    expect(PLATFORMS[1]).toMatchObject({ id: 'github', name: 'GitHub', section: 'automatic', ready: true });
   });
 
-  it('shows GitHub on Home once it is ready, after YouTube', () => {
-    const ready = PLATFORMS.map((p) => ({ ...p, ready: true }));
-    expect(readyBySection(ready)[0].platforms.map((p) => p.name)).toEqual(['YouTube', 'GitHub']);
+  it('shows GitHub on Home after YouTube', () => {
+    expect(readyBySection(PLATFORMS)[0].platforms.map((p) => p.name)).toEqual(['YouTube', 'GitHub']);
   });
 
   it('gives GitHub a dark-look logo', () => {

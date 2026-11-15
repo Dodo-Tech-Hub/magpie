@@ -44,8 +44,7 @@ export const PLATFORMS: Platform[] = [
     logo: require('../../assets/platforms/github.png'),
     logoDark: require('../../assets/platforms/github-white.png'),
     section: 'automatic',
-    // ponytail: hidden until US5 passes, flip at the Phase 8 checkpoint
-    ready: false,
+    ready: true,
     driver: githubDriver,
     open: (dispatch) => dispatch({ type: 'openPlatform', platform: 'github' }),
     unfinished: async () => {

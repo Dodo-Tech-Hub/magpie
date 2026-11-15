@@ -70,10 +70,11 @@ describe('GitHub card', () => {
     await waitFor(() => expect(src()).toBe(PLATFORMS[1].logoDark));
   });
 
-  it('is hidden from Home while the platform is not ready', async () => {
+  it('shows on Home in the app after YouTube', async () => {
     await render(<App />);
     await screen.findByText('Automatic');
-    expect(screen.queryByLabelText('GitHub')).toBeNull();
+    expect(screen.getByLabelText('GitHub')).toBeTruthy();
+    expect(screen.getByLabelText('YouTube')).toBeTruthy();
   });
 });
 

@@ -4,14 +4,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { driverFor } from '@/platforms/platforms';
 import { useApp } from '@/state/AppState';
 import type { StoredItem } from '@/store/progressStore';
-import { isMovable, startMove, togglePick } from '@/state/flows';
+import { allowKind, isMovable, startMove, togglePick } from '@/state/flows';
 import { timeLeft } from '@/move/pacer';
-import { pickedCounter, strings, summary, timeLeftText } from '@/strings';
+import { needAccess, pickedCounter, strings, summary, timeLeftText } from '@/strings';
 import { useTheme, type Colors } from '@/theme/theme';
 import { AccessNote } from '@/ui/AccessNote';
 import { ItemRow, ROW_HEIGHT } from '@/ui/ItemRow';
 
-type Row = { item: StoredItem } | { heading: string; key: string };
+type Row = { item: StoredItem } | { heading: string; key: string; kind: string; locked: boolean };
+
+const LOCKED_HEIGHT = 130;
+const heightOf = (r: Row) => ('item' in r ? ROW_HEIGHT : r.locked ? LOCKED_HEIGHT : ROW_HEIGHT);
 
 export function PickStep() {
   const { state, dispatch } = useApp();
@@ -43,14 +46,17 @@ export function PickStep() {
     ? items.filter((c) => c.title.toLowerCase().includes(query.toLowerCase()))
     : items;
   // One section per kind when there is more than one kind. A kind with no items has none (FR-GH-003).
+  // A kind the new account has no access for is greyed out with an Allow button (FR-GH-020).
+  const noAccess = (kind: string) => !!state.newAccount && !state.granted.includes(kind);
   const kinds = driver.kinds.filter((k) => shown.some((c) => c.kind === k.id));
   const rows: Row[] =
-    kinds.length < 2
+    kinds.length < 2 && !kinds.some((k) => noAccess(k.id))
       ? shown.map((item) => ({ item }))
       : kinds.flatMap((k) => [
-          { heading: k.heading, key: `h:${k.id}` },
+          { heading: k.heading, key: `h:${k.id}`, kind: k.id, locked: noAccess(k.id) },
           ...shown.filter((c) => c.kind === k.id).map((item) => ({ item })),
         ]);
+  const offsets = rows.reduce<number[]>((acc, r, i) => [...acc, (acc[i] ?? 0) + heightOf(r)], [0]);
   const shownPickable = shown.filter((c) => c.status !== 'already_there' && c.status !== 'moved');
   const allPicked = shownPickable.length > 0 && shownPickable.every((c) => c.picked);
 
@@ -98,14 +104,30 @@ export function PickStep() {
       <FlatList
         data={rows}
         keyExtractor={(r) => ('item' in r ? r.item.itemId : r.key)}
-        getItemLayout={(_, i) => ({ length: ROW_HEIGHT, offset: ROW_HEIGHT * i, index: i })}
+        getItemLayout={(_, i) => ({ length: rows[i] ? heightOf(rows[i]) : ROW_HEIGHT, offset: offsets[i] ?? 0, index: i })}
         renderItem={({ item: r }) =>
           'item' in r ? (
-            <ItemRow item={r.item} laterLabel={words.later} onToggle={onToggle} />
+            <ItemRow item={r.item} laterLabel={words.later} greyed={noAccess(r.item.kind)} onToggle={onToggle} />
           ) : (
-            <Text style={styles.section} accessibilityRole="header">
-              {r.heading}
-            </Text>
+            <View style={r.locked ? styles.lockedSection : styles.sectionBox}>
+              <Text style={styles.section} accessibilityRole="header">
+                {r.heading}
+              </Text>
+              {r.locked && (
+                <>
+                  <Text style={styles.lockedText}>{needAccess(r.heading)}</Text>
+                  <Pressable
+                    style={styles.allow}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${strings.allow} ${r.heading}`}
+                    onPress={() => void allowKind(state, dispatch, r.kind)}
+                  >
+                    <Ionicons name="key-outline" size={18} color={colors.text} />
+                    <Text style={styles.allowText}>{strings.allow}</Text>
+                  </Pressable>
+                </>
+              )}
+            </View>
           )
         }
         ListEmptyComponent={<Text style={styles.empty}>{words.noItems}</Text>}
@@ -146,7 +168,12 @@ const makeStyles = (c: Colors) =>
     input: { flex: 1, fontSize: 15, color: c.text },
     allRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     all: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    section: { height: ROW_HEIGHT, textAlignVertical: 'center', paddingHorizontal: 14, fontSize: 13, color: c.muted },
+    sectionBox: { height: ROW_HEIGHT, justifyContent: 'center' },
+    lockedSection: { height: LOCKED_HEIGHT, justifyContent: 'center', gap: 6, opacity: 1 },
+    section: { paddingHorizontal: 14, fontSize: 13, color: c.muted },
+    lockedText: { paddingHorizontal: 14, fontSize: 13, color: c.text },
+    allow: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginHorizontal: 14, padding: 8, borderWidth: 1, borderColor: c.border, borderRadius: 8 },
+    allowText: { fontSize: 13, color: c.text },
     counter: { fontSize: 13, color: c.muted },
     locked: { alignItems: 'center', padding: 32, gap: 8 },
     empty: { padding: 24, textAlign: 'center', color: c.muted },

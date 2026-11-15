@@ -136,8 +136,9 @@ export async function signInNew(state: State, dispatch: D): Promise<void> {
     dispatch({ type: 'setNotice', notice: strings.sameAsOld });
     return;
   }
+  const granted = await driver.granted();
   dispatch({ type: 'setNew', account: res.account });
-  dispatch({ type: 'setGranted', kinds: await driver.granted() });
+  dispatch({ type: 'setGranted', kinds: granted });
   dispatch({ type: 'setExpectedNew', account: null });
   if (!old) return;
   try {
@@ -187,6 +188,36 @@ export async function switchAccount(state: State, dispatch: D, role: Role): Prom
     dispatch({ type: 'setAccessEnded', ended: true });
   } else {
     dispatch({ type: 'setOld', account: null, items: [] });
+  }
+}
+
+// "Allow" on a kind the new account has no access for: sign in again, asking for what it had plus this kind (FR-GH-020).
+export async function allowKind(state: State, dispatch: D, kind: string): Promise<void> {
+  const driver = driverOf(state);
+  const { progressId, newAccount } = state;
+  if (!newAccount || !progressId) return;
+  dispatch({ type: 'setNotice', notice: null });
+  const res = await signInAs(state, dispatch, 'new', [...state.granted, kind]);
+  if (!res.ok) {
+    if (res.reason === 'failed') dispatch({ type: 'setNotice', notice: strings.signInFailed });
+    return;
+  }
+  // The driver kept the old token for a different account, so there is nothing to undo.
+  if (res.account.id !== newAccount.id) {
+    dispatch({ type: 'setNotice', notice: strings.allowOtherAccount });
+    return;
+  }
+  const granted = await driver.granted();
+  dispatch({ type: 'setGranted', kinds: granted });
+  try {
+    const items = await getItems(progressId, pickOrder(driver));
+    await markAlreadyThere(progressId, await checkNew(progressId, driver, items));
+    // Rows of a kind that now has access become pickable, all picked.
+    const fresh = await getItems(progressId, pickOrder(driver));
+    await setPicked(progressId, fresh.filter((c) => c.kind === kind && granted.includes(kind)).map((c) => c.itemId), true);
+    await reload(progressId, driver, dispatch);
+  } catch (e) {
+    dispatch({ type: 'setNotice', notice: noticeFor(e, driver) });
   }
 }
 
@@ -274,8 +305,9 @@ export async function openProgress(dispatch: D, progressId: string): Promise<voi
   const driver = platform.driver;
   // A paused move keeps its sign-in on the phone (FR-GH-019), so it can go on at once.
   if (driver.resumesNew && (await driver.canAct('new', saved.newAccount.id))) {
+    const granted = await driver.granted();
     dispatch({ type: 'setNew', account: saved.newAccount });
-    dispatch({ type: 'setGranted', kinds: await driver.granted() });
+    dispatch({ type: 'setGranted', kinds: granted });
     dispatch({ type: 'setExpectedNew', account: null });
     dispatch({ type: 'setStep', step: 'pick' });
     return;

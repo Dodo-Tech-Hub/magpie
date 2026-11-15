@@ -2,7 +2,6 @@ import { Alert, Linking, type AlertButton } from 'react-native';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import * as Clipboard from 'expo-clipboard';
 import App from '../../App';
-import { PLATFORMS } from '@/platforms/platforms';
 import { closeStore } from '@/store/progressStore';
 import { dropNew, dropOld } from '@/auth/githubTokens';
 import { __reset } from '../mocks/expoSecureStore';
@@ -105,13 +104,7 @@ export async function resetGithub() {
   jest.spyOn(Linking, 'openURL').mockImplementation(async () => undefined as never);
 }
 
-// The GitHub card is hidden until the feature is ready (Phase 8). Tests show it.
-export function showGithub() {
-  PLATFORMS.find((p) => p.id === 'github')!.ready = true;
-}
-
 export async function renderGithub() {
-  showGithub();
   const view = await render(<App />);
   await fireEvent.press(await screen.findByLabelText('GitHub'));
   return view;

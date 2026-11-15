@@ -9,6 +9,8 @@ export const strings = {
   newTitle: 'New account',
   switchAccount: 'Switch',
   signOut: 'Sign out',
+  allow: 'Allow',
+  allowOtherAccount: 'Use your new account here too.',
   openAccessPage: 'Open GitHub settings',
   loading: 'Loading your list…',
   loadPartial: "Some items couldn't load. The rest can still move.",
@@ -60,6 +62,7 @@ export const timeLeftText = (seconds: number, adds: number) => {
   const minutes = Math.ceil(seconds / 60);
   return seconds < 60 ? 'Less than a minute' : `About ${minutes} minute${minutes === 1 ? '' : 's'}`;
 };
+export const needAccess = (heading: string) => `Magpie needs extra access to move ${heading.toLowerCase()}.`;
 export const pickedCounter = (picked: number, total: number) => `${picked} of ${total} picked`;
 export const itemsLeft = (oldHandle: string, newHandle: string, left: number) =>
   `${oldHandle.split('@')[0]} → ${newHandle.split('@')[0]} · ${left} left`;
