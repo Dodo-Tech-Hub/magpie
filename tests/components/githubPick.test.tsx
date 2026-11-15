@@ -16,6 +16,13 @@ const fill = () => {
   w.data.old.gists = [gist('g1', 'My gist')];
   w.data.old.people = [person(7, 'bob')];
 };
+// A section heading is a button that says whether it is open.
+const headings = () =>
+  screen
+    .getAllByRole('button')
+    .filter((b) => b.props.accessibilityState?.expanded !== undefined)
+    .map((b) => b.props.accessibilityLabel);
+const heading = (name: string) => screen.getByRole('button', { name });
 const checked = (name: string) => screen.getByRole('checkbox', { name }).props.accessibilityState.checked;
 
 describe('sections', () => {
@@ -25,8 +32,7 @@ describe('sections', () => {
     await signInBoth(w);
     for (const name of ['o/r1', 'o/r2', 'Work', 'My gist', 'bob']) expect(checked(name)).toBe(true);
     expect(screen.getByText('5 of 5 picked')).toBeTruthy();
-    const order = screen.getAllByRole('header').map((h) => h.props.children);
-    expect(order).toEqual(['Stars', 'Lists', 'Gists', 'People']);
+    expect(headings()).toEqual(['Stars, 2', 'Lists, 1', 'Gists, 1', 'People, 1']);
   });
 
   it('shows no section for a kind with no items', async () => {
@@ -34,14 +40,14 @@ describe('sections', () => {
     w.data.old.people = [person(7)];
     await renderGithub();
     await signInBoth(w);
-    expect(screen.getAllByRole('header').map((h) => h.props.children)).toEqual(['Stars', 'People']);
+    expect(headings()).toEqual(['Stars, 1', 'People, 1']);
   });
 
   it('shows a plain list with no heading when there is one kind', async () => {
     w.data.old.stars = [repo(1), repo(2)];
     await renderGithub();
     await signInBoth(w);
-    expect(screen.queryByRole('header')).toBeNull();
+    expect(screen.queryAllByRole('button').filter((b) => b.props.accessibilityState?.expanded !== undefined)).toEqual([]);
     expect(screen.getByLabelText('o/r1')).toBeTruthy();
   });
 
@@ -54,7 +60,7 @@ describe('sections', () => {
     expect(screen.getByLabelText('bob')).toBeTruthy();
     expect(screen.getByLabelText('Work')).toBeTruthy();
     expect(screen.queryByLabelText('My gist')).toBeNull();
-    expect(screen.queryByText('Gists')).toBeNull();
+    expect(screen.queryByLabelText('Gists, 1')).toBeNull();
     await fireEvent.changeText(screen.getByLabelText('Search'), '');
     await fireEvent.press(screen.getByRole('checkbox', { name: 'All' }));
     expect(screen.getByText('0 of 5 picked')).toBeTruthy();
@@ -67,6 +73,53 @@ describe('sections', () => {
     await renderGithub();
     await signInBoth(w);
     expect(screen.getByLabelText('Move 5 items')).toBeTruthy();
+  });
+});
+
+describe('collapsible sections (FR-GH-023)', () => {
+  it('opens every section at first and collapses and expands one on tap', async () => {
+    fill();
+    await renderGithub();
+    await signInBoth(w);
+    expect(heading('Stars, 2').props.accessibilityState.expanded).toBe(true);
+    await fireEvent.press(heading('Stars, 2'));
+    expect(heading('Stars, 2').props.accessibilityState.expanded).toBe(false);
+    expect(screen.queryByLabelText('o/r1')).toBeNull();
+    expect(screen.getByLabelText('bob')).toBeTruthy();
+    await fireEvent.press(heading('Stars, 2'));
+    expect(screen.getByLabelText('o/r1')).toBeTruthy();
+  });
+
+  it('opens a section while the search matches it and restores the choice when cleared', async () => {
+    fill();
+    await renderGithub();
+    await signInBoth(w);
+    await fireEvent.press(heading('Stars, 2'));
+    await fireEvent.changeText(screen.getByLabelText('Search'), 'r1');
+    expect(screen.getByLabelText('o/r1')).toBeTruthy();
+    await fireEvent.changeText(screen.getByLabelText('Search'), '');
+    expect(screen.queryByLabelText('o/r1')).toBeNull();
+  });
+
+  it('counts collapsed items in All, the counter, and Move', async () => {
+    fill();
+    await renderGithub();
+    await signInBoth(w);
+    await fireEvent.press(heading('Stars, 2'));
+    expect(screen.getByText('5 of 5 picked')).toBeTruthy();
+    expect(screen.getByLabelText('Move 5 items')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'All' }));
+    expect(screen.getByText('0 of 5 picked')).toBeTruthy();
+  });
+
+  it('opens again every time Pick shows', async () => {
+    fill();
+    await renderGithub();
+    await signInBoth(w);
+    await fireEvent.press(heading('Stars, 2'));
+    await fireEvent.press(screen.getByRole('tab', { name: 'From' }));
+    await fireEvent.press(screen.getByRole('tab', { name: 'Pick' }));
+    expect(heading('Stars, 2').props.accessibilityState.expanded).toBe(true);
   });
 });
 

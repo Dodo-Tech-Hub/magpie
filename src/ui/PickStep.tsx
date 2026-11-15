@@ -11,7 +11,7 @@ import { useTheme, type Colors } from '@/theme/theme';
 import { AccessNote } from '@/ui/AccessNote';
 import { ItemRow, ROW_HEIGHT } from '@/ui/ItemRow';
 
-type Row = { item: StoredItem } | { heading: string; key: string; kind: string; locked: boolean };
+type Row = { item: StoredItem } | { heading: string; key: string; kind: string; locked: boolean; count: number };
 
 const LOCKED_HEIGHT = 130;
 const heightOf = (r: Row) => ('item' in r ? ROW_HEIGHT : r.locked ? LOCKED_HEIGHT : ROW_HEIGHT);
@@ -23,6 +23,14 @@ export function PickStep() {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const [query, setQuery] = useState('');
+  // Collapsed kinds. Not saved: every section is open each time Pick opens (FR-GH-023).
+  const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
+  const toggleKind = (kind: string) =>
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (!next.delete(kind)) next.add(kind);
+      return next;
+    });
 
   const driver = driverFor(state.platform!);
   const onToggle = useCallback(
@@ -52,10 +60,16 @@ export function PickStep() {
   const rows: Row[] =
     kinds.length < 2 && !kinds.some((k) => noAccess(k.id))
       ? shown.map((item) => ({ item }))
-      : kinds.flatMap((k) => [
-          { heading: k.heading, key: `h:${k.id}`, kind: k.id, locked: noAccess(k.id) },
-          ...shown.filter((c) => c.kind === k.id).map((item) => ({ item })),
-        ]);
+      : kinds.flatMap((k) => {
+          const inKind = shown.filter((c) => c.kind === k.id);
+          // A search shows every section that has a match (FR-GH-023).
+          const hidden = !query && collapsed.has(k.id);
+          return [
+            { heading: k.heading, key: `h:${k.id}`, kind: k.id, locked: noAccess(k.id), count: inKind.length },
+            ...(hidden ? [] : inKind.map((item) => ({ item }))),
+          ];
+        });
+  const isOpen = (kind: string) => !!query || !collapsed.has(kind);
   const offsets = rows.reduce<number[]>((acc, r, i) => [...acc, (acc[i] ?? 0) + heightOf(r)], [0]);
   const shownPickable = shown.filter((c) => c.status !== 'already_there' && c.status !== 'moved');
   const allPicked = shownPickable.length > 0 && shownPickable.every((c) => c.picked);
@@ -110,9 +124,17 @@ export function PickStep() {
             <ItemRow item={r.item} laterLabel={words.later} greyed={noAccess(r.item.kind)} onToggle={onToggle} />
           ) : (
             <View style={r.locked ? styles.lockedSection : styles.sectionBox}>
-              <Text style={styles.section} accessibilityRole="header">
-                {r.heading}
-              </Text>
+              <Pressable
+                style={styles.sectionRow}
+                accessibilityRole="button"
+                accessibilityLabel={`${r.heading}, ${r.count}`}
+                accessibilityState={{ expanded: isOpen(r.kind) }}
+                onPress={() => toggleKind(r.kind)}
+              >
+                <Ionicons name={isOpen(r.kind) ? 'chevron-down' : 'chevron-forward'} size={20} color={colors.text} />
+                <Text style={styles.section}>{r.heading}</Text>
+                <Text style={styles.sectionCount}>{r.count}</Text>
+              </Pressable>
               {r.locked && (
                 <>
                   <Text style={styles.lockedText}>{needAccess(r.heading)}</Text>
@@ -170,7 +192,10 @@ const makeStyles = (c: Colors) =>
     all: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     sectionBox: { height: ROW_HEIGHT, justifyContent: 'center' },
     lockedSection: { height: LOCKED_HEIGHT, justifyContent: 'center', gap: 6, opacity: 1 },
-    section: { paddingHorizontal: 14, fontSize: 13, color: c.muted },
+    sectionRow: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10 },
+    // The same text style as the section headings on Home.
+    section: { color: c.text, fontSize: 18, fontWeight: '600' },
+    sectionCount: { fontSize: 13, color: c.muted },
     lockedText: { paddingHorizontal: 14, fontSize: 13, color: c.text },
     allow: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginHorizontal: 14, padding: 8, borderWidth: 1, borderColor: c.border, borderRadius: 8 },
     allowText: { fontSize: 13, color: c.text },

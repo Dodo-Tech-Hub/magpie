@@ -81,6 +81,12 @@ describe('a kind without access', () => {
     expect(screen.queryByLabelText('Allow People')).toBeNull();
   });
 
+  it('keeps the Allow button when the greyed section is collapsed', async () => {
+    await fireEvent.press(screen.getByRole('button', { name: 'Gists, 1' }));
+    expect(screen.queryByLabelText('My gist')).toBeNull();
+    expect(screen.getByLabelText('Allow Gists')).toBeTruthy();
+  });
+
   it('runs the move for the other kinds and does not count the greyed kind as failed', async () => {
     await fireEvent.press(screen.getByLabelText('Move 1 item'));
     expect(await eventually('1 moved')).toBeTruthy();
