@@ -17,7 +17,7 @@ A device test on 2026-11-15 showed two gaps. When a move stops at a platform lim
 This feature adds two things, for every platform:
 
 1. The reminder popup says the reason first, in one short sentence.
-2. Each platform card on Home has an info button. It opens a web page about that platform's limits in the system browser. The pages live in the project's repository, so the owner can fix the text without an app release.
+2. Each platform card on Home has an info button. It opens a web page about that platform's limits (the "limits page") in the system browser. After a stop, a "Learn more" link on Pick opens the same page. The pages live in the project's repository, so the owner can fix the text without an app release.
 
 No new screen is added to the app.
 
@@ -27,6 +27,7 @@ No new screen is added to the app.
 
 - Q: Where must the limits pages be served from, given the project repository is private? → A: From the project's repository. The owner makes the repository public when satisfied with the state of the app, before the public release.
 - Q: Must the popup and the reason line on Pick use the same sentence per platform, or two different texts? → A: The same sentence. Each platform has one reason sentence, shown in the popup and on Pick. The words "We'll remind you when you can move the rest" are removed from Pick.
+- Q: When a move stops at a limit, must the user be able to open the platform's limits page from that place, or only from the info button on Home? → A: Also from Pick. The reason line on Pick gets a "Learn more" link that opens the same limits page as the info button on that platform's Home card. The popup gets no link.
 
 ## How it fits
 
@@ -37,7 +38,9 @@ flowchart TD
     Browser -->|Back| Home
 
     Flow -->|Move stops at a platform limit| Popup["Popup: the reason in one sentence,<br/>then 'Can we remind you...?'"]
-    Popup -->|Yes or No| Pick["Pick: rows paused, reason line, Continue"]
+    Popup -->|Yes or No| Pick["Pick: rows paused, reason line<br/>with 'Learn more', Continue"]
+    Pick -->|Tap 'Learn more'| Browser
+    Browser -->|Back| Pick
 ```
 
 ## User Scenarios & Testing *(mandatory)*
@@ -56,6 +59,8 @@ A user taps Move. After some items, the platform's limit is reached and the move
 2. **Given** a GitHub move stops because GitHub asked the app to wait or the hourly pace is reached, **When** the reminder popup shows, **Then** it first says the reason (for example "GitHub asked Magpie to slow down.") and then asks the same question.
 3. **Given** the popup shows, **When** the user taps Yes or No, **Then** the reminder is set or not set exactly as today, and Pick shows the paused rows, Continue, and a reason line with the same sentence as the popup.
 4. **Given** the user already answered the reminder question on an earlier stop, **When** a move stops at a limit again, **Then** no popup shows (as today) and the reason line on Pick says why the move stopped, with the platform's reason sentence.
+5. **Given** Pick shows the reason line after a stop at a limit, **When** the user taps "Learn more" next to it, **Then** the system browser opens the same limits page as the info button on that platform's Home card, and on return Pick is as the user left it (paused rows, reason line, Continue).
+6. **Given** a platform has no limits page, **When** Pick shows the reason line, **Then** no "Learn more" link shows.
 
 ---
 
@@ -113,6 +118,8 @@ The project owner finds that a limits page is unclear, or a platform changes its
 - **FR-003**: The popup's choices, when it shows, and what each choice does MUST stay as they are today. This feature changes only the text of the popup and of the reason line on Pick.
 - **FR-004**: Every platform in the platform list that can stop at a limit MUST have exactly one reason sentence, kept with the other app text. The popup and the reason line on Pick MUST show this same sentence. The reason line on Pick MUST NOT promise a reminder, because the user may have answered No. A new platform MUST supply its own sentence; shared code MUST NOT name a platform.
 
+- **FR-014**: When Pick shows the reason line after a stop at a limit, and the platform has a limits page, a "Learn more" link MUST show with the reason line. Tapping it MUST open the same limits page as the info button on that platform's Home card, in the system browser. The link MUST be a tap target of at least 48 x 48 points and MUST have an accessibility label that names the platform. If the page cannot be opened, the app MUST stay on Pick and show the same short line as FR-008. The popup MUST NOT get a link.
+
 **The info button on a platform card**
 
 - **FR-005**: Every platform card on Home that has a limits page MUST show an info button with an icon. A platform without a limits page MUST NOT show the button.
@@ -147,7 +154,7 @@ The exact words are drafts. The plan may refine them, keeping the meaning.
 ### Measurable Outcomes
 
 - **SC-001**: In a test with a move that stops at the limit, 5 out of 5 testers can say why the move stopped after reading only the popup.
-- **SC-002**: From Home, a user reaches a platform's limits page with one tap, and returns to the app with Home unchanged.
+- **SC-002**: From Home, and from Pick after a stop at a limit, a user reaches the platform's limits page with one tap, and returns to the app with that screen unchanged.
 - **SC-003**: A change to a limits page is visible to users within 10 minutes, with no app release.
 - **SC-004**: Adding a platform needs no change to Home or to the popup beyond that platform's own reason sentence and page address.
 - **SC-005**: All existing tests pass with no change to what they check, apart from the text of the popup and of the reason line on Pick.
