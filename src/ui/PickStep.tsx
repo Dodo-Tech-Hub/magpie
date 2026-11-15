@@ -1,15 +1,17 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { driverFor } from '@/platforms/platforms';
 import { useApp } from '@/state/AppState';
 import { isMovable, startMove, togglePick } from '@/state/flows';
-import { moveButton, pickedCounter, strings, summary } from '@/strings';
+import { pickedCounter, strings, summary } from '@/strings';
 import { useTheme, type Colors } from '@/theme/theme';
-import { ChannelRow, ROW_HEIGHT } from '@/ui/ChannelRow';
+import { ItemRow, ROW_HEIGHT } from '@/ui/ItemRow';
 
 export function PickStep() {
   const { state, dispatch } = useApp();
-  const { channels, moveState } = state;
+  const { items, moveState } = state;
+  const words = driverFor(state.platform!).words;
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const [query, setQuery] = useState('');
@@ -19,20 +21,20 @@ export function PickStep() {
     [state, dispatch],
   );
 
-  const movable = channels.filter(isMovable).length;
+  const movable = items.filter(isMovable).length;
   const moving = moveState === 'moving';
-  const resume = moveState === 'limit' || moveState === 'offline' || moveState === 'auth';
+  const resume = moveState === 'limit' || moveState === 'offline' || moveState === 'auth' || moveState === 'stopped';
   const counts = {
-    moved: channels.filter((c) => c.status === 'moved').length,
-    alreadyThere: channels.filter((c) => c.status === 'already_there').length,
-    couldntMove: channels.filter((c) => c.status === 'couldnt_move').length,
-    waiting: channels.filter(isMovable).length,
+    moved: items.filter((c) => c.status === 'moved').length,
+    alreadyThere: items.filter((c) => c.status === 'already_there').length,
+    couldntMove: items.filter((c) => c.status === 'couldnt_move').length,
+    waiting: items.filter(isMovable).length,
   };
   const showSummary = moveState === 'done' || resume;
-  const pickable = channels.filter((c) => c.status !== 'already_there');
+  const pickable = items.filter((c) => c.status !== 'already_there');
   const shown = query
-    ? channels.filter((c) => c.title.toLowerCase().includes(query.toLowerCase()))
-    : channels;
+    ? items.filter((c) => c.title.toLowerCase().includes(query.toLowerCase()))
+    : items;
   const shownPickable = shown.filter((c) => c.status !== 'already_there' && c.status !== 'moved');
   const allPicked = shownPickable.length > 0 && shownPickable.every((c) => c.picked);
 
@@ -54,9 +56,9 @@ export function PickStep() {
             style={styles.input}
             value={query}
             onChangeText={setQuery}
-            placeholder={strings.searchPlaceholder}
+            placeholder={words.searchPlaceholder}
             placeholderTextColor={colors.muted}
-            accessibilityLabel={strings.searchPlaceholder}
+            accessibilityLabel={words.searchPlaceholder}
           />
         </View>
         <View style={styles.allRow}>
@@ -66,7 +68,7 @@ export function PickStep() {
             accessibilityLabel={strings.all}
             accessibilityState={{ checked: allPicked }}
             onPress={() =>
-              void togglePick(state, dispatch, shownPickable.map((c) => c.channelId), !allPicked)
+              void togglePick(state, dispatch, shownPickable.map((c) => c.itemId), !allPicked)
             }
           >
             <Ionicons name={allPicked ? 'checkbox' : 'square-outline'} size={24} color={colors.primary} />
@@ -79,26 +81,26 @@ export function PickStep() {
       </View>
       <FlatList
         data={shown}
-        keyExtractor={(c) => c.channelId}
+        keyExtractor={(c) => c.itemId}
         getItemLayout={(_, i) => ({ length: ROW_HEIGHT, offset: ROW_HEIGHT * i, index: i })}
-        renderItem={({ item }) => <ChannelRow channel={item} onToggle={onToggle} />}
-        ListEmptyComponent={<Text style={styles.empty}>{strings.noChannels}</Text>}
+        renderItem={({ item }) => <ItemRow item={item} laterLabel={words.later} onToggle={onToggle} />}
+        ListEmptyComponent={<Text style={styles.empty}>{words.noItems}</Text>}
       />
       <View style={styles.bar}>
         {showSummary && <Text style={styles.summary}>{summary(counts)}</Text>}
-        {moveState === 'limit' && <Text style={styles.note}>{strings.limitReached}</Text>}
+        {moveState === 'limit' && <Text style={styles.note}>{words.limitReached}</Text>}
         {state.notice && <Text style={styles.error}>{state.notice}</Text>}
-        {!(moveState === 'done' && movable === 0) && channels.length > 0 && (
+        {!(moveState === 'done' && movable === 0) && items.length > 0 && (
           <Pressable
             style={[styles.move, moving && styles.off]}
             accessibilityRole="button"
-            accessibilityLabel={moving ? strings.moving : resume ? strings.continueMove : moveButton(movable)}
+            accessibilityLabel={moving ? strings.moving : resume ? strings.continueMove : words.moveButton(movable)}
             disabled={moving}
             onPress={() => void startMove(state, dispatch)}
           >
             <Ionicons name="arrow-forward" size={18} color={colors.onPrimary} />
             <Text style={styles.moveText}>
-              {moving ? strings.moving : resume ? strings.continueMove : moveButton(movable)}
+              {moving ? strings.moving : resume ? strings.continueMove : words.moveButton(movable)}
             </Text>
           </Pressable>
         )}

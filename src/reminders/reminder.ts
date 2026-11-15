@@ -37,11 +37,11 @@ export async function askOnce(): Promise<boolean> {
 }
 
 // The reminder carries only the progress ID; everything else is looked up on the phone.
-export async function scheduleReminder(progressId: string, at: Date): Promise<void> {
+export async function scheduleReminder(progressId: string, at: Date, body: string): Promise<void> {
   if (!(await Notifications.getPermissionsAsync()).granted) return;
   await Notifications.scheduleNotificationAsync({
     identifier: idFor(progressId),
-    content: { title: strings.reminderTitle, body: strings.reminderBody, data: { progressId } },
+    content: { title: strings.reminderTitle, body, data: { progressId } },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at },
   });
 }

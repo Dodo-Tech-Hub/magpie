@@ -70,7 +70,7 @@ describe('accounts', () => {
     expect(screen.queryByLabelText('Alpha')).toBeNull();
     const saved = await listUnfinished();
     expect(saved).toHaveLength(1);
-    expect(saved[0].oldAccount.email).toBe('old.me@gmail.com');
+    expect(saved[0].oldAccount.handle).toBe('old.me@gmail.com');
   });
 
   it('blocks Switch while a move is running', async () => {

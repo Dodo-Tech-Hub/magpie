@@ -7,7 +7,7 @@ const busy: State = {
   progressId: 'p1',
   moveState: 'moving',
   notice: 'hi',
-  channels: [{ channelId: 'a', title: 'A', thumbnailUrl: null, picked: true, status: 'waiting' }],
+  items: [{ itemId: 'a', kind: 'channel', title: 'A', thumbnailUrl: null, data: null, picked: true, status: 'waiting', reason: null }],
 };
 
 describe('platform field', () => {
@@ -29,5 +29,11 @@ describe('platform field', () => {
     const inFlow = { ...busy, platform: 'youtube' as const };
     expect(reducer(inFlow, { type: 'reset' })).toEqual({ ...initialState, platform: 'youtube' });
     expect(reducer(busy, { type: 'reset' })).toEqual(initialState);
+  });
+});
+
+describe('move state', () => {
+  it('can be stopped, when the platform paused the account', () => {
+    expect(reducer(busy, { type: 'setMoveState', moveState: 'stopped' }).moveState).toBe('stopped');
   });
 });

@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useMemo, useReducer } from 'react';
 import type { PlatformId } from '@/platforms/platforms';
-import type { AccountInfo, StoredChannel } from '@/store/progressStore';
+import type { AccountInfo, StoredItem } from '@/store/progressStore';
 
 export type Step = 'from' | 'pick' | 'to';
-export type MoveState = 'idle' | 'moving' | 'limit' | 'done' | 'offline' | 'auth';
+export type MoveState = 'idle' | 'moving' | 'limit' | 'done' | 'offline' | 'auth' | 'stopped';
 
 export type State = {
   // null shows Home. A platform id shows that platform's flow.
@@ -12,7 +12,7 @@ export type State = {
   settingsOpen: boolean;
   oldAccount: AccountInfo | null;
   newAccount: AccountInfo | null;
-  channels: StoredChannel[];
+  items: StoredItem[];
   progressId: string | null;
   // Set when a saved progress is opened: only this exact new account may sign in (FR-033).
   expectedNew: AccountInfo | null;
@@ -26,10 +26,10 @@ export type Action =
   | { type: 'setStep'; step: Step }
   | { type: 'openSettings' }
   | { type: 'closeSettings' }
-  | { type: 'setOld'; account: AccountInfo | null; channels: StoredChannel[] }
+  | { type: 'setOld'; account: AccountInfo | null; items: StoredItem[] }
   | { type: 'setNew'; account: AccountInfo | null }
-  | { type: 'setProgress'; progressId: string | null; channels: StoredChannel[] }
-  | { type: 'setChannels'; channels: StoredChannel[] }
+  | { type: 'setProgress'; progressId: string | null; items: StoredItem[] }
+  | { type: 'setItems'; items: StoredItem[] }
   | { type: 'setExpectedNew'; account: AccountInfo | null }
   | { type: 'setMoveState'; moveState: MoveState }
   | { type: 'setNotice'; notice: string | null }
@@ -41,7 +41,7 @@ export const initialState: State = {
   settingsOpen: false,
   oldAccount: null,
   newAccount: null,
-  channels: [],
+  items: [],
   progressId: null,
   expectedNew: null,
   moveState: 'idle',
@@ -65,7 +65,7 @@ export function reducer(state: State, action: Action): State {
       return {
         ...state,
         oldAccount: action.account,
-        channels: action.channels,
+        items: action.items,
         progressId: null,
         expectedNew: null,
         moveState: 'idle',
@@ -74,9 +74,9 @@ export function reducer(state: State, action: Action): State {
     case 'setNew':
       return { ...state, newAccount: action.account, notice: null };
     case 'setProgress':
-      return { ...state, progressId: action.progressId, channels: action.channels, moveState: 'idle' };
-    case 'setChannels':
-      return { ...state, channels: action.channels };
+      return { ...state, progressId: action.progressId, items: action.items, moveState: 'idle' };
+    case 'setItems':
+      return { ...state, items: action.items };
     case 'setExpectedNew':
       return { ...state, expectedNew: action.account };
     case 'setMoveState':

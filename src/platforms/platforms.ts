@@ -1,5 +1,7 @@
 import type { Dispatch } from 'react';
 import type { ImageSourcePropType } from 'react-native';
+import type { Driver } from '@/platforms/driver';
+import { youtubeDriver } from '@/platforms/youtubeDriver';
 import type { Action } from '@/state/AppState';
 import { listUnfinished } from '@/store/progressStore';
 import { strings } from '@/strings';
@@ -11,6 +13,9 @@ export type Platform = {
   id: PlatformId;
   name: string;
   logo: ImageSourcePropType;
+  // Shown on the dark look, when the logo needs a different color.
+  logoDark?: ImageSourcePropType;
+  driver: Driver;
   section: Section;
   ready: boolean;
   open: (dispatch: Dispatch<Action>) => void;
@@ -25,13 +30,20 @@ export const PLATFORMS: Platform[] = [
     logo: require('../../assets/platforms/youtube.png'),
     section: 'automatic',
     ready: true,
+    driver: youtubeDriver,
     open: (dispatch) => dispatch({ type: 'openPlatform', platform: 'youtube' }),
     unfinished: async () => {
-      const list = await listUnfinished();
+      const list = await listUnfinished('youtube');
       return { left: list.reduce((n, p) => n + p.left, 0), ids: list.map((p) => p.id) };
     },
   },
 ];
+
+export function driverFor(id: PlatformId): Driver {
+  const p = PLATFORMS.find((x) => x.id === id);
+  if (!p) throw new Error(`No platform ${id}`);
+  return p.driver;
+}
 
 const SECTIONS: Section[] = ['automatic', 'guided'];
 
