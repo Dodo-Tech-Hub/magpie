@@ -94,7 +94,7 @@ Rationale: automation breaks platform terms and gets users' accounts banned. A g
 
 ## Platform & Technology Constraints
 
-- Stack: Expo (React Native) with TypeScript in strict mode. Builds use EAS Build.
+- Stack: Expo (React Native) with TypeScript in strict mode. Builds are made locally on the project owner's machine, not with EAS cloud builds (see `AGENTS.md`).
 - Specs MUST cover both Android and iOS. Android ships first. Any platform-specific behavior MUST be
   called out in the spec.
 - Data source: each supported platform's official API, or the user's own data export for guided flows. Designs MUST respect each platform's API quota and terms. For example, on YouTube `subscriptions.insert` costs 50 units against a shared daily project quota. Batch work, save progress, resume after interruption, and tell the user clearly when a limit is reached.
@@ -142,4 +142,4 @@ Rationale: a spec is read by people who are new to the feature. A flow, a state 
 - Reviews of every spec, plan, and pull request MUST check compliance. Any exception MUST be written
   in the plan with its reason and approved by the project owner.
 
-**Version**: 1.5.1 | **Ratified**: 2026-11-08 | **Last Amended**: 2026-11-14
+**Version**: 1.5.2 | **Ratified**: 2026-11-08 | **Last Amended**: 2026-11-15

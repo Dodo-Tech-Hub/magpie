@@ -14,7 +14,7 @@ Magpie: a mobile app that migrates a user's subscriptions from one account to an
 ## Tech stack
 
 - Expo (React Native) with TypeScript.
-- EAS Build for Android and iOS builds (no local Mac needed for iOS builds).
+- Builds are local only, on the project owner's machine (for example `npx expo run:android`, or Gradle in `android/`). Do not use or assume EAS cloud builds, EAS environment variables, EAS Update, or an Expo account login. Build-time values such as `EXPO_PUBLIC_*` come from the local `.env`, which is not committed. Never tell the owner to set a value on EAS.
 - Platform APIs with the platform's OAuth for reading and writing subscriptions. For YouTube: YouTube Data API v3 with Google OAuth.
 
 ## Domain constraints
