@@ -11,17 +11,21 @@ beforeEach(async () => {
 });
 
 describe('platform list', () => {
-  it('holds only YouTube at launch, as a ready Automatic platform', () => {
-    expect(PLATFORMS).toHaveLength(1);
-    const [yt] = PLATFORMS;
-    expect(yt).toMatchObject({
-      id: 'youtube',
-      name: 'YouTube',
-      section: 'automatic',
-      ready: true,
-    });
+  it('has YouTube first, ready, and GitHub after it in the Automatic section', () => {
+    expect(PLATFORMS.map((p) => p.id)).toEqual(['youtube', 'github']);
+    expect(PLATFORMS[0]).toMatchObject({ id: 'youtube', name: 'YouTube', section: 'automatic', ready: true });
+    expect(PLATFORMS[1]).toMatchObject({ id: 'github', name: 'GitHub', section: 'automatic' });
   });
 
+  it('shows GitHub on Home once it is ready, after YouTube', () => {
+    const ready = PLATFORMS.map((p) => ({ ...p, ready: true }));
+    expect(readyBySection(ready)[0].platforms.map((p) => p.name)).toEqual(['YouTube', 'GitHub']);
+  });
+
+  it('gives GitHub a dark-look logo', () => {
+    expect(PLATFORMS[1].logoDark).toBeDefined();
+    expect(PLATFORMS[0].logoDark).toBeUndefined();
+  });
 });
 
 describe('drivers', () => {
@@ -47,6 +51,24 @@ describe('readyBySection', () => {
       'automatic',
     ]);
     expect(readyBySection(PLATFORMS).map((g) => g.section)).toEqual(['automatic']);
+  });
+});
+
+describe('GitHub entry', () => {
+  const gh = PLATFORMS[1];
+
+  it('counts only GitHub progresses', async () => {
+    const yt = await getOrCreateProgress('youtube', acct('o1'), acct('n1'));
+    await saveItems(yt, ['a', 'b'].map(ch));
+    const g = await getOrCreateProgress('github', acct('o1'), acct('n1'));
+    await saveItems(g, ['c'].map(ch));
+    expect(await gh.unfinished()).toEqual({ left: 1, ids: [g] });
+  });
+
+  it('opens the GitHub flow', () => {
+    const dispatch = jest.fn();
+    gh.open(dispatch);
+    expect(dispatch).toHaveBeenCalledWith({ type: 'openPlatform', platform: 'github' });
   });
 });
 

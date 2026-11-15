@@ -15,7 +15,7 @@ type Props = {
 
 // The card body and the Continue note are two separate tap targets (FR-016).
 export function PlatformCard({ platform, left = 0, onOpen, onContinue }: Props) {
-  const { colors } = useTheme();
+  const { colors, look } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const [logoFailed, setLogoFailed] = useState(false);
   return (
@@ -28,7 +28,7 @@ export function PlatformCard({ platform, left = 0, onOpen, onContinue }: Props) 
       >
         {!logoFailed && (
           <Image
-            source={platform.logo}
+            source={look === 'dark' && platform.logoDark ? platform.logoDark : platform.logo}
             testID={`logo-${platform.id}`}
             style={styles.logo}
             resizeMode="contain"

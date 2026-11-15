@@ -32,6 +32,25 @@ describe('platform field', () => {
   });
 });
 
+describe('sign-in code and granted kinds', () => {
+  it('sets and clears the code', () => {
+    const code = { role: 'new' as const, code: 'ABCD-1234', hint: null };
+    const next = reducer(busy, { type: 'setSignInCode', code });
+    expect(next.signInCode).toEqual(code);
+    expect(reducer(next, { type: 'setSignInCode', code: null }).signInCode).toBeNull();
+  });
+
+  it('sets the granted kinds, reset clears both, and setOld leaves granted alone', () => {
+    const s = reducer(
+      reducer(busy, { type: 'setGranted', kinds: ['repo'] }),
+      { type: 'setSignInCode', code: { role: 'old', code: 'X', hint: 'h' } },
+    );
+    expect(s.granted).toEqual(['repo']);
+    expect(reducer(s, { type: 'setOld', account: null, items: [] }).granted).toEqual(['repo']);
+    expect(reducer(s, { type: 'reset' })).toMatchObject({ granted: [], signInCode: null });
+  });
+});
+
 describe('move state', () => {
   it('can be stopped, when the platform paused the account', () => {
     expect(reducer(busy, { type: 'setMoveState', moveState: 'stopped' }).moveState).toBe('stopped');

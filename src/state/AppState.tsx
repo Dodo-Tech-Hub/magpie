@@ -18,6 +18,10 @@ export type State = {
   expectedNew: AccountInfo | null;
   moveState: MoveState;
   notice: string | null;
+  // The code a sign-in is waiting on. The account card shows it in place. Native sign-ins never set it.
+  signInCode: { role: 'old' | 'new'; code: string; hint: string | null } | null;
+  // Kinds the new account has access for, from the platform.
+  granted: string[];
 };
 
 export type Action =
@@ -33,6 +37,8 @@ export type Action =
   | { type: 'setExpectedNew'; account: AccountInfo | null }
   | { type: 'setMoveState'; moveState: MoveState }
   | { type: 'setNotice'; notice: string | null }
+  | { type: 'setSignInCode'; code: State['signInCode'] }
+  | { type: 'setGranted'; kinds: string[] }
   | { type: 'reset' };
 
 export const initialState: State = {
@@ -46,6 +52,8 @@ export const initialState: State = {
   expectedNew: null,
   moveState: 'idle',
   notice: null,
+  signInCode: null,
+  granted: [],
 };
 
 export function reducer(state: State, action: Action): State {
@@ -83,6 +91,10 @@ export function reducer(state: State, action: Action): State {
       return { ...state, moveState: action.moveState };
     case 'setNotice':
       return { ...state, notice: action.notice };
+    case 'setSignInCode':
+      return { ...state, signInCode: action.code };
+    case 'setGranted':
+      return { ...state, granted: action.kinds };
     case 'reset':
       // Delete all keeps the user where they are (FR-010, research R1).
       return { ...initialState, platform: state.platform };

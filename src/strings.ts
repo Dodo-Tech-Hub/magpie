@@ -37,6 +37,7 @@ export const strings = {
   sectionAutomatic: 'Automatic',
   sectionGuided: 'Guided',
   platformYoutube: 'YouTube',
+  platformGithub: 'GitHub',
   look: 'Look',
   light: 'Light',
   dark: 'Dark',
@@ -78,4 +79,20 @@ export const youtubeWords: Words = {
   reminderBody: 'You can move the rest of your channels now.',
   moveButton: (n) => `Move ${n} channel${n === 1 ? '' : 's'}`,
   notAffiliated: 'Magpie is not made by or linked with YouTube or Google. YouTube is a trademark of Google LLC.',
+};
+
+export const githubWords: Words = {
+  signIn: 'Sign in with GitHub',
+  signInIcon: 'logo-github',
+  oldHint: 'Where your stars and follows are now',
+  newHint: 'Where your stars and follows should go',
+  searchPlaceholder: 'Search',
+  noItems: "This account doesn't follow anything yet",
+  needPick: 'Pick at least 1 item',
+  later: 'Later',
+  limitReached: "GitHub needs a break. We'll remind you when you can move the rest.",
+  reminderBody: 'You can move the rest now.',
+  moveButton: (n) => `Move ${n} item${n === 1 ? '' : 's'}`,
+  notAffiliated: 'Magpie is not made by or linked with GitHub. GitHub is a trademark of GitHub, Inc.',
+  accessNote: "Magpie's access ends on its own within 8 hours. To end it now, open GitHub settings.",
 };
