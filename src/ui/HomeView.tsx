@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { FlatList, PixelRatio, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { PLATFORMS, readyBySection, type Platform } from '@/platforms/platforms';
 import { useApp } from '@/state/AppState';
-import { openProgress } from '@/state/flows';
+import { leaveFlowFor, openProgress } from '@/state/flows';
 import { strings } from '@/strings';
 import { useTheme, type Colors } from '@/theme/theme';
 import { columnsFor } from '@/ui/gridColumns';
@@ -27,12 +27,18 @@ export function HomeView({ platforms = PLATFORMS }: { platforms?: Platform[] }) 
     return () => {
       live = false;
     };
-  }, [platforms, state.platform, state.moveState, state.progressId, state.channels]);
+  }, [platforms, state.platform, state.moveState, state.progressId, state.items]);
 
-  const onContinue = (p: Platform) => {
+  // Another platform's unfinished flow asks to be saved first (FR-GH-022).
+  const onOpen = async (p: Platform) => {
+    if (await leaveFlowFor(state, dispatch, p.id)) p.open(dispatch);
+  };
+
+  const onContinue = async (p: Platform) => {
+    if (!(await leaveFlowFor(state, dispatch, p.id))) return;
     const { ids = [] } = unfinished[p.id] ?? {};
     if (ids.length === 1) {
-      void openProgress(dispatch, ids[0]);
+      await openProgress(dispatch, ids[0]);
     } else {
       p.open(dispatch);
       dispatch({ type: 'setStep', step: 'from' });
@@ -58,8 +64,8 @@ export function HomeView({ platforms = PLATFORMS }: { platforms?: Platform[] }) 
                 <PlatformCard
                   platform={item}
                   left={unfinished[item.id]?.left}
-                  onOpen={() => item.open(dispatch)}
-                  onContinue={() => onContinue(item)}
+                  onOpen={() => void onOpen(item)}
+                  onContinue={() => void onContinue(item)}
                 />
               </View>
             )}

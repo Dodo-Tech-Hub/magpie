@@ -1,5 +1,5 @@
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
-import type { AccountInfo } from '@/store/progressStore';
+export type GoogleAccount = { id: string; email: string; name: string; photoUrl: string | null };
 
 export type Role = 'old' | 'new';
 
@@ -10,7 +10,7 @@ const SCOPES: Record<Role, string[]> = {
 };
 
 export type SignInResult =
-  | { ok: true; account: AccountInfo }
+  | { ok: true; account: GoogleAccount }
   | { ok: false; reason: 'cancelled' | 'failed' };
 
 export async function signIn(role: Role): Promise<SignInResult> {

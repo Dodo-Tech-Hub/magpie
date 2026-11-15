@@ -63,14 +63,14 @@ describe('accounts', () => {
   it('reloads the list for a switched old account and keeps the earlier progress saved', async () => {
     await bothSignedIn();
     await fireEvent.press(screen.getByRole('tab', { name: 'From' }));
-    listMock.mockResolvedValueOnce([ch('x', 'Xavier')]);
+    listMock.mockResolvedValueOnce([ch('x', 'Xavier')]).mockResolvedValueOnce([]);
     signInAs(mockUser('old2-id', 'second.old@gmail.com'));
     await fireEvent.press(screen.getByLabelText('Switch Old account'));
     expect(await screen.findByLabelText('Xavier')).toBeTruthy();
     expect(screen.queryByLabelText('Alpha')).toBeNull();
     const saved = await listUnfinished();
-    expect(saved).toHaveLength(1);
-    expect(saved[0].oldAccount.email).toBe('old.me@gmail.com');
+    // The new old account starts its own progress at sign-in (FR-GH-021). The earlier one stays.
+    expect(saved.map((p) => p.oldAccount.handle).sort()).toEqual(['old.me@gmail.com', 'second.old@gmail.com']);
   });
 
   it('blocks Switch while a move is running', async () => {

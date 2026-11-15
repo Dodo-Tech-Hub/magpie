@@ -1,6 +1,6 @@
 # Implementation Plan: GitHub Platform
 
-**Branch**: `feature/github-platform` | **Date**: 2026-11-14 | **Spec**: [spec.md](spec.md)
+**Branch**: `feature/github-platform` | **Date**: 2026-11-14, updated 2026-11-15 | **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `specs/008-github-platform/spec.md`
 
@@ -15,6 +15,7 @@ The work has two parts and one check before Part B.
 | Check | Owner creates the OAuth app and runs [verify-access.sh](verify-access.sh) to confirm star, follow, gist star, and star lists with the planned scopes. | Done 2026-11-14: passed (research R1) | Recorded in research R1 |
 | Part A | Make the Automatic flow platform-neutral behind a platform driver. YouTube is the only driver. No behavior change. | Owner approved the restructure on 2026-11-14 (Principle IV) | Its own pull request, before Part B |
 | Part B | Add the GitHub driver, the code sign-in, sections on Pick, the pacer, token handling, and the texts. | Check passed, Part A merged, one client ID | One or more pull requests |
+| Part C | Device test changes of 2026-11-15: progress from the old sign-in, the question on switching platforms, larger collapsible Pick sections (FR-GH-021, 022, 023, FR-GH-003). Applies to every Automatic platform. | Part B code on `feature/github-platform-impl` | Same pull request as Part B |
 
 **App type**: GitHub's docs show a GitHub App can star only repositories where it is installed, so the plan uses one classic OAuth app, approved by the owner on 2026-11-14 ([research.md](research.md), R1). The check confirms the one scope the docs do not name: `user` for star lists. Part A does not depend on it.
 
@@ -45,7 +46,7 @@ Technical approach:
 
 **Constraints**: At most 20 adds per minute and 300 per hour per new account (FR-GH-010). Hosts: `github.com`, `api.github.com`, `avatars.githubusercontent.com`. No client secret. No refresh token saved. All text in `src/strings.ts`.
 
-**Scale/Scope**: Part A: about 12 edited files, 2 new, 1 renamed, every existing test file touched for renames only. Part B: about 8 new files, about 8 edited, 1 logo asset, about 10 new test files.
+**Scale/Scope**: Part A: about 12 edited files, 2 new, 1 renamed, every existing test file touched for renames only. Part B: about 8 new files, about 8 edited, 1 logo asset, about 10 new test files. Part C: about 9 edited files, 2 new test files, several test files updated.
 
 ## Constitution Check
 
@@ -57,8 +58,8 @@ Checked against `.specify/memory/constitution.md` v1.5.1.
 | --- | --- | --- |
 | I. New screen justified | No new screen. The sign-in code, the hint, "Allow", and the remove-access line show in place on existing steps (FR-GH-002). | Pass |
 | I. Icons, labels, simple words | Sign-in button uses `logo-github` with "Sign in with GitHub". "Allow" uses `key-outline`. The remove-access button uses `open-outline`. Texts are the spec's. | Pass |
-| I. Accessibility | The code is read letter by letter in its label. Section headings are headings. Greyed rows say why. Every new button has a label. | Pass |
-| I. Confirmations | None added. | N/A |
+| I. Accessibility | The code is read letter by letter in its label. Section headings are buttons with an open or collapsed state and a 48-point target (FR-GH-023). Greyed rows say why. Every new button has a label. | Pass |
+| I. Confirmations | One, Part C: "Save your <platform> progress?" when switching platforms. Allowed because Don't save deletes a progress. Native `Alert.alert` (R13). | Pass |
 | II. Tests | Unit tests for the driver, the pacer, the migration, and the mover. Component tests for the code sign-in, sections, gists, pause, and sign-out. No real GitHub calls. | Pass |
 | II. Tests check behavior | Each test checks what the user sees or a business rule (pace, list union, scope per kind, migration). A test asserts a mocked call only where that call is the behavior itself: the browser opens, the token is saved or deleted. No coverage-only tests. | Pass |
 | III.1 Least privilege | One classic OAuth app. No scope for the old account. Scopes per picked kind for the new account; `gist` only on request; the user can untick any scope. `public_repo`, `user`, and `gist` are broader than needed: **approved exception** (2026-11-14), listed below. | Pass with approved exception |
@@ -167,6 +168,20 @@ Done when: every existing test passes with renames only, the migration test pass
 7. Token drop at the summary, the line that Magpie can still use the account with the remove-access button, Delete all.
 8. Texts, including "Magpie is not made by or linked with GitHub" in Settings.
 
+## Part C. Device test changes (2026-11-15)
+
+Research R12 to R14, data model Part C. Order matters: each step keeps the tests green.
+
+1. `src/store/migrate.ts`: version 2 (nullable new account, `progress_no_new` index), 1 to 2 rebuild, fresh install at version 2.
+2. `src/store/progressStore.ts`: `getOrCreateProgress` with an optional new account, `attachNew`, `saveItems` drops gone `waiting` rows, `UnfinishedProgress.newAccount` nullable.
+3. `src/state/AppState.tsx`: `flowPlatform`, `startFlow`, `forProgress`.
+4. `src/move/mover.ts`: optional `signal` in `MoveOptions`, checked before each item, returns `stopped`.
+5. `src/state/flows.ts`: `signInOld` creates or reopens the progress; `signInNew` calls `attachNew`; `togglePick` always writes to the store; `openProgress` handles a progress with no new account (opens Pick, no sign-in line); new `openPlatformCard(state, dispatch, platform)` with the question and the three outcomes; keep the move's `AbortController` so Don't save can stop it.
+6. `src/ui/HomeView.tsx`: card body and Continue note call `openPlatformCard`. `src/ui/FromStep.tsx`: "New account not chosen yet" for a progress with no new account. `src/strings.ts`: the question, the three buttons, the not-chosen line.
+7. `src/ui/PickStep.tsx`: heading row as a `Pressable` with the Home heading style, count, arrow, collapsed set in local state, search override.
+
+Done when: the new tests in the table below pass, all existing tests pass, and the device bug no longer reproduces (quickstart checks 14 to 18).
+
 ## Tests
 
 | Area | Test | Kind |
@@ -181,6 +196,10 @@ Done when: every existing test passes with renames only, the migration test pass
 | Pick | Sections, one kind has no heading, search and All across sections, kinds without a scope greyed until allowed, gists never asked first | Component |
 | Move | Rows change in place, pause shows "Later" and the break text, Continue moves only the rest, summary skips kinds without access | Component |
 | Sign-out | Remove-access line and button, Delete all leaves no GitHub data | Component |
+| Store version 2 | Version 1 database opens as version 2 with the same rows; a second progress with no new account for the same old account is refused; `attachNew` merges into an existing pair | Unit |
+| Progress from From | Picks survive going Home and back and an app restart before To; signing in to the same old account again keeps picks, adds new items picked, drops gone items; From list shows "New account not chosen yet" | Component |
+| Switching platforms | Same card resumes; different card with an unfinished progress asks; Save opens the other platform fresh and keeps the Continue note; Don't save deletes the progress and signs out; Cancel stays on Home; no question with nothing unfinished or from a reminder; a move kept running by Save does not change the other flow | Component |
+| Pick sections | Heading shows name and count; tap collapses and expands; search opens matching sections and clearing restores; All, counter, and Move count collapsed rows; Allow stays visible when collapsed | Component |
 | YouTube | All existing tests | Existing |
 
 ## What the project owner needs to do
@@ -188,7 +207,7 @@ Done when: every existing test passes with renames only, the migration test pass
 1. ~~Approve the restructure (Part A)~~: approved on 2026-11-14.
 2. ~~Create the OAuth app and run the access check~~: passed on 2026-11-14.
 3. ~~Add the official GitHub mark~~: in `assets/platforms/`.
-4. Set `EXPO_PUBLIC_GITHUB_CLIENT_ID` in `.env` and in the EAS environment variables before Part B.
+4. Set `EXPO_PUBLIC_GITHUB_CLIENT_ID` in the local `.env` before Part B. Builds are local, so no EAS variable is needed.
 
 ## Complexity Tracking
 

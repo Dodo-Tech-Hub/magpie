@@ -3,7 +3,7 @@ import { Alert, BackHandler } from 'react-native';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import App from '../../App';
 import { palettes } from '@/theme/theme';
-import { getOrCreateProgress, initStore, listUnfinished, saveChannels } from '@/store/progressStore';
+import { getOrCreateProgress, initStore, listUnfinished, saveItems } from '@/store/progressStore';
 import { answerAlert, ch, listMock, NEW, nextSignIn, OLD, renderApp, resetWorld, subMock } from './helpers';
 
 jest.mock('@/api/youtube', () => ({
@@ -32,12 +32,12 @@ const back = async () => {
   });
   return result;
 };
-const acct = (u: typeof OLD) => ({ id: u.id, email: u.email, name: u.name, photoUrl: u.photo });
+const acct = (u: typeof OLD) => ({ id: u.id, handle: u.email, name: u.name, photoUrl: u.photo });
 
 async function seed(ids = ['a', 'b']) {
   await initStore();
-  const pid = await getOrCreateProgress(acct(OLD), acct(NEW));
-  await saveChannels(pid, ids.map((id) => ({ channelId: id, title: id, thumbnailUrl: null })));
+  const pid = await getOrCreateProgress('youtube', acct(OLD), acct(NEW));
+  await saveItems(pid, ids.map((id) => ({ itemId: id, kind: 'channel', title: id, thumbnailUrl: null, data: null })));
   return pid;
 }
 

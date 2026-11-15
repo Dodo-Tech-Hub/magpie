@@ -1,19 +1,30 @@
 import React, { useMemo } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import type { Words } from '@/platforms/driver';
 import type { AccountInfo } from '@/store/progressStore';
-import { strings } from '@/strings';
+import * as Clipboard from 'expo-clipboard';
+import { codeLabel, strings } from '@/strings';
 import { useTheme, type Colors } from '@/theme/theme';
+
+type IconName = keyof typeof Ionicons.glyphMap;
 
 type Props = {
   title: string;
+  words: Words;
   hint: string;
   account: AccountInfo | null;
   onSignIn: () => void;
+  // The code a sign-in is waiting on. Shown in place of the Sign in button.
+  code?: { code: string; hint: string | null } | null;
+  onCancel?: () => void;
+  // The Switch button signs out instead (the platform cannot switch in place).
+  signsOut?: boolean;
+  onSwitch?: () => void;
   disabled?: boolean;
 };
 
-export function AccountCard({ title, hint, account, onSignIn, disabled }: Props) {
+export function AccountCard({ title, words, hint, account, onSignIn, code, onCancel, signsOut, onSwitch, disabled }: Props) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   if (account) {
@@ -23,24 +34,58 @@ export function AccountCard({ title, hint, account, onSignIn, disabled }: Props)
           <Image source={{ uri: account.photoUrl }} style={styles.avatar} />
         ) : (
           <View style={[styles.avatar, styles.fallback]}>
-            <Text style={styles.text}>{account.email[0].toUpperCase()}</Text>
+            <Text style={styles.text}>{account.handle[0].toUpperCase()}</Text>
           </View>
         )}
         <View style={styles.flex}>
           <Text style={styles.title}>{title}</Text>
-          <Text style={styles.hint}>{account.email}</Text>
+          <Text style={styles.hint}>{account.handle}</Text>
         </View>
         <Pressable
           style={[styles.button, disabled && styles.off]}
           accessibilityRole="button"
-          accessibilityLabel={`${strings.switchAccount} ${title}`}
+          accessibilityLabel={`${signsOut ? strings.signOut : strings.switchAccount} ${title}`}
           accessibilityState={{ disabled: !!disabled }}
           disabled={disabled}
-          onPress={onSignIn}
+          onPress={onSwitch ?? onSignIn}
         >
-          <Ionicons name="swap-horizontal" size={18} color={colors.text} />
-          <Text style={styles.buttonText}>{strings.switchAccount}</Text>
+          <Ionicons name={signsOut ? 'log-out-outline' : 'swap-horizontal'} size={18} color={colors.text} />
+          <Text style={styles.buttonText}>{signsOut ? strings.signOut : strings.switchAccount}</Text>
         </Pressable>
+      </View>
+    );
+  }
+  if (code) {
+    return (
+      <View style={styles.card}>
+        <View style={styles.flex}>
+          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.code} accessibilityLabel={codeLabel(code.code)}>
+            {code.code}
+          </Text>
+          {code.hint && <Text style={styles.hint}>{code.hint}</Text>}
+          <Text style={styles.hint}>{strings.waitingForYou}</Text>
+          <View style={styles.codeButtons}>
+            <Pressable
+              style={styles.button}
+              accessibilityRole="button"
+              accessibilityLabel={strings.copyCode}
+              onPress={() => void Clipboard.setStringAsync(code.code)}
+            >
+              <Ionicons name="copy-outline" size={18} color={colors.text} />
+              <Text style={styles.buttonText}>{strings.copyCode}</Text>
+            </Pressable>
+            <Pressable
+              style={styles.button}
+              accessibilityRole="button"
+              accessibilityLabel={strings.cancel}
+              onPress={onCancel}
+            >
+              <Ionicons name="close-outline" size={18} color={colors.text} />
+              <Text style={styles.buttonText}>{strings.cancel}</Text>
+            </Pressable>
+          </View>
+        </View>
       </View>
     );
   }
@@ -52,12 +97,12 @@ export function AccountCard({ title, hint, account, onSignIn, disabled }: Props)
         <Pressable
           style={[styles.signIn, disabled && styles.off]}
           accessibilityRole="button"
-          accessibilityLabel={`${strings.signIn}: ${title}`}
+          accessibilityLabel={`${words.signIn}: ${title}`}
           disabled={disabled}
           onPress={onSignIn}
         >
-          <Ionicons name="logo-google" size={18} color={colors.onPrimary} />
-          <Text style={styles.signInText}>{strings.signIn}</Text>
+          <Ionicons name={words.signInIcon as IconName} size={18} color={colors.onPrimary} />
+          <Text style={styles.signInText}>{words.signIn}</Text>
         </Pressable>
       </View>
     </View>
@@ -78,4 +123,6 @@ const makeStyles = (c: Colors) =>
     signIn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 10, height: 44, borderRadius: 8, backgroundColor: c.primary },
     signInText: { color: c.onPrimary, fontSize: 15 },
     off: { opacity: 0.4 },
+    code: { fontSize: 32, fontWeight: '600', letterSpacing: 2, color: c.text, marginTop: 8 },
+    codeButtons: { flexDirection: 'row', gap: 8, marginTop: 10 },
   });

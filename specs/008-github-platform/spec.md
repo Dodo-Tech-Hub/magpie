@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-13
 
-**Status**: Draft
+**Status**: Implemented
 
 **Input**: User description: "GitHub platform. Then let's discuss which items GitHub supports, and whether this feature is feasible (not facing any platform limitations)."
 
@@ -159,6 +159,13 @@ sequenceDiagram
 - Update (2026-11-14): GitHub OAuth apps now offer "Expire user access tokens". The owner turned it on, and the access check showed tokens run out after 8 hours. The rule 3 exception shrinks back to "deleted on the phone, not cancelled, runs out within 8 hours".
 - Access check (2026-11-14): with no scope, the old account reads stars, follows, starred gists, and star lists. GitHub's error for `createUserList` names `user` as the required scope, so star lists stay in scope.
 
+### Session 2026-11-15
+
+- Q: Device test found a bug: on GitHub Pick with a list, the user goes Home and taps YouTube, and GitHub's Pick still shows. What should happen? → A: Tapping a different platform's card while another platform has an active progress MUST ask whether to save that progress. Save keeps it and opens the tapped platform fresh. This applies to every Automatic platform (FR-GH-022).
+- Q: When does a progress start? Today it starts only when both accounts are signed in. → A: A progress is the saved state of whatever the user is doing, starting from the first old account sign-in. The new account is optional until Move. This applies to every Automatic platform (FR-GH-021).
+- Q: Pick section headings are small and every section is always open. → A: Headings MUST be larger and each section MUST be collapsible. This applies to every platform whose Pick has sections (FR-GH-003, FR-GH-023).
+- Q: After the Part B device test, the owner asked for an "All" checkbox on each section, apart from the All for the whole list. → A: Each section heading gets its own All checkbox for that kind (FR-GH-024). This applies to every platform whose Pick has sections.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Move stars and follows to a new GitHub account (Priority: P1)
@@ -263,6 +270,9 @@ Each kind needs its own access on the new account, and some access is broad: sta
 - GitHub flags the new account for unusual activity: the next add fails, the app stops, saves the progress, and shows "GitHub paused your account's activity. Try again later." It does not retry in a loop.
 - The internet drops during a move: the move pauses, unfinished rows go back to waiting, and the user sees "No internet. Try again when you're online."
 - The user closes the app during a move: on return, moved items stay Moved and the rest are waiting.
+- The user is on GitHub Pick, goes Home, and taps YouTube: the app asks "Save your GitHub progress?" (FR-GH-022). Save opens YouTube from the start, and the GitHub card shows a Continue note.
+- A GitHub move is running when the user taps another platform's card: Save keeps the move running, as when the user goes Home (spec 004). Don't save stops it first.
+- The user collapses a section, then searches: sections with matches open while the search has text, and the collapsed one closes again when the search is cleared.
 - The user switches to the browser during sign-in and the app goes to the background: when they return, the app goes on checking until sign-in ends or the code runs out.
 - GitHub changes or removes an API the app uses: the affected kind of item fails with "Couldn't move", and the other kinds still work. If reading one kind from the old account fails, Pick shows the other kinds with the line "Some items couldn't load. The rest can still move."
 
@@ -274,7 +284,9 @@ Each kind needs its own access on the new account, and some access is broad: sta
 
 - **FR-GH-001**: The GitHub card MUST appear in the Automatic section of Home, after YouTube, through the one list of platforms (spec 004, FR-003). The app MUST move four kinds of items: starred repositories, star lists, starred gists, and followed people.
 - **FR-GH-002**: Tapping the GitHub card MUST open the same From, Pick, To flow as YouTube, with the same steps, row states, summary, saved progress, unfinished progress list, Home button, and Settings. The flow MUST NOT get GitHub-only screens. The sign-in code (FR-GH-006) shows in place on the From or To step.
-- **FR-GH-003**: When the old account has more than one kind of item, Pick MUST split the list into one section per kind, each under a short heading ("Stars", "Lists", "Gists", "People"). A kind with no items MUST NOT show a section. With only one kind, Pick MUST show a plain list with no heading. Search, All, and the counter MUST work across all sections.
+- **FR-GH-003**: When the old account has more than one kind of item, Pick MUST split the list into one section per kind, each under a short heading ("Stars", "Lists", "Gists", "People") in the same text style as the section headings on Home ("Automatic"), followed by the section's item count. A kind with no items MUST NOT show a section. With only one kind, Pick MUST show a plain list with no heading. Search, All, and the counter MUST work across all sections.
+- **FR-GH-023**: Each Pick section MUST be collapsible, for every platform whose Pick has sections. Tapping the heading MUST collapse or expand the section, and the heading MUST show an arrow that points down when open and right when collapsed. The whole heading row MUST be one tap target of at least 48 x 48 points, and screen readers MUST read it as a button with its open or collapsed state. Every section MUST be open when Pick opens; the app MUST NOT save which sections are collapsed. While the search box has text, every section with a match MUST show open, and clearing the search MUST restore the user's choice. All, the counter, and Move MUST include items in collapsed sections. A greyed kind (FR-GH-020) keeps its "Allow" button visible in the heading row when collapsed.
+- **FR-GH-024**: Each Pick section heading MUST have its own "All" checkbox, apart from the All for the whole list, for every platform whose Pick has sections. It MUST pick or unpick every item of that kind that can be picked (while the search box has text, only the matching ones, as the list's All does), and MUST show checked only when all of them are picked. It MUST work when the section is collapsed, and tapping it MUST NOT collapse or expand the section. It MUST be its own tap target of at least 48 x 48 points, and screen readers MUST read it as a checkbox named "All" plus the heading (for example "All Stars"). A greyed kind (FR-GH-020) and a kind with nothing left to pick MUST NOT show it.
 - **FR-GH-004**: All user-facing text MUST say "items" or the kind name (for example "Move 12 items", "12 of 340 picked") instead of "channels" in the GitHub flow, and MUST live with the other app text.
 - **FR-GH-018**: Moving a star list MUST create a list with the same name and description on the new account, or reuse one with the same name, and add to it every repository of the list that is Moved or Already there. Repositories of the list that are not picked or fail MUST be left out of the list, and the list row MUST say how many were left out. Picking a list MUST NOT pick its repositories on its own. Moving a list MUST NOT take a repository out of any list it is already in on the new account.
 - **FR-GH-016**: Removed on 2026-11-15. The old sign-in asks for no scope, so the old account's list holds only public repositories, and any account can star a public repository. The app MUST NOT spend a request per repository to check this before the move. A repository the new account cannot star fails at move time with its reason (FR-GH-017).
@@ -294,6 +306,11 @@ Each kind needs its own access on the new account, and some access is broad: sta
 - **FR-GH-011**: Pick MUST show the expected time left for the picked items at that pace before the user taps Move.
 - **FR-GH-012**: When GitHub asks the app to wait for 60 seconds or less, or gives no time (then the app waits 60 seconds), the app MUST wait and try the same item again without a message. When GitHub asks for a longer wait, asks again to wait for the same item, or the hourly pace in FR-GH-010 is reached, the app MUST stop, mark the rest "Later", save the progress, show "GitHub needs a break. We'll remind you when you can move the rest.", and ask for reminders as YouTube does at the daily limit. The reminder MUST be set for the time GitHub gave, or the time the hourly pace allows the next add, or 1 hour later when GitHub gave no time, whichever is latest.
 
+**Progress and switching platforms (every Automatic platform)**
+
+- **FR-GH-021**: A progress MUST start as soon as the old account's list is read, with or without a new account, and MUST save the list, the picks, and both accounts as they change. Signing in again to an old account that already has an unfinished progress with no new account on that platform MUST open that progress, re-read the list, keep the picks for items still on it, and pick new items. When the new account signs in and a progress for that old and new pair already exists, the app MUST open that progress and delete the one without a new account. The unfinished progress list and the Continue note (spec 004, FR-007) MUST include progresses with no new account, shown as "New account not chosen yet".
+- **FR-GH-022**: Going Home and tapping the same platform's card MUST return to the step and state the user left. Tapping a different platform's card while the current platform has an unfinished progress MUST ask "Save your <platform> progress?" with three choices. Save keeps the progress and opens the tapped platform's flow from the start. Don't save stops a running move, deletes the progress and that platform's tokens, and opens the tapped platform's flow from the start; items already moved stay on the new account. Cancel stays on Home. With no unfinished progress, or when a reminder opens a progress, the app MUST switch with no question.
+
 **Data, security, and both phone types**
 
 - **FR-GH-019**: The app MUST keep each GitHub token on the phone for as short a time as possible, as an approved exception to Principle III, rule 3: (a) delete the old account token as soon as its list is read; (b) delete the new account token when the summary shows, on Sign out, and on Delete all; (c) never save the refresh token GitHub sends. GitHub's sign-out is Sign out on a step, or Delete all. Because the token stays valid on GitHub until it runs out (8 hours after sign-in), the summary MUST say so in one line with a button that opens GitHub's page where the user removes Magpie's access. The To step after Sign out and Settings next to Delete all MUST show the same button.
@@ -307,13 +324,13 @@ Each kind needs its own access on the new account, and some access is broad: sta
 - **Platform**: GitHub is a new entry in the existing list of platforms, in the Automatic section.
 - **Account**: A signed-in GitHub account on From or To, with an ID, a username, and a picture.
 - **Item**: Something the old account stars or follows that can be moved. It has a kind (repository, list, gist, or person), a name, and a picture. This is what YouTube calls a channel.
-- **Progress**: The existing saved move progress, tied to a platform. One progress per old and new account pair per platform.
+- **Progress**: The saved state of a move on one platform, from the old account's sign-in on (FR-GH-021). The new account is optional until Move. One progress per old and new account pair per platform, and at most one unfinished progress with no new account per old account per platform.
 
 ```mermaid
 erDiagram
     PLATFORM ||--o{ PROGRESS : has
     PROGRESS }o--|| ACCOUNT : "from (old)"
-    PROGRESS }o--|| ACCOUNT : "to (new)"
+    PROGRESS }o--o| ACCOUNT : "to (new), optional"
     PROGRESS ||--o{ ITEM_STATUS : tracks
     ITEM ||--o{ ITEM_STATUS : "is moved in"
 ```
@@ -396,6 +413,6 @@ Private stars and private star lists of the old account are not read, because re
 These steps need your GitHub account and cannot be done by an agent. They block the plan's sign-in work, not this spec.
 
 1. **Create one OAuth app** in the organisation at <https://github.com/organizations/Dodo-Tech-Hub/settings/applications/new>, named "Magpie". Set the homepage URL and the callback URL to the repository page (the app never uses the callback). Tick **Enable Device Flow**, and keep **Expire user access tokens** ticked. Delete the empty Redirect URI row if GitHub accepts it.
-2. **Client ID**: copy the Client ID into your local `.env` as `EXPO_PUBLIC_GITHUB_CLIENT_ID`, and into the EAS environment variables. It is public, so this is safe. **Do not generate a client secret.** The app does not use one.
+2. **Client ID**: copy the Client ID into your local `.env` as `EXPO_PUBLIC_GITHUB_CLIENT_ID`. Builds are local, so no EAS variable is needed. It is public, so this is safe. **Do not generate a client secret.** The app does not use one.
 3. **Access test**: done on 2026-11-14 (passed).
 4. **Test accounts**: have two GitHub accounts ready, one that stars and follows a few items and one new.

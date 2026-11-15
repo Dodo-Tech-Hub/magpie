@@ -1,11 +1,12 @@
 import React, { useMemo } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { signOut } from '@/auth/google';
 import { cancelReminder } from '@/reminders/reminder';
+import { PLATFORMS } from '@/platforms/platforms';
 import { useApp } from '@/state/AppState';
 import { deleteAll, listUnfinished } from '@/store/progressStore';
 import { strings } from '@/strings';
+import { AccessNote } from '@/ui/AccessNote';
 import { useTheme, type Colors, type ThemeChoice } from '@/theme/theme';
 
 type Icon = keyof typeof Ionicons.glyphMap;
@@ -31,7 +32,7 @@ export function SettingsView() {
         onPress: async () => {
           for (const p of await listUnfinished()) await cancelReminder(p.id);
           await deleteAll();
-          await signOut();
+          for (const p of PLATFORMS) await p.driver.signOut();
           resetChoice();
           dispatch({ type: 'reset' });
         },
@@ -74,8 +75,17 @@ export function SettingsView() {
           <Text style={styles.deleteText}>{strings.deleteAll}</Text>
         </Pressable>
       </View>
+      {PLATFORMS.filter((p) => p.ready && p.driver.removeAccessUrl).map((p) => (
+        <View key={p.id} style={styles.block}>
+          <AccessNote driver={p.driver} />
+        </View>
+      ))}
       <View style={styles.block}>
-        <Text style={styles.notice}>{strings.notAffiliated}</Text>
+        {PLATFORMS.filter((p) => p.ready).map((p) => (
+          <Text key={p.id} style={styles.notice}>
+            {p.driver.words.notAffiliated}
+          </Text>
+        ))}
       </View>
     </View>
   );
