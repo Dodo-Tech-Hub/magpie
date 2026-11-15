@@ -94,7 +94,7 @@ description: "Task list for limit reasons"
 - [ ] T017 [P] [US3] Create `docs/limits/youtube.md`. Plain Markdown, no front matter, no HTML, no images, no logo, each sentence on one line. Start with `# YouTube limits in Magpie`, then these parts in this order with a `##` heading each (contracts/limits-pages.md): why a move can pause (YouTube gives each app a fixed amount of work per day, and all people who use Magpie share it); how many items (about 200 channels per day, for everyone together); when the move can go on (the limit starts again once a day, the app shows "Tomorrow" on the rows and can send a reminder); what is safe (channels already moved stay moved, tap Continue to move the rest, nothing is lost); and a last line "Magpie is not made by or linked with YouTube or Google. YouTube is a trademark of Google LLC.". Simple words, short sentences, no "quota" and no "rate limit" (constitution I, FR-011).
 - [ ] T018 [P] [US3] Create `docs/limits/github.md` with the same rules and order as T017. Title `# GitHub limits in Magpie`. Parts: why (GitHub's rules do not allow starring or following a lot in a short time, so Magpie goes slowly to keep your account safe); how many (at most 20 items per minute and 300 per hour, and Magpie also waits when GitHub asks); when (usually within the hour, the app shows "Later" on the rows and can send a reminder); what is safe (items already moved stay moved, tap Continue, nothing is lost); last line "Magpie is not made by or linked with GitHub. GitHub is a trademark of GitHub, Inc.".
 
-**Checkpoint**: Both files exist and hold every part of the contract. They are served only after T023.
+**Checkpoint**: Both files exist and hold every part of the contract. The owner checks the content by reading the two Markdown files in the pull request. They are served only after T023, which is pending.
 
 ---
 
@@ -104,7 +104,7 @@ description: "Task list for limit reasons"
 - [ ] T020 [P] Update `specs/009-limit-reasons/checklists/requirements.md`: in Notes, replace the "Open points for `/speckit-clarify`" line with "Both open points were closed on 2026-11-15 (spec, Clarifications and Assumptions)."
 - [ ] T021 Run `npm test`, `npm run typecheck`, and `npm run lint`. All pass. The test count is the count of T002 plus the new tests; no existing test was removed or skipped (SC-005).
 - [ ] T022 Manual check on a phone, quickstart.md Step 2, rows 1 to 12 (local build with `npx expo run:android`). Needs the owner or a device. Before the repository is public, rows 2 and 9 show GitHub's "not found" page: that is expected.
-- [ ] T023 Owner step, before the public release (plan.md, "What the project owner needs to do"): make the repository public, then Settings, Pages, "Deploy from a branch", branch `main`, folder `/docs`. Then run quickstart.md Step 1: both addresses show their page without `.html`, the pages fit a phone screen, and a changed sentence shows within 10 minutes (SC-003). If a page does not render or does not fit, report it; the fix is a small `docs/_config.yml` (research R2), and the addresses stay the same.
+- [ ] T023 **PENDING, owner, later**: does not block the code or the merge. When the owner makes the repository public (plan.md, "What the project owner needs to do"): Settings, Pages, "Deploy from a branch", branch `main`, folder `/docs`. Then run quickstart.md Step 1: both addresses show their page without `.html`, the pages fit a phone screen, and a changed sentence shows within 10 minutes (SC-003). If a page does not render or does not fit, report it; the fix is a small `docs/_config.yml` (research R2), and the addresses stay the same.
 - [ ] T024 Owner step: quickstart.md Step 3, 5 testers read only the popup and say why the move stopped (SC-001).
 - [ ] T025 After the pull request is merged, set the `**Status**:` line in `specs/009-limit-reasons/spec.md` to `Implemented`.
 
@@ -128,7 +128,7 @@ flowchart LR
 - **US2**: T012 and T013, then T014; T015 can run beside T014; T016 needs T007, T014, and T015.
 - **US3**: T017 and T018 need nothing but the contract. The app works without them (the browser shows "not found").
 - US1 and US2 touch different files, except that both import `openLimits` from T007. They can be done in either order.
-- T023 and T024 need the owner and do not block the merge of the code.
+- T023 is pending until the owner makes the repository public. T023 and T024 need the owner and do not block the merge of the code.
 
 ## Parallel examples
 
