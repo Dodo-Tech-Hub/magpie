@@ -151,7 +151,7 @@ The exact words are drafts. The plan may refine them, keeping the meaning.
 - The pages are in English, like the app's text today.
 - The page opens in the system browser, as the "remove access" page of spec 008 does. The app does not fetch the page, so the page's host is not added to the list of hosts the app talks to (constitution, Principle III, rule 5). The plan confirms this in its Constitution Check.
 - The reminder question is still asked only once, as today. A later stop shows the reason on Pick, not in a popup.
-- GitHub's texts need spec 008 to be merged. If this feature ships first, it covers YouTube alone, and GitHub's sentence and page are added with spec 008.
+- Spec 008 is merged (2026-11-15), so this feature covers YouTube and GitHub from its first release.
 - Guided platforms (spec 005) get an info button only when they have limits worth explaining. That is decided when each one is added.
 
 ## What the project owner needs to do
