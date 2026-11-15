@@ -23,11 +23,11 @@ description: "Task list for the GitHub platform"
 
 **Purpose**: Status, dependencies, config, test mocks, and a known-good start
 
-- [ ] T001 Set the `**Status**:` line in `specs/008-github-platform/spec.md` to `In progress` (AGENTS.md: implementation has started).
-- [ ] T002 Install the two Expo modules with `npx expo install expo-secure-store expo-clipboard`. Check each module's Expo docs and add a config plugin entry to `app.config.ts` only if the docs say one is needed on Android or iOS. Commit `package.json` and `package-lock.json`. Run `npm audit` and note any high or critical issue (constitution III.11).
-- [ ] T003 [P] Add `EXPO_PUBLIC_GITHUB_CLIENT_ID=` with a one-line comment ("Public client ID of the Magpie GitHub OAuth app. Not a secret. Never add a client secret.") to `.env.example`. Do not touch `.env`.
-- [ ] T004 [P] Create `tests/mocks/expoSecureStore.ts` (in-memory `getItemAsync`, `setItemAsync`, `deleteItemAsync`, and a `__reset()` and `__dump()` for tests) and `tests/mocks/expoClipboard.ts` (`setStringAsync` as `jest.fn`). Register both in `jest.setup.ts` with `jest.mock(..., () => jest.requireActual(...))`, the same way the other mocks are.
-- [ ] T005 Run `npm test`, `npm run typecheck`, and `npm run lint` before any code change. All pass. Write the test count in the commit message of T007.
+- [X] T001 Set the `**Status**:` line in `specs/008-github-platform/spec.md` to `In progress` (AGENTS.md: implementation has started).
+- [X] T002 Install the two Expo modules with `npx expo install expo-secure-store expo-clipboard`. Check each module's Expo docs and add a config plugin entry to `app.config.ts` only if the docs say one is needed on Android or iOS. Commit `package.json` and `package-lock.json`. Run `npm audit` and note any high or critical issue (constitution III.11).
+- [X] T003 [P] Add `EXPO_PUBLIC_GITHUB_CLIENT_ID=` with a one-line comment ("Public client ID of the Magpie GitHub OAuth app. Not a secret. Never add a client secret.") to `.env.example`. Do not touch `.env`.
+- [X] T004 [P] Create `tests/mocks/expoSecureStore.ts` (in-memory `getItemAsync`, `setItemAsync`, `deleteItemAsync`, and a `__reset()` and `__dump()` for tests) and `tests/mocks/expoClipboard.ts` (`setStringAsync` as `jest.fn`). Register both in `jest.setup.ts` with `jest.mock(..., () => jest.requireActual(...))`, the same way the other mocks are.
+- [X] T005 Run `npm test`, `npm run typecheck`, and `npm run lint` before any code change. All pass. Write the test count in the commit message of T007.
 
 ---
 
