@@ -90,7 +90,7 @@ const makeStyles = (c: Colors) =>
     flex: { flex: 1 },
     error: { color: c.danger, paddingHorizontal: 14 },
     heading: { fontSize: 13, color: c.muted, paddingHorizontal: 14, marginTop: 12 },
-    row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, height: 48, borderTopWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 8, minHeight: 48, borderTopWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     open: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
-    label: { fontSize: 15, color: c.text },
+    label: { flex: 1, fontSize: 15, color: c.text },
   });
