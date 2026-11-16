@@ -32,4 +32,5 @@
 ## Notes
 
 - 2026-11-12: All items pass on first validation. Defaults chosen instead of clarification markers: centered single column (no two-pane), max content width 600 points, breakpoints 600 and 840, no posture-aware layout, iPad stays off, rotation enabled on all devices.
+- 2026-11-16: Owner decision: the move flow shows two panes in Expanded windows (Story 5, FR-015 to FR-020). Devices whose hinge hides part of the screen are out of scope. All items re-checked and pass.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
