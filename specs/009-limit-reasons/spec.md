@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-15
 
-**Status**: Draft
+**Status**: In progress
 
 **Input**: User description: "Limit reasons, for every platform. (1) When a move stops at a platform limit, the reminder popup only says 'Can we remind you when you can move the rest?' and users do not understand what happened. The popup must first say the reason in one short simple sentence, then ask about the reminder. (2) Each platform card on Home gets an info button. Tapping it opens, in the system browser, a web page that explains the reason for that platform's limits. The pages are Markdown files in the project's GitHub repo, one per platform, served through GitHub Pages, so content is fixed without an app release. No new in-app screen."
 
