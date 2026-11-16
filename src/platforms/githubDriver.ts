@@ -98,6 +98,7 @@ export const githubDriver: Driver = {
       }, 0),
   },
   removeAccessUrl: 'https://github.com/settings/applications',
+  limitsUrl: 'https://dodo-tech-hub.github.io/magpie/limits/github',
   switchSignsOut: true,
   resumesNew: true,
 

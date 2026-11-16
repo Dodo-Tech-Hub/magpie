@@ -32,6 +32,23 @@ describe('drivers', () => {
     expect(PLATFORMS.every((p) => p.driver.id === p.id)).toBe(true);
     expect(driverFor('youtube')).toBe(youtubeDriver);
   });
+
+  // FR-010: the app opens only the addresses listed in contracts/limits-pages.md.
+  it('gives each platform its limits page address, and only the listed ones', () => {
+    expect(PLATFORMS.map((p) => p.driver.limitsUrl)).toEqual([
+      'https://dodo-tech-hub.github.io/magpie/limits/youtube',
+      'https://dodo-tech-hub.github.io/magpie/limits/github',
+    ]);
+  });
+
+  // FR-002, FR-004: one plain sentence that names the platform and promises no reminder.
+  it('gives each platform a plain reason sentence that names it', () => {
+    for (const p of PLATFORMS) {
+      const reason = p.driver.words.limitReached;
+      expect(reason).toContain(p.name);
+      expect(reason).not.toMatch(/quota|rate limit|remind/i);
+    }
+  });
 });
 
 describe('readyBySection', () => {

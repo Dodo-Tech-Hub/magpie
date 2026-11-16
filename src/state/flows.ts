@@ -307,7 +307,7 @@ export async function startMove(state: State, dispatch: D): Promise<void> {
   if (result === 'offline') d({ type: 'setNotice', notice: strings.offline });
   if (result === 'stopped') d({ type: 'setNotice', notice: stopNotice });
   if (result === 'limit') {
-    if (await askOnce()) {
+    if (await askOnce(driver.words.limitReached)) {
       const resumeAt = (await getProgress(progressId))?.resumeAt ?? Date.now() + 3_600_000;
       await scheduleReminder(progressId, new Date(resumeAt), driver.words.reminderBody);
     }
@@ -397,4 +397,15 @@ async function discardFlow(state: State, platform: PlatformId) {
   const driver = driverFor(platform);
   await driver.signOut('old');
   await driver.signOut('new');
+}
+
+// Opens a platform's limits page in the system browser. false = it could not open; the screen says so (research R3, R6).
+// No canOpenURL: on Android 11+ it answers false unless the app lists the links it asks about.
+export async function openLimits(url: string): Promise<boolean> {
+  try {
+    await Linking.openURL(url);
+    return true;
+  } catch {
+    return false;
+  }
 }
