@@ -77,13 +77,13 @@ Checked against `.specify/memory/constitution.md` v1.6.0.
 | VI. Safe areas | The existing `SafeAreaView` wraps the whole app, including in landscape. Checked on devices. | Pass |
 | VI. Touch targets | 48 points on both platforms (R6). | Pass |
 | VI. Specs and tests | Tests cover one Compact and one Medium window for each screen. | Pass |
-| Spec edge case "Half-folded" | A hinge that hides content is not handled (R7). | **Needs owner approval**, see below |
+| Spec edge case "Half-folded" | The spec now puts a hinge that hides content out of scope (R7). | Pass |
 
-**Gate result (pre-research)**: Pass. **Gate result (post-design)**: Pass with one open item.
+**Gate result (pre-research)**: Pass. **Gate result (post-design)**: Pass.
 
-### Open item for the owner
+### Resolved: hinges that hide content
 
-The spec's "Half-folded" edge case says the column must not cross a hinge that blocks content. Meeting it needs a native fold library, for devices outside the test matrix (R7). Proposed spec edit: replace that sentence with "Devices whose hinge hides part of the screen are out of scope; the app reads the window size only." The dual-screen edge case then follows the same rule. Tasks should not start until this is approved or the library is accepted.
+The "Half-folded" edge case used to say the column must not cross a hinge that blocks content. Meeting it needs a native fold library, for devices outside the test matrix (R7). The owner approved the spec edit on 2026-11-16: "Devices whose hinge hides part of the screen are out of scope; the app reads the window size only." The dual-screen edge case follows the same rule.
 
 ## Project Structure
 
@@ -150,4 +150,4 @@ tests/
 
 ## Complexity Tracking
 
-No constitution violations. One spec deviation waits for approval (see "Open item for the owner").
+No constitution violations and no spec deviations.

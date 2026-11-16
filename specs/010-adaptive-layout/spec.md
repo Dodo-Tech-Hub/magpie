@@ -109,11 +109,11 @@ A user turns their phone sideways, or puts the app next to another app in split-
 
 ### Edge Cases
 
-- **Half-folded (tabletop or book posture)**: the app treats the window as one flat screen of its current size. No special hinge layout in this feature. Content must not be lost under a hinge that hides pixels; on devices that report a hinge that blocks content, the centered column must not cross it, or the layout falls back to one side.
+- **Half-folded (tabletop or book posture)**: the app treats the window as one flat screen of its current size. No special hinge layout in this feature. Devices whose hinge hides part of the screen are out of scope; the app reads the window size only.
 - **Rapid fold and unfold**: several size changes in under a second must not stack duplicate actions, reset state, or flash an error.
 - **Size change during a dialog or system prompt** (for example, notification permission): the prompt result is still handled when the user answers.
 - **App restored after the system closed it in the background** on a new window size: behavior is the same as resume from feature 001 (saved progress reopens), shown in the new size class.
-- **Dual-screen devices with a gap between two physical screens**: treated as the half-folded case above.
+- **Dual-screen devices with a gap between two physical screens**: out of scope, as in the half-folded case above.
 - **Very wide but short windows** (landscape phone): the column limit keeps rows readable, and the action bar stays visible as in Story 4.
 - **System display size set to its smallest value** on a closed foldable: the window may cross 600 points; the app uses the size class for the reported width and does not assume a device type.
 

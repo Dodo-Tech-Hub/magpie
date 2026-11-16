@@ -94,7 +94,7 @@ The risk is future code that unmounts a screen when the width changes (for examp
 
 **Rationale**: Reading the hinge position needs Android's Jetpack WindowManager, which Expo SDK does not expose. It would take a new native dependency or custom native code. Current book-style and flip-style foldables have one continuous screen with no hidden area, and the centered column keeps content away from the screen edges, not the middle. Devices with a real gap between two screens are rare and not in the test matrix.
 
-**Conflict with the spec**: the edge case "Half-folded" says that on a device with a hinge that blocks content, the column must not cross it. This plan does not meet that sentence. It is listed in the plan as an exception that needs the owner's approval, with a proposed spec edit.
+**Spec**: the edge case "Half-folded" first said that the column must not cross a hinge that blocks content. The owner approved a spec edit on 2026-11-16 that puts such devices out of scope.
 
 **Alternatives considered**: Add a fold-aware library now. Rejected: a native dependency (Principle III.11, Principle IV) for devices outside the test matrix.
 

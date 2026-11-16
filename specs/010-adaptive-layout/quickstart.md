@@ -34,7 +34,7 @@ Then open `android/app/src/main/AndroidManifest.xml` and confirm the main activi
 
 ## Devices
 
-Emulators with a resizable window are fine where a real device is not available.
+The owner has no foldable phone. Foldable checks run on an Android Studio emulator (a "Pixel Fold" or "Resizable" virtual device) or on a real foldable in a device cloud such as BitBar. Emulators with a resizable window are fine where a real device is not available.
 
 | Device | Used for |
 | --- | --- |
@@ -89,5 +89,5 @@ In a normal portrait phone window, every screen looks as it did before this feat
 
 ## Not covered
 
-- Devices whose hinge hides part of the screen (plan, "Open item for the owner").
+- Devices whose hinge hides part of the screen (spec, edge case "Half-folded").
 - iPad: support stays off.
