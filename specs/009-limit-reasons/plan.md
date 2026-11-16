@@ -38,7 +38,7 @@ flowchart LR
 
 **Testing**: Jest with `jest-expo` and React Native Testing Library. `Linking.openURL` and `Alert.alert` are spied on, as in the 008 tests.
 
-**Target Platform**: Android 8.0+ first, iOS 16+. No platform-specific behavior (FR-013). No new permission, no deep link.
+**Target Platform**: Android 8.0+ first, iOS 16+. No platform-specific behavior (FR-013). The phone check runs on both (quickstart Step 2). No new permission, no deep link.
 
 **Project Type**: Mobile app (single Expo project, no backend), plus two static pages in `docs/`.
 
@@ -108,11 +108,10 @@ src/
 ├── reminders/
 │   └── reminder.ts              # askOnce(reason): reason, blank line, question
 ├── state/
-│   ├── flows.ts                 # pass the reason to askOnce; new openLimits(dispatch, url)
-│   └── AppState.tsx             # goHome clears the notice
+│   └── flows.ts                 # pass the reason to askOnce; new openLimits(url)
 └── ui/
     ├── PlatformCard.tsx         # info button, third tap target
-    ├── HomeView.tsx             # onInfo, show the notice line
+    ├── HomeView.tsx             # onInfo, a local "couldn't open" line
     ├── LimitNote.tsx            # new. Reason sentence and "Learn more" on Pick
     └── PickStep.tsx             # use LimitNote in place of the plain text
 tests/
@@ -150,7 +149,7 @@ tests/
 
 ### Opening a limits page (FR-006, FR-008, FR-014)
 
-`openLimits(dispatch, url)` in `flows.ts`: call `Linking.openURL(url)`; if it rejects, dispatch `setNotice` with `strings.couldntOpenPage`. It does not call `canOpenURL`, which needs extra app settings on Android 11 and later (R3). Pick shows the notice already. `HomeView` gains the same notice line. The `goHome` action does not clear the notice today, so it gains `notice: null`; without that, an old line from a flow (for example "No internet") would show on Home. Opening a platform from Home must clear it too; the tasks check the `openPlatform` action.
+`openLimits(url)` in `flows.ts` calls `Linking.openURL(url)` and returns `true`, or `false` if it rejects. It touches no state. It does not call `canOpenURL`, which needs extra app settings on Android 11 and later (R3). Pick, on `false`, dispatches `setNotice` with `strings.couldntOpenPage`, and Pick already shows the notice. `HomeView` keeps its own line in local state and sets it on `false`. Home does not use the shared notice, because a move that runs in the background reports its own notices through that field (for example "No internet") and they would show on Home (R6).
 
 ### Home card (FR-005, FR-007)
 
@@ -171,7 +170,6 @@ The info button is a sibling of the card body and the Continue note, placed in t
 | `limitReason` | `openURL` rejects: Pick shows "Couldn't open the page." | FR-014 |
 | `homeInfo` (component) | Each card has a button labelled "About {name} limits". Tapping it calls `openURL` with that platform's address and does not open the flow, also on a card with a Continue note. | US2.1, US2.2, US2.4, FR-006 |
 | `homeInfo` | `openURL` rejects: Home stays and shows "Couldn't open the page." A platform without `limitsUrl` has no button. | FR-008, FR-005, US2.5 |
-| `homeInfo` | A flow shows "No internet", then the user goes Home: Home shows no line. | Design, `goHome` |
 | `platforms` (unit) | Every `limitsUrl` in the platform list is one of the addresses in the contract. | FR-010 |
 | Existing tests | Pass with only the sentence changed. | SC-005 |
 

@@ -39,6 +39,6 @@ Decisions for [plan.md](plan.md). The codebase was read at `main` of 2026-11-15,
 
 ## R6. The "couldn't open" line on Home
 
-- **Decision**: `openLimits` dispatches the existing `setNotice` action. `HomeView` shows `state.notice` as a line, as Pick does. The `goHome` action gains `notice: null`.
-- **Rationale**: One opener for both places and no new state. Home shows no notice today and `goHome` keeps the old one, so that action must clear it.
+- **Decision**: `openLimits(url)` returns `true` or `false` and touches no state. Pick dispatches `setNotice` on `false` (it shows that field already). `HomeView` keeps its own line in local state.
+- **Rationale**: One opener for both places, no reducer change. A move that runs in the background reports its notices through the shared `notice` field (`forProgress` in `flows.ts`), so a Home line built on it would show "No internet" or "Your sign-in ran out" there. A local line on Home cannot.
 - **Alternatives considered**: Local state in `HomeView` plus a second failure path for Pick (two ways to do one job).

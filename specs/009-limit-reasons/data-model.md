@@ -21,4 +21,4 @@ One Markdown file per platform in `docs/limits/`, named by the platform ID. It h
 
 ## State
 
-No new state. The existing `notice` line carries "Couldn't open the page." on Pick and, new, on Home. The setting `reminderAsked` is unchanged: a user who answered before this feature sees no popup and reads the sentence on Pick.
+No new store or app state. On Pick the existing `notice` line carries "Couldn't open the page.". On Home it is a local line of `HomeView`. The setting `reminderAsked` is unchanged: a user who answered before this feature sees no popup and reads the sentence on Pick.

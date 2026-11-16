@@ -28,7 +28,7 @@ Before the repository is public, both addresses show GitHub's "not found" page. 
 
 ## Step 2. On a phone
 
-Build locally (`npx expo run:android`). Use test accounts.
+Run the whole table twice, once on Android (`npx expo run:android`) and once on iOS (`npx expo run:ios`, on the owner's Mac), so both platforms are checked (FR-013). Use test accounts. Differences to expect: TalkBack on Android and VoiceOver on iOS read the labels of row 4; the browser is Chrome on Android and Safari on iOS.
 
 | # | Do | Expect | Covers |
 | --- | --- | --- | --- |
