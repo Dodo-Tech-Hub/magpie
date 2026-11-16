@@ -94,7 +94,7 @@ Rationale: automation breaks platform terms and gets users' accounts banned. A g
 
 ### VI. Adaptive Layout
 
-Every screen MUST fit the window the app actually has, from a small phone to an open foldable, a phone in landscape, or a split-screen window. [007 Adaptive Layout](../../specs/007-adaptive-layout/spec.md) is the reference design; new UI MUST follow these rules without restating them.
+Every screen MUST fit the window the app actually has, from a small phone to an open foldable, a phone in landscape, or a split-screen window. [009 Adaptive Layout](../../specs/009-adaptive-layout/spec.md) is the reference design; new UI MUST follow these rules without restating them.
 
 - **Size by window, not device**: layout MUST be chosen from the current window width using the shared size classes: Compact (below 600 points), Medium (600 to 839), Expanded (840 and above). Layout MUST NOT depend on device model or device type. All sizes are density-independent points.
 - **Readable width**: in Medium and Expanded windows, content MUST sit in a centered column no wider than the shared maximum content width. Backgrounds and bars MAY fill the full window. Screens MUST use the shared size class and maximum width values, not their own breakpoints.

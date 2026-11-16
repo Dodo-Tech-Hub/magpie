@@ -6,7 +6,7 @@
 
 **Status**: Draft
 
-**Input**: User description: "007-adaptive-layout: Optimise the UI for foldable phones and phones with different screen sizes"
+**Input**: User description: "Optimise the UI for foldable phones and phones with different screen sizes"
 
 ## Context
 
@@ -41,7 +41,7 @@ flowchart TD
 
 ### User Story 1 - Use the app comfortably on an open foldable (Priority: P1)
 
-A user opens the app on a foldable phone that is unfolded. Every screen (sign-in steps, channel list, settings) shows its content in a readable centered column. The channel rows, search box, and Move button do not stretch edge to edge. Nothing is cut off, and nothing is hidden behind the hinge or the camera cutout.
+A user opens the app on a foldable phone that is unfolded. Every screen (Home, sign-in steps, Pick list, Settings) shows its content in a readable centered column. The item rows, search box, and Move button do not stretch edge to edge. Nothing is cut off, and nothing is hidden behind the hinge or the camera cutout.
 
 **Why this priority**: Foldable owners see the stretched layout on every screen today. This is the main reason for the feature.
 
@@ -50,7 +50,7 @@ A user opens the app on a foldable phone that is unfolded. Every screen (sign-in
 **Acceptance Scenarios**:
 
 1. **Given** the window is Medium or Expanded, **When** any screen shows, **Then** its content sits in a centered column no wider than the maximum content width, and the space on each side uses the screen background color.
-2. **Given** the window is Medium or Expanded, **When** the channel list shows, **Then** each row, the search box, the "All" row, and the bottom action bar line up to the same column width.
+2. **Given** the window is Medium or Expanded, **When** the Pick list shows, **Then** each row, each section heading, the search box, the "All" row, and the bottom action bar line up to the same column width.
 3. **Given** the window is Medium or Expanded, **When** the top bar shows, **Then** its background spans the full window width and its contents line up with the centered column.
 4. **Given** a device with a camera cutout, rounded corners, or a system navigation bar, **When** any screen shows in any orientation, **Then** no text or control is drawn under those areas.
 
@@ -58,26 +58,27 @@ A user opens the app on a foldable phone that is unfolded. Every screen (sign-in
 
 ### User Story 2 - Keep my place when I fold, unfold, or rotate (Priority: P1)
 
-A user is picking channels on the cover screen of a foldable. They unfold the phone to see more. The app shows the same step, the same picks, the same search text, and the list is near the same row. If a move is running, it keeps running and its progress stays on screen. The same holds when the user folds the phone again, rotates it, or resizes the app in split-screen.
+A user is picking items on the cover screen of a foldable. They unfold the phone to see more. The app shows the same step, the same picks, the same search text, and the list is near the same row. If a move is running, it keeps running and its progress stays on screen. The same holds when the user folds the phone again, rotates it, or resizes the app in split-screen.
 
 **Why this priority**: Losing picks or a running move on unfold would be worse than a stretched layout. Without this, the layout work in Story 1 is not safe to ship.
 
-**Independent Test**: On a foldable or a resizable emulator, sign in, pick some channels, type a search, scroll down, start a move, then fold and unfold several times. Confirm nothing is lost and the move continues.
+**Independent Test**: On a foldable or a resizable emulator, sign in, pick some items, type a search, scroll down, start a move, then fold and unfold several times. Confirm nothing is lost and the move continues.
 
 **Acceptance Scenarios**:
 
 1. **Given** the user is on any step, **When** the window changes size class, **Then** the app stays on the same step and screen (including Settings, if open).
-2. **Given** the user has picked channels and typed a search, **When** the window changes size, **Then** the picks and the search text are unchanged.
-3. **Given** the user has scrolled the channel list, **When** the window changes size, **Then** the list shows at least one of the rows that were visible before the change.
+2. **Given** the user has picked items, collapsed a Pick section, and typed a search, **When** the window changes size, **Then** the picks, the collapsed sections, and the search text are unchanged.
+3. **Given** the user has scrolled the Pick list, **When** the window changes size, **Then** the list shows at least one of the rows that were visible before the change.
 4. **Given** a move is running, **When** the window changes size, **Then** the move is not stopped, restarted, or duplicated, and its progress and counts stay correct.
 5. **Given** the keyboard is open in the search box, **When** the window changes size, **Then** the search box stays usable and the typed text is kept.
 6. **Given** a sign-in screen from the platform is open, **When** the window changes size, **Then** returning from sign-in still completes the sign-in step.
+7. **Given** a sign-in code is on screen and the app is waiting for the user to enter it in the browser, **When** the window changes size, **Then** the same code stays on screen and the wait continues without a new code.
 
 ---
 
 ### User Story 3 - Fit small phones and large text settings (Priority: P2)
 
-A user has a small phone, or has turned up the system font size or display size. Every screen still shows all its controls. Long channel names shorten with an ellipsis rather than pushing the checkbox or status off screen. The Move button and messages in the bottom bar stay visible above the system navigation, and the user can still reach every control by scrolling where needed.
+A user has a small phone, or has turned up the system font size or display size. Every screen still shows all its controls. Long item names shorten with an ellipsis rather than pushing the checkbox or status off screen. The Move button and messages in the bottom bar stay visible above the system navigation, and the user can still reach every control by scrolling where needed.
 
 **Why this priority**: Small screens and large text are common and affect access, but the current layout mostly works on them, so this is a hardening pass rather than a fix for a broken screen.
 
@@ -86,9 +87,9 @@ A user has a small phone, or has turned up the system font size or display size.
 **Acceptance Scenarios**:
 
 1. **Given** the window is 320 points wide, **When** any screen shows, **Then** no control is cut off and no text overlaps another element.
-2. **Given** the largest system font size, **When** the channel list shows, **Then** long names wrap or end with an ellipsis, and the checkbox and status for each row stay visible.
+2. **Given** the largest system font size, **When** the Pick list shows, **Then** long names wrap or end with an ellipsis, and the checkbox and status for each row stay visible.
 3. **Given** the largest system font size, **When** a screen has more content than fits, **Then** the user can scroll to reach every control.
-4. **Given** the bottom action bar shows a summary, a notice, and the Move button at once on a short window, **When** the screen shows, **Then** the Move button is still visible without scrolling the channel list.
+4. **Given** the bottom action bar shows a summary, a notice, and the Move button at once on a short window, **When** the screen shows, **Then** the Move button is still visible without scrolling the Pick list.
 5. **Given** any window size, **When** the user taps a control, **Then** its touch target is at least 44 by 44 points (iOS) and 48 by 48 points (Android).
 
 ---
@@ -104,7 +105,7 @@ A user turns their phone sideways, or puts the app next to another app in split-
 **Acceptance Scenarios**:
 
 1. **Given** the user rotates the device, **When** the window becomes landscape, **Then** the app shows the screen for the new window size rather than staying sideways.
-2. **Given** the app is in split-screen and the window is very short (for example, under 400 points tall), **When** the channel list shows, **Then** the bottom action bar stays visible and the list scrolls in the remaining space.
+2. **Given** the app is in split-screen and the window is very short (for example, under 400 points tall), **When** the Pick list shows, **Then** the bottom action bar stays visible and the list scrolls in the remaining space.
 
 ### Edge Cases
 
@@ -124,16 +125,16 @@ A user turns their phone sideways, or puts the app next to another app in split-
 - **FR-002**: The app MUST re-check the size class whenever the window size changes (fold, unfold, rotate, split-screen resize, display size change) and update the layout without a restart.
 - **FR-003**: In Medium and Expanded windows, every screen's content MUST sit in one centered column no wider than the maximum content width (default 600 points, see Assumptions). Background colors and top bar backgrounds MUST still fill the full window.
 - **FR-004**: In Compact windows, the layout MUST match today's full-width single column.
-- **FR-005**: The app MUST keep, across any window size change: the current step, whether Settings is open, signed-in accounts, picked channels, search text, any running or paused move and its counts, and any notice on screen.
-- **FR-006**: The channel list SHOULD keep the user's scroll position across a window size change, so at least one previously visible row stays visible.
+- **FR-005**: The app MUST keep, across any window size change: the current step, whether Settings is open, signed-in accounts, picked items, collapsed Pick sections, search text, a sign-in code that is waiting for the user (spec 008, FR-GH-006), any running or paused move and its counts, and any notice on screen.
+- **FR-006**: The Pick list SHOULD keep the user's scroll position across a window size change, so at least one previously visible row stays visible.
 - **FR-007**: A window size change MUST NOT start, stop, repeat, or cancel a move or a platform request.
 - **FR-008**: The app MUST support portrait and landscape on all phones and foldables, following the device's rotation setting.
 - **FR-009**: No text or control MUST be drawn under a camera cutout, rounded screen corner, status bar, or system navigation area, in any orientation.
 - **FR-010**: Every screen MUST be fully usable at a window width of 320 points and at the largest system font and display size: all controls visible or reachable by scrolling, no overlapping text.
-- **FR-011**: Channel names and other single-line labels that do not fit MUST end with an ellipsis or wrap, and MUST NOT push row controls (checkbox, status) off screen.
-- **FR-012**: The bottom action bar on the channel list (summary, notices, Move button) MUST stay visible while the list scrolls, at every supported window size.
+- **FR-011**: Item names and other single-line labels that do not fit MUST end with an ellipsis or wrap, and MUST NOT push row controls (checkbox, status) off screen.
+- **FR-012**: The bottom action bar on the Pick list (summary, notices, Move button) MUST stay visible while the list scrolls, at every supported window size.
 - **FR-013**: Touch targets MUST be at least 44 by 44 points on iOS and 48 by 48 points on Android, at every window size.
-- **FR-014**: All existing behavior from features 001 to 005 MUST work the same in every size class; this feature changes layout only.
+- **FR-014**: All existing behavior from features 001 to 005 and 008 MUST work the same in every size class; this feature changes layout only.
 
 ### Platform-specific behavior
 
