@@ -42,13 +42,13 @@ async function hitLimitAfterOne() {
   nextSignIn('new');
   await fireEvent.press(screen.getByLabelText('Sign in with Google: New account'));
   await fireEvent.press(await screen.findByLabelText('Move 3 channels'));
-  await screen.findByText(/Daily limit reached/);
+  await screen.findByText("YouTube lets Magpie move only some channels each day. Today's limit is reached.");
 }
 
 describe('daily limit', () => {
   it('turns the rest into Tomorrow and shows the limit message and Continue', async () => {
     await hitLimitAfterOne();
-    expect(screen.getByText("Daily limit reached. We'll remind you when you can move the rest.")).toBeTruthy();
+    expect(screen.getByText("YouTube lets Magpie move only some channels each day. Today's limit is reached.")).toBeTruthy();
     expect(screen.getAllByText('Tomorrow')).toHaveLength(2);
     expect(screen.getByText('1 moved · 2 waiting')).toBeTruthy();
     expect(screen.getByLabelText('Continue')).toBeTruthy();

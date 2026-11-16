@@ -62,6 +62,8 @@ export type Driver = {
   pace?: { perMinute: number; perHour: number; adds(items: StoredItem[]): number };
   // Page where the user removes the app's access.
   removeAccessUrl?: string;
+  // Page that explains this platform's limits. Missing = no info button and no "Learn more".
+  limitsUrl?: string;
   // The Switch button becomes Sign out.
   switchSignsOut?: boolean;
   // The new account's sign-in is kept for an unfinished move, so Continue needs no new sign-in.

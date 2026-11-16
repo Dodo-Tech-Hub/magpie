@@ -398,3 +398,14 @@ async function discardFlow(state: State, platform: PlatformId) {
   await driver.signOut('old');
   await driver.signOut('new');
 }
+
+// Opens a platform's limits page in the system browser. false = it could not open; the screen says so (research R3, R6).
+// No canOpenURL: on Android 11+ it answers false unless the app lists the links it asks about.
+export async function openLimits(url: string): Promise<boolean> {
+  try {
+    await Linking.openURL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}

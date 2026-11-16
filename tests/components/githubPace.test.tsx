@@ -7,7 +7,7 @@ let w: ReturnType<typeof githubWorld>;
 const scheduled = Notifications.scheduleNotificationAsync as jest.Mock;
 const permission = Notifications.getPermissionsAsync as jest.Mock;
 const request = Notifications.requestPermissionsAsync as jest.Mock;
-const BREAK = "GitHub needs a break. We'll remind you when you can move the rest.";
+const BREAK = "GitHub lets Magpie move only some items each hour. Magpie must wait a little.";
 const PUT = 'PUT https://api.github.com/*';
 
 beforeEach(async () => {
