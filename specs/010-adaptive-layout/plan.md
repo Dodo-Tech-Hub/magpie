@@ -2,7 +2,7 @@
 
 **Branch**: `feature/adaptive-layout` | **Date**: 2026-11-16 | **Spec**: [spec.md](spec.md)
 
-**Input**: Feature specification from `specs/009-adaptive-layout/spec.md`
+**Input**: Feature specification from `specs/010-adaptive-layout/spec.md`
 
 ## Summary
 
@@ -90,7 +90,7 @@ The spec's "Half-folded" edge case says the column must not cross a hinge that b
 ### Documentation (this feature)
 
 ```text
-specs/009-adaptive-layout/
+specs/010-adaptive-layout/
 ├── plan.md              # This file
 ├── research.md          # Phase 0 decisions R1 to R8
 ├── quickstart.md        # Phase 1: device checks and test commands
