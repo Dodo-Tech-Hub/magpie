@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { FlatList, PixelRatio, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { PLATFORMS, readyBySection, type Platform } from '@/platforms/platforms';
 import { useApp } from '@/state/AppState';
-import { leaveFlowFor, openProgress } from '@/state/flows';
+import { leaveFlowFor, openLimits, openProgress } from '@/state/flows';
 import { strings } from '@/strings';
 import { useTheme, type Colors } from '@/theme/theme';
 import { columnsFor } from '@/ui/gridColumns';
@@ -17,6 +17,9 @@ export function HomeView({ platforms = PLATFORMS }: { platforms?: Platform[] }) 
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const columns = columnsFor(useWindowDimensions().width, PixelRatio.getFontScale());
   const [unfinished, setUnfinished] = useState<Record<string, Unfinished>>({});
+  // Local, not state.notice: a move running in the background writes its own notices there (research R6).
+  const [pageError, setPageError] = useState(false);
+  const onInfo = (url: string) => void openLimits(url).then((ok) => setPageError(!ok));
 
   // Read what is left after the card shows. No loading indicator (FR-019).
   useEffect(() => {
@@ -66,12 +69,18 @@ export function HomeView({ platforms = PLATFORMS }: { platforms?: Platform[] }) 
                   left={unfinished[item.id]?.left}
                   onOpen={() => void onOpen(item)}
                   onContinue={() => void onContinue(item)}
+                  onInfo={item.driver.limitsUrl ? () => onInfo(item.driver.limitsUrl!) : undefined}
                 />
               </View>
             )}
           />
         </View>
       ))}
+      {pageError && (
+        <Text style={styles.error} accessibilityLiveRegion="polite">
+          {strings.couldntOpenPage}
+        </Text>
+      )}
     </ScrollView>
   );
 }
@@ -80,4 +89,5 @@ const makeStyles = (c: Colors) =>
   StyleSheet.create({
     content: { padding: 10 },
     header: { color: c.text, fontSize: 18, fontWeight: '600', paddingHorizontal: 6, paddingVertical: 8 },
+    error: { fontSize: 13, color: c.danger, paddingHorizontal: 6, paddingVertical: 8 },
   });
