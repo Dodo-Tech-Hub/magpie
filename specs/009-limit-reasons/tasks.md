@@ -98,13 +98,13 @@ description: "Task list for limit reasons"
 
 ## Phase 6: Polish and checks
 
-- [ ] T017 [P] Run `grep -rn "WebView\|expo-web-browser" src` and confirm nothing is found (FR-009: the page opens in the system browser, never inside the app). Run `grep -rn "limitsUrl\|github.io" src` and confirm the two addresses appear only in `src/platforms/youtubeDriver.ts` and `src/platforms/githubDriver.ts`, and that shared code (`src/state`, `src/ui`, `src/reminders`) names no platform (FR-004, SC-004).
-- [ ] T018 [P] Update `specs/009-limit-reasons/checklists/requirements.md`: in Notes, replace the "Open points for `/speckit-clarify`" line with "Both open points were closed on 2026-11-15 (spec, Clarifications and Assumptions)."
-- [ ] T019 Run `npm test`, `npm run typecheck`, and `npm run lint`. All pass. The test count is the count of T002 plus the new tests; no existing test was removed or skipped (SC-005).
-- [ ] T020 Manual check on both platforms, quickstart.md Step 2, rows 1 to 12, once on Android (`npx expo run:android`) and once on iOS (`npx expo run:ios`, needs the owner's Mac) (FR-013). Needs the owner or a device. Before the repository is public, rows 2 and 9 show GitHub's "not found" page: that is expected.
+- [X] T017 [P] Run `grep -rn "WebView\|expo-web-browser" src` and confirm nothing is found (FR-009: the page opens in the system browser, never inside the app). Run `grep -rn "limitsUrl\|github.io" src` and confirm the two addresses appear only in `src/platforms/youtubeDriver.ts` and `src/platforms/githubDriver.ts`, and that shared code (`src/state`, `src/ui`, `src/reminders`) names no platform (FR-004, SC-004).
+- [X] T018 [P] Update `specs/009-limit-reasons/checklists/requirements.md`: in Notes, replace the "Open points for `/speckit-clarify`" line with "Both open points were closed on 2026-11-15 (spec, Clarifications and Assumptions)."
+- [X] T019 (2026-11-16: 441 tests in 39 suites pass, was 424; none removed or skipped) Run `npm test`, `npm run typecheck`, and `npm run lint`. All pass. The test count is the count of T002 plus the new tests; no existing test was removed or skipped (SC-005).
+- [ ] T020 **PENDING, owner, device**: Manual check on both platforms, quickstart.md Step 2, rows 1 to 12, once on Android (`npx expo run:android`) and once on iOS (`npx expo run:ios`, needs the owner's Mac) (FR-013). Needs the owner or a device. Before the repository is public, rows 2 and 9 show GitHub's "not found" page: that is expected.
 - [ ] T021 **PENDING, owner, later**: does not block the code or the merge. When the owner makes the repository public (plan.md, "What the project owner needs to do"): Settings, Pages, "Deploy from a branch", branch `main`, folder `/docs`. Then run quickstart.md Step 1: both addresses show their page without `.html`, the pages fit a phone screen, and a changed sentence shows within 10 minutes (SC-003). If a page does not render or does not fit, report it; the fix is a small `docs/_config.yml` (research R2), and the addresses stay the same.
-- [ ] T022 Owner step: quickstart.md Step 3, 5 testers read only the popup and say why the move stopped (SC-001).
-- [ ] T023 After the pull request is merged, set the `**Status**:` line in `specs/009-limit-reasons/spec.md` to `Implemented`.
+- [ ] T022 **PENDING, owner**: Owner step: quickstart.md Step 3, 5 testers read only the popup and say why the move stopped (SC-001).
+- [ ] T023 **PENDING, after merge**: After the pull request is merged, set the `**Status**:` line in `specs/009-limit-reasons/spec.md` to `Implemented`.
 
 ---
 

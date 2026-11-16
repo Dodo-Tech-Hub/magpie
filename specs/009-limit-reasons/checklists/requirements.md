@@ -34,4 +34,4 @@
 ## Notes
 
 - The owner chose pages in the project's repository, opened in the system browser, so "repository" and "system browser" are part of the requirement, not implementation detail.
-- Open points for `/speckit-clarify`: whether the repository is public (decides where the pages are served), and whether this ships before or after spec 008.
+- Both open points were closed on 2026-11-15 (spec, Clarifications and Assumptions).
