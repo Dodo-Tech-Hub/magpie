@@ -1,7 +1,5 @@
-import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react-native';
-import App from '../../App';
-import { ch, listMock, nextSignIn, resetWorld, subMock } from './helpers';
+import { fireEvent, screen } from '@testing-library/react-native';
+import { ch, listMock, nextSignIn, renderApp, resetWorld, subMock } from './helpers';
 
 jest.mock('@/api/youtube', () => ({
   ...jest.requireActual('@/api/youtube'),
@@ -15,7 +13,7 @@ async function open(newFollows: ReturnType<typeof ch>[]) {
   listMock
     .mockResolvedValueOnce([ch('a', 'Alpha'), ch('b', 'Beta'), ch('c', 'Gamma')])
     .mockResolvedValueOnce(newFollows);
-  await render(<App />);
+  await renderApp();
   nextSignIn('old');
   await fireEvent.press(screen.getByLabelText('Sign in with Google: Old account'));
   await screen.findByLabelText('Alpha');

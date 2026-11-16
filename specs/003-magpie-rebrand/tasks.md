@@ -161,6 +161,23 @@ Polish:
 2. US3 is small and can ship with US1 or after.
 3. Do not release to a store before T017, T018, and T027 are done. The identifiers cannot change after release.
 
+## Open Items (handover)
+
+Status on 2026-11-11: everything an agent can do is done and checked on a Pixel 8 (icon shapes, themed icon, splash, Dark notice, small-size icon). 124 tests, typecheck, and lint pass. What is left:
+
+1. **T017 (owner):** Google Cloud OAuth clients for `com.dodotechhub.magpie`, consent screen renamed "Magpie", new iOS client ID in `.env`. Blocks the sign-in check and the daily-limit reminder notification check (T012 is only partly done until then).
+2. **T018:** two-account move test on real devices. Needs T017.
+3. **iOS device check (not done):** local build is blocked. Xcode 15.4 on macOS Sonoma 14.5 cannot target an iOS 26 device, and React Native 0.88's Podfile rejects it ("Please upgrade XCode"). Xcode 26 needs macOS Sequoia 15.6 or later. Options, pick one:
+   - Update macOS and Xcode, then build locally. A free Apple ID gives personal-team signing that expires after 7 days.
+   - Paid Apple Developer account ($99/year) with EAS Build. This gives a device or IPA build for TestFlight or a device farm (BitBar). EAS removes only the Mac problem, not the account requirement. Needs an `eas.json` profile.
+   - EAS simulator build: free, no account, but runs on simulators only and is not an IPA.
+4. **T026:** run the full quickstart (steps 1 to 7) once items 1 to 3 are done.
+5. **T027 (owner):** rename the GitHub repository to `magpie`, then update `AGENTS.md` line 9. Check "Magpie" for store-name and trademark conflicts. Fill in the consent screen (logo, support email, privacy policy link). Update the constitution title.
+6. **Housekeeping:** `assets/magpie-icon-large.png` is untracked and unused. Delete it or commit it as a source image.
+7. **YouTube brand use (owner):** the app shows the official YouTube icon on its Home card (spec 004, `assets/platforms/youtube.png`). Before publishing, request permission to use the YouTube brand at https://support.google.com/youtube/contact/brand_request?hl=en . Mention the icon size used on the card, since the icon page lists a 100px minimum height for digital use.
+
+Do not release to a store before items 1, 2, 5, and 7 are done.
+
 ## Notes
 
 - Total: 27 tasks. Setup 3, Foundational 2, US1 7, US2 6, US3 4, Polish 5.

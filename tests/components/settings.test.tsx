@@ -1,10 +1,11 @@
 import React from 'react';
-import { Appearance } from 'react-native';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { Alert, Appearance } from 'react-native';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react-native';
 import App from '../../App';
+import { PLATFORMS } from '@/platforms/platforms';
 import { palettes } from '@/theme/theme';
 import { getSetting, setSetting } from '@/store/progressStore';
-import { ch, listMock, nextSignIn, resetWorld } from './helpers';
+import { ch, listMock, nextSignIn, renderApp, resetWorld } from './helpers';
 
 jest.mock('@/api/youtube', () => ({
   ...jest.requireActual('@/api/youtube'),
@@ -39,7 +40,7 @@ const bg = () => {
 
 describe('Settings and the theme choice', () => {
   it('opens from the gear on every step and turns the gear into a back arrow', async () => {
-    await render(<App />);
+    await renderApp();
     await ready();
     for (const step of ['From', 'Pick', 'To']) {
       await fireEvent.press(screen.getByRole('tab', { name: step }));
@@ -53,7 +54,7 @@ describe('Settings and the theme choice', () => {
   });
 
   it('shows Light, Dark and Auto as radios with Auto marked at the start', async () => {
-    await render(<App />);
+    await renderApp();
     await ready();
     await openSettings();
     expect(checked('Auto')).toBe(true);
@@ -62,7 +63,7 @@ describe('Settings and the theme choice', () => {
   });
 
   it('changes the whole app at once and saves the choice', async () => {
-    await render(<App />);
+    await renderApp();
     await ready();
     expect(bg()).toBe(palettes.light.background);
     await openSettings();
@@ -80,12 +81,12 @@ describe('Settings and the theme choice', () => {
   });
 
   it('opens in the saved look after a restart', async () => {
-    const first = await render(<App />);
+    const first = await renderApp();
     await ready();
     await openSettings();
     await choose('Dark');
     await first.unmount();
-    await render(<App />);
+    await renderApp();
     await ready();
     expect(bg()).toBe(palettes.dark.background);
   });
@@ -94,7 +95,7 @@ describe('Settings and the theme choice', () => {
 describe('Auto follows the phone', () => {
   it('matches a dark phone on a fresh start, and follows it when it changes', async () => {
     mockPhone = 'dark';
-    const view = await render(<App />);
+    const view = await renderApp();
     await ready();
     expect(bg()).toBe(palettes.dark.background);
     mockPhone = 'light';
@@ -104,7 +105,7 @@ describe('Auto follows the phone', () => {
 
   it('shows Light when the phone reports nothing', async () => {
     mockPhone = null;
-    await render(<App />);
+    await renderApp();
     await ready();
     expect(bg()).toBe(palettes.light.background);
   });
@@ -112,14 +113,14 @@ describe('Auto follows the phone', () => {
   it('ignores the phone when Light or Dark is chosen', async () => {
     await setSetting('themeChoice', 'light');
     mockPhone = 'dark';
-    await render(<App />);
+    await renderApp();
     await ready();
     expect(bg()).toBe(palettes.light.background);
   });
 
   it('treats a damaged saved value as Auto with no error', async () => {
     await setSetting('themeChoice', 'purple');
-    await render(<App />);
+    await renderApp();
     await ready();
     await openSettings();
     expect(checked('Auto')).toBe(true);
@@ -128,14 +129,14 @@ describe('Auto follows the phone', () => {
 
 describe('Settings keeps the user place', () => {
   it('does not show Delete all on the From step any more', async () => {
-    await render(<App />);
+    await renderApp();
     await ready();
     expect(screen.queryByLabelText('Delete all my data')).toBeNull();
   });
 
   it('keeps picks and the counter after opening and closing Settings', async () => {
     listMock.mockResolvedValueOnce([ch('a'), ch('b')]);
-    await render(<App />);
+    await renderApp();
     await ready();
     nextSignIn('old');
     await fireEvent.press(screen.getByLabelText('Sign in with Google: Old account'));
@@ -148,7 +149,7 @@ describe('Settings keeps the user place', () => {
   });
 
   it('closes Settings when a step tab is tapped', async () => {
-    await render(<App />);
+    await renderApp();
     await ready();
     await openSettings();
     await fireEvent.press(screen.getByRole('tab', { name: 'To' }));
@@ -162,7 +163,7 @@ describe('Not-affiliated notice', () => {
     'Magpie is not made by or linked with YouTube or Google. YouTube is a trademark of Google LLC.';
 
   it('shows in Settings in Light and in Dark', async () => {
-    await render(<App />);
+    await renderApp();
     await ready();
     await openSettings();
     expect(screen.getByText(notice)).toBeTruthy();
@@ -170,5 +171,27 @@ describe('Not-affiliated notice', () => {
     expect(screen.getByText(notice)).toBeTruthy();
     await choose('Light');
     expect(screen.getByText(notice)).toBeTruthy();
+  });
+
+  it('shows one line per platform, each naming its own platform', async () => {
+    await renderApp();
+    await ready();
+    await openSettings();
+    expect(screen.getByText(notice)).toBeTruthy();
+    expect(
+      screen.getByText('Magpie is not made by or linked with GitHub. GitHub is a trademark of GitHub, Inc.'),
+    ).toBeTruthy();
+  });
+});
+
+describe('Delete all signs out of every platform', () => {
+  it('signs out of Google and drops the GitHub token', async () => {
+    const spies = PLATFORMS.map((p) => jest.spyOn(p.driver, 'signOut'));
+    jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => buttons?.find((b) => b.text === 'Delete')?.onPress?.());
+    await renderApp();
+    await ready();
+    await openSettings();
+    await fireEvent.press(screen.getByLabelText('Delete all my data'));
+    await waitFor(() => spies.forEach((s) => expect(s).toHaveBeenCalledTimes(1)));
   });
 });

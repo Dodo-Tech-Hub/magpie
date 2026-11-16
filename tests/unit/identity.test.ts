@@ -17,8 +17,8 @@ describe('project identifiers', () => {
   it('share the Magpie name', () => {
     expect(ids.slug).toBe('magpie');
     expect(ids.packageName).toBe('magpie');
-    expect(ids.iosBundle).toBe('com.dodotechhub.magpie');
-    expect(ids.androidPackage).toBe('com.dodotechhub.magpie');
+    expect(ids.iosBundle).toBe('io.github.dodotechhub.magpie');
+    expect(ids.androidPackage).toBe('io.github.dodotechhub.magpie');
   });
 
   it('do not contain youtube', () => {

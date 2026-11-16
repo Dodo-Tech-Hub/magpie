@@ -14,7 +14,7 @@ Magpie: a mobile app that migrates a user's subscriptions from one account to an
 ## Tech stack
 
 - Expo (React Native) with TypeScript.
-- EAS Build for Android and iOS builds (no local Mac needed for iOS builds).
+- Builds are local only, on the project owner's machine (for example `npx expo run:android`, or Gradle in `android/`). Do not use or assume EAS cloud builds, EAS environment variables, EAS Update, or an Expo account login. Build-time values such as `EXPO_PUBLIC_*` come from the local `.env`, which is not committed. Never tell the owner to set a value on EAS.
 - Platform APIs with the platform's OAuth for reading and writing subscriptions. For YouTube: YouTube Data API v3 with Google OAuth.
 
 ## Domain constraints
@@ -49,9 +49,42 @@ Workflow, in order:
 
 Command names differ slightly by agent (for example `/speckit-plan` in Claude Code, `/speckit.plan` in opencode).
 
+### Spec status
+
+Every `spec.md` has a `**Status**:` line near the top. Use only these values. For `Cancelled` and `Superseded`, add a short reason after a period (for example `**Status**: Cancelled. The app stays free, so no credits are needed.`).
+
+| Status | Meaning |
+|--------|---------|
+| `Draft` | Just created. Still being written or clarified. Not ready to implement. |
+| `In progress` | Implementation has started (plan or tasks exist, code is being written). |
+| `Implemented` | Fully implemented and merged. |
+| `Superseded` | Replaced by a newer spec. Name the spec that replaces it (for example `**Status**: Superseded by 007-foo.`). |
+| `Cancelled` | The project owner cancelled it. Kept as a record. Give the reason. |
+
+Update the status when the work changes state: set `In progress` when `speckit-implement` starts, and `Implemented` when the work is merged.
+
 The user is new to Spec Kit. Do not explain Spec Kit steps unprompted beyond naming the files changed and the next step. When the user asks, explain in full and in plain language.
 
 To add Spec Kit support for another agent, run `specify integration install <key>` (see `specify integration list`).
+
+### Model per step
+
+Steps that need judgment use a deep-reasoning model. Steps that follow a written plan use a fast coding model. In Claude Code, switch with `/model opus` or `/model sonnet` before each step. Other agents use their own model settings with the same split.
+
+| Step | Model | Why |
+|------|-------|-----|
+| `speckit-constitution`, `speckit-specify`, `speckit-clarify`, `speckit-plan` | Deep reasoning (Fable if available, otherwise Opus) | Requirements and architecture. Mistakes here spread to every later step. |
+| `speckit-analyze`, `speckit-converge` | Deep reasoning (Opus) | They find gaps across many files. |
+| `speckit-tasks`, `speckit-checklist` | Fast coding (Sonnet) | They follow the structure of the plan. |
+| `speckit-implement` | Fast coding (Sonnet) | The plan and tasks already decide the design. |
+| Code review | Deep reasoning (Opus) | It replaces a line-by-line human review. |
+
+- The review agent starts with a fresh context and, where possible, uses a different model from the author agent (for example Opus reviews Sonnet's code). A fresh Opus agent reviews Opus's code.
+- Do not pin models by editing the generated `speckit-*` skill or command files. A Spec Kit upgrade can overwrite them.
+
+### Recommended plugin
+
+[Ponytail](https://github.com/DietrichGebert/ponytail) applies the "Simplest solution first" rule of the constitution (Principle IV). Install it for your agent if you want it. It is optional, and the constitution wins when its rules conflict.
 
 ## Docs and comments
 

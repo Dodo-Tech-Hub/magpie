@@ -1,9 +1,7 @@
-import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
-import App from '../../App';
+import { fireEvent, screen, waitFor } from '@testing-library/react-native';
 import { GoogleSignin, mockUser, signInAs } from '../mocks/googleSignin';
 import { listUnfinished } from '@/store/progressStore';
-import { ch, listMock, nextSignIn, resetWorld, subMock } from './helpers';
+import { ch, listMock, nextSignIn, renderApp, resetWorld, subMock } from './helpers';
 
 jest.mock('@/api/youtube', () => ({
   ...jest.requireActual('@/api/youtube'),
@@ -17,7 +15,7 @@ async function bothSignedIn() {
   listMock
     .mockResolvedValueOnce([ch('a', 'Alpha'), ch('b', 'Beta')])
     .mockResolvedValueOnce([]);
-  await render(<App />);
+  await renderApp();
   nextSignIn('old');
   await fireEvent.press(screen.getByLabelText('Sign in with Google: Old account'));
   await screen.findByLabelText('Alpha');
@@ -39,7 +37,7 @@ describe('accounts', () => {
 
   it('refuses the old account as the new account', async () => {
     listMock.mockResolvedValueOnce([ch('a', 'Alpha')]);
-    await render(<App />);
+    await renderApp();
     nextSignIn('old');
     await fireEvent.press(screen.getByLabelText('Sign in with Google: Old account'));
     await screen.findByLabelText('Alpha');
@@ -51,7 +49,7 @@ describe('accounts', () => {
   });
 
   it('refuses the new account as the old account', async () => {
-    await render(<App />);
+    await renderApp();
     await fireEvent.press(screen.getByRole('tab', { name: 'To' }));
     nextSignIn('new');
     await fireEvent.press(screen.getByLabelText('Sign in with Google: New account'));
@@ -65,14 +63,14 @@ describe('accounts', () => {
   it('reloads the list for a switched old account and keeps the earlier progress saved', async () => {
     await bothSignedIn();
     await fireEvent.press(screen.getByRole('tab', { name: 'From' }));
-    listMock.mockResolvedValueOnce([ch('x', 'Xavier')]);
+    listMock.mockResolvedValueOnce([ch('x', 'Xavier')]).mockResolvedValueOnce([]);
     signInAs(mockUser('old2-id', 'second.old@gmail.com'));
     await fireEvent.press(screen.getByLabelText('Switch Old account'));
     expect(await screen.findByLabelText('Xavier')).toBeTruthy();
     expect(screen.queryByLabelText('Alpha')).toBeNull();
     const saved = await listUnfinished();
-    expect(saved).toHaveLength(1);
-    expect(saved[0].oldAccount.email).toBe('old.me@gmail.com');
+    // The new old account starts its own progress at sign-in (FR-GH-021). The earlier one stays.
+    expect(saved.map((p) => p.oldAccount.handle).sort()).toEqual(['old.me@gmail.com', 'second.old@gmail.com']);
   });
 
   it('blocks Switch while a move is running', async () => {

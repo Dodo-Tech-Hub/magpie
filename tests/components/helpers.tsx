@@ -1,4 +1,7 @@
+import React from 'react';
 import type { AlertButton } from 'react-native';
+import { fireEvent, render, screen } from '@testing-library/react-native';
+import App from '../../App';
 import { GoogleSignin, mockUser, signInAs } from '../mocks/googleSignin';
 import { listMySubscriptions, subscribe } from '@/api/youtube';
 import { closeStore } from '@/store/progressStore';
@@ -27,3 +30,10 @@ export const answerAlert = (spy: jest.SpyInstance, text: string) =>
   spy.mockImplementation((_t: unknown, _m: unknown, buttons?: unknown) =>
     (buttons as AlertButton[] | undefined)?.find((b) => b.text === text)?.onPress?.(),
   );
+
+// Render the app and open the YouTube flow, so tests start where they did before Home existed.
+export async function renderApp() {
+  const view = await render(<App />);
+  await fireEvent.press(await screen.findByLabelText('YouTube'));
+  return view;
+}

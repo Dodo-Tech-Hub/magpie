@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { BackHandler, StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { initReminders, onReminderTapped } from '@/reminders/reminder';
@@ -7,6 +7,8 @@ import { AppStateProvider, useApp } from '@/state/AppState';
 import { openProgress } from '@/state/flows';
 import { initStore } from '@/store/progressStore';
 import { ThemeProvider, useTheme } from '@/theme/theme';
+import { HomeBar } from '@/ui/HomeBar';
+import { HomeView } from '@/ui/HomeView';
 import { TopBar } from '@/ui/TopBar';
 import { FromStep } from '@/ui/FromStep';
 import { PickStep } from '@/ui/PickStep';
@@ -18,14 +20,25 @@ function Screen() {
   const { colors } = useTheme();
   // Tapping a reminder opens that progress. Unknown IDs are ignored (constitution III.8).
   useEffect(() => onReminderTapped((id) => void openProgress(dispatch, id)), [dispatch]);
+  // Android back: close Settings, else go Home, else let the system handle it (FR-010).
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (state.settingsOpen) dispatch({ type: 'closeSettings' });
+      else if (state.platform !== null) dispatch({ type: 'goHome' });
+      else return false;
+      return true;
+    });
+    return () => sub.remove();
+  }, [state.settingsOpen, state.platform, dispatch]);
   return (
     <View style={[styles.flex, { backgroundColor: colors.background }]} testID="root">
-      <TopBar />
+      {state.platform === null ? <HomeBar /> : <TopBar />}
       <View style={styles.flex}>
         {state.settingsOpen && <SettingsView />}
-        {!state.settingsOpen && state.step === 'from' && <FromStep />}
-        {!state.settingsOpen && state.step === 'pick' && <PickStep />}
-        {!state.settingsOpen && state.step === 'to' && <ToStep />}
+        {!state.settingsOpen && state.platform === null && <HomeView />}
+        {!state.settingsOpen && state.platform !== null && state.step === 'from' && <FromStep />}
+        {!state.settingsOpen && state.platform !== null && state.step === 'pick' && <PickStep />}
+        {!state.settingsOpen && state.platform !== null && state.step === 'to' && <ToStep />}
       </View>
     </View>
   );

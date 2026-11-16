@@ -1,4 +1,4 @@
-# YouTube Subscriptions Migrator Constitution
+# Magpie Constitution
 
 ## Core Principles
 
@@ -30,6 +30,7 @@ Every feature and every bug fix MUST include tests that cover its behavior.
   have unit tests.
 - User flows changed by a feature MUST have component tests that check what the user sees and taps.
 - Every bug fix MUST add a test that fails without the fix.
+- Every test MUST check behavior that matters to the user or the business logic. Tests written only to raise coverage, or tests that only check that mocks were called, MUST NOT be added, and a reviewer MAY reject them. A test that checks a call at the mocked boundary is allowed when that call is itself the behavior the user or the security baseline needs (for example the browser opens, or a token is deleted).
 - Tests MUST NOT call real platform APIs or use real accounts. Mock network and auth at the boundary.
 - All tests MUST pass before a change is merged.
 
@@ -42,7 +43,7 @@ Every feature MUST comply with this baseline. A plan or change that breaks a rul
 until the rule is met or the constitution is amended.
 
 1. **Least privilege scopes**: for each platform, request only the minimum scopes it needs: read-only scopes for the source account and write scopes only for the target account. The spec MUST list the scopes per platform. For Google, request `https://www.googleapis.com/auth/youtube.readonly` for the source account and `https://www.googleapis.com/auth/youtube` only for the target account. Request no other scopes.
-2. **Secure sign-in**: use OAuth 2.0 Authorization Code with PKCE through the system browser or the platform's native sign-in SDK. Never collect platform passwords and never sign in through an embedded WebView. Validate the OAuth `state` and redirect URI.
+2. **Secure sign-in**: for each platform, use the most secure sign-in flow that platform offers to a public client (an app that cannot keep a secret), in this order of preference: the platform's native sign-in SDK, OAuth 2.0 Authorization Code with PKCE, then OAuth 2.0 Device Authorization Grant (device code flow). Sign-in MUST happen in the native SDK or the system browser, never in an embedded WebView. Never collect platform passwords. Validate every value the flow returns (for example the OAuth `state` and redirect URI, or the device code response) before use. The spec or plan of each platform MUST name the flow it uses and why no higher one in the list is available.
 3. **Token storage**: store tokens only in `expo-secure-store` (iOS Keychain, Android Keystore).
    Never store tokens in AsyncStorage, files, or app state that is persisted elsewhere. Revoke tokens
    and delete them on sign-out.
@@ -74,6 +75,8 @@ New features MUST fit the existing structure. They MUST NOT be bolted onto unrel
 - **Extend, do not patch**: a separate capability SHOULD be a new function, component, or module, plugged in at a clear integration point (for example a step list, a settings section, or a route). Growing existing code is fine when the change belongs to that code's own job (for example a new field on a form that already edits that data). Existing code MUST NOT grow flags, boolean parameters, or `if (newFeature)` branches to carry a capability that is not its job. Bug fixes may edit existing code directly. Agents use their judgment; the plan explains the choice when it is not obvious.
 - **Flat logic**: avoid deeply nested `if` statements (more than two levels). Use early returns, or a mapping or lookup table (for example an object keyed by status or step) when it fits the actual case. Prefer whichever is clearer for the situation; do not force a table onto a single simple condition.
 - **Reuse first**: before writing code, search for an existing function that does the job and use it. When the same logic is needed in two or more places, extract it into one shared module and use it from both. Business logic MUST stay separate from UI and network code so it can be reused and unit tested on its own. Do not build abstractions for a single, hypothetical use.
+- **Simplest solution first**: before writing code, check in this order and stop at the first step that works: (1) is it needed at all, (2) does code in the repo already do it (see "Reuse first"), (3) does a TypeScript or JavaScript built-in do it, (4) does an Expo SDK module or a native platform feature do it, (5) does an installed dependency do it, (6) only then write the minimum new code. A deliberate shortcut with a known limit MUST carry a comment in the form `// ponytail: <limit>, <when and how to upgrade>`. Shortcuts without such a comment are not allowed. `ponytail:` is only a searchable tag: use it whether or not the ponytail plugin is installed.
+- **Constitution wins over tool rules**: when the ruleset of an agent tool or plugin (for example ponytail) conflicts with this constitution, the constitution wins. For example, Principle II tests stay required, "one job per file" stays, and specs stay detailed as described in Specification Style.
 - **Restructure instead of forcing it**: if a feature cannot fit without reshaping many existing modules, or needs new architecture (for example a navigation library or a backend), the plan MUST stop and propose a restructure or a new project setup to the project owner. An approved restructure is its own change, done and tested before the feature work starts. It MUST NOT be mixed into the feature.
 
 Rationale: features will be added over time, often by AI agents. Clear homes, one pattern per job, and new modules instead of patches keep the codebase easy to read and keep each change small and safe to review.
@@ -107,7 +110,7 @@ Rationale: users run the app on many screen sizes, and foldables change size whi
 
 ## Platform & Technology Constraints
 
-- Stack: Expo (React Native) with TypeScript in strict mode. Builds use EAS Build.
+- Stack: Expo (React Native) with TypeScript in strict mode. Builds are made locally on the project owner's machine, not with EAS cloud builds (see `AGENTS.md`).
 - Specs MUST cover both Android and iOS. Android ships first. Any platform-specific behavior MUST be
   called out in the spec.
 - Data source: each supported platform's official API, or the user's own data export for guided flows. Designs MUST respect each platform's API quota and terms. For example, on YouTube `subscriptions.insert` costs 50 units against a shared daily project quota. Batch work, save progress, resume after interruption, and tell the user clearly when a limit is reached.
@@ -155,4 +158,4 @@ Rationale: a spec is read by people who are new to the feature. A flow, a state 
 - Reviews of every spec, plan, and pull request MUST check compliance. Any exception MUST be written
   in the plan with its reason and approved by the project owner.
 
-**Version**: 1.4.0 | **Ratified**: 2026-11-08 | **Last Amended**: 2026-11-13
+**Version**: 1.6.0 | **Ratified**: 2026-11-08 | **Last Amended**: 2026-11-16

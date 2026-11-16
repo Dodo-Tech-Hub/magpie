@@ -1,18 +1,17 @@
-import React from 'react';
 import { Alert } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import App from '../../App';
 import { GoogleSignin, mockUser, signInAs } from '../mocks/googleSignin';
 import {
-  getChannels,
+  getItems,
   getOrCreateProgress,
   initStore,
   listUnfinished,
-  saveChannels,
+  saveItems,
   setStatus,
 } from '@/store/progressStore';
-import { answerAlert, ch, listMock, NEW, nextSignIn, OLD, resetWorld, subMock } from './helpers';
+import { answerAlert, ch, listMock, NEW, nextSignIn, OLD, renderApp, resetWorld, subMock } from './helpers';
 
 jest.mock('@/api/youtube', () => ({
   ...jest.requireActual('@/api/youtube'),
@@ -22,15 +21,15 @@ jest.mock('@/api/youtube', () => ({
 
 const acct = (u: { id: string; email: string; name: string; photo: string | null }) => ({
   id: u.id,
-  email: u.email,
+  handle: u.email,
   name: u.name,
   photoUrl: u.photo,
 });
 
 async function seed(old = OLD, nu = NEW, ids = ['a', 'b']) {
   await initStore();
-  const pid = await getOrCreateProgress(acct(old), acct(nu));
-  await saveChannels(pid, ids.map((id) => ({ channelId: id, title: id.toUpperCase(), thumbnailUrl: null })));
+  const pid = await getOrCreateProgress('youtube', acct(old), acct(nu));
+  await saveItems(pid, ids.map((id) => ({ itemId: id, kind: 'channel', title: id.toUpperCase(), thumbnailUrl: null, data: null })));
   return pid;
 }
 
@@ -39,7 +38,7 @@ beforeEach(resetWorld);
 describe('saved progresses', () => {
   it('lists unfinished progresses with how many channels are left', async () => {
     await seed();
-    await render(<App />);
+    await renderApp();
     expect(await screen.findByLabelText('old.me → new.me · 2 left')).toBeTruthy();
   });
 
@@ -47,14 +46,14 @@ describe('saved progresses', () => {
     const pid = await seed();
     await setStatus(pid, 'a', 'moved');
     await setStatus(pid, 'b', 'moved');
-    await render(<App />);
+    await renderApp();
     await screen.findByLabelText('Sign in with Google: Old account');
     expect(screen.queryByLabelText(/left$/)).toBeNull();
   });
 
   it('opens a saved progress with the old account from the phone and asks for the exact new account', async () => {
     await seed();
-    await render(<App />);
+    await renderApp();
     await fireEvent.press(await screen.findByLabelText('old.me → new.me · 2 left'));
     expect(await screen.findByText('Sign in to new.me@gmail.com to keep going.')).toBeTruthy();
     expect(listMock).not.toHaveBeenCalled();
@@ -76,7 +75,7 @@ describe('saved progresses', () => {
     listMock
       .mockResolvedValueOnce([ch('a', 'A'), ch('b', 'B'), ch('c', 'C')])
       .mockResolvedValueOnce([]);
-    await render(<App />);
+    await renderApp();
     nextSignIn('old');
     await fireEvent.press(screen.getByLabelText('Sign in with Google: Old account'));
     await screen.findByLabelText('B');
@@ -89,7 +88,7 @@ describe('saved progresses', () => {
 
   it('deletes a saved progress', async () => {
     await seed();
-    await render(<App />);
+    await renderApp();
     await fireEvent.press(await screen.findByLabelText('Delete old.me → new.me · 2 left'));
     await act(async () => undefined);
     expect(screen.queryByLabelText('old.me → new.me · 2 left')).toBeNull();
@@ -99,7 +98,7 @@ describe('saved progresses', () => {
   it('opens the progress when a reminder is tapped and ignores unknown IDs', async () => {
     const pid = await seed();
     const listener = Notifications.addNotificationResponseReceivedListener as jest.Mock;
-    await render(<App />);
+    await renderApp();
     const tap = (id: string) =>
       act(async () => listener.mock.calls.at(-1)[0]({ notification: { request: { content: { data: { progressId: id } } } } }));
     await tap('nope');
@@ -112,7 +111,7 @@ describe('saved progresses', () => {
     await seed();
     await seed(mockUser('o2', 'o2@x.com'), mockUser('n2', 'n2@x.com'));
     answerAlert(jest.spyOn(Alert, 'alert'), 'Delete');
-    await render(<App />);
+    await renderApp();
     await screen.findByLabelText('old.me → new.me · 2 left');
     await fireEvent.press(screen.getByLabelText('Settings'));
     await fireEvent.press(screen.getByLabelText('Delete all my data'));
@@ -121,7 +120,7 @@ describe('saved progresses', () => {
     expect(Notifications.cancelScheduledNotificationAsync).toHaveBeenCalledTimes(2);
     expect(GoogleSignin.revokeAccess).toHaveBeenCalled();
     expect(subMock).not.toHaveBeenCalled();
-    expect(await getChannels('x')).toEqual([]);
+    expect(await getItems('x')).toEqual([]);
     // Settings closes, From shows signed out, and the look is back to Auto.
     expect(screen.queryByText('Look')).toBeNull();
     await fireEvent.press(screen.getByLabelText('Settings'));
@@ -131,11 +130,37 @@ describe('saved progresses', () => {
   it('delete all asks first and keeps everything when cancelled', async () => {
     await seed();
     answerAlert(jest.spyOn(Alert, 'alert'), 'Cancel');
-    await render(<App />);
+    await renderApp();
     await screen.findByLabelText('old.me → new.me · 2 left');
     await fireEvent.press(screen.getByLabelText('Settings'));
     await fireEvent.press(screen.getByLabelText('Delete all my data'));
     await act(async () => undefined);
     expect((await listUnfinished()).length).toBe(1);
+  });
+
+  it('opens the progress straight from a reminder while Home shows', async () => {
+    const pid = await seed();
+    const listener = Notifications.addNotificationResponseReceivedListener as jest.Mock;
+    await render(<App />);
+    await screen.findByText('Automatic');
+    await act(async () =>
+      listener.mock.calls.at(-1)[0]({ notification: { request: { content: { data: { progressId: pid } } } } }),
+    );
+    expect(await screen.findByText('Sign in to new.me@gmail.com to keep going.')).toBeTruthy();
+    expect(screen.queryByText('Automatic')).toBeNull();
+  });
+
+  it('closes Settings and opens the progress when a reminder is tapped there', async () => {
+    const pid = await seed();
+    const listener = Notifications.addNotificationResponseReceivedListener as jest.Mock;
+    await render(<App />);
+    await screen.findByText('Automatic');
+    await fireEvent.press(screen.getByLabelText('Settings'));
+    expect(screen.getByText('Look')).toBeTruthy();
+    await act(async () =>
+      listener.mock.calls.at(-1)[0]({ notification: { request: { content: { data: { progressId: pid } } } } }),
+    );
+    expect(await screen.findByText('Sign in to new.me@gmail.com to keep going.')).toBeTruthy();
+    expect(screen.queryByText('Look')).toBeNull();
   });
 });
