@@ -7,7 +7,7 @@ import { answerReminder, eventually, githubWorld, person, renderGithub, repo, re
 
 let w: ReturnType<typeof githubWorld>;
 const NOTE = "Magpie's access ends on its own within 8 hours. To end it now, open GitHub settings.";
-const BREAK = "GitHub needs a break. We'll remind you when you can move the rest.";
+const BREAK = "GitHub lets Magpie move only some items each hour. Magpie must wait a little.";
 const PUT = 'PUT https://api.github.com/*';
 
 beforeEach(async () => {

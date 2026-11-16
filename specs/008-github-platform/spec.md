@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-13
 
-**Status**: In progress
+**Status**: Implemented
 
 **Input**: User description: "GitHub platform. Then let's discuss which items GitHub supports, and whether this feature is feasible (not facing any platform limitations)."
 

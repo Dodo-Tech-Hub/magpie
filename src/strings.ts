@@ -53,10 +53,14 @@ export const strings = {
   light: 'Light',
   dark: 'Dark',
   auto: 'Auto',
+  learnMore: 'Learn more',
+  couldntOpenPage: "Couldn't open the page.",
 } as const;
 
 export const continueLeft = (n: number) => `Continue: ${n} left`;
 export const continueLabel = (name: string, n: number) => `Continue ${name}, ${n} left`;
+export const aboutLimits = (name: string) => `About ${name} limits`;
+export const learnMoreLabel = (name: string) => `Learn more about ${name} limits`;
 export const signInTo = (handle: string) => `Sign in to ${handle} to keep going.`;
 export const wrongAccount = (handle: string) => `This one needs ${handle}. Pick that account.`;
 // How long the picked adds take at the pace of the platform (FR-GH-011).
@@ -94,7 +98,7 @@ export const youtubeWords: Words = {
   noItems: "This account doesn't follow any channels yet",
   needPick: 'Pick at least 1 channel',
   later: 'Tomorrow',
-  limitReached: "Daily limit reached. We'll remind you when you can move the rest.",
+  limitReached: "YouTube lets Magpie move only some channels each day. Today's limit is reached.",
   reminderBody: 'You can move the rest of your channels now.',
   moveButton: (n) => `Move ${n} channel${n === 1 ? '' : 's'}`,
   notAffiliated: 'Magpie is not made by or linked with YouTube or Google. YouTube is a trademark of Google LLC.',
@@ -109,7 +113,7 @@ export const githubWords: Words = {
   noItems: "This account doesn't follow anything yet",
   needPick: 'Pick at least 1 item',
   later: 'Later',
-  limitReached: "GitHub needs a break. We'll remind you when you can move the rest.",
+  limitReached: 'GitHub lets Magpie move only some items each hour. Magpie must wait a little.',
   reminderBody: 'You can move the rest now.',
   moveButton: (n) => `Move ${n} item${n === 1 ? '' : 's'}`,
   notAffiliated: 'Magpie is not made by or linked with GitHub. GitHub is a trademark of GitHub, Inc.',

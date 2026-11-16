@@ -155,7 +155,7 @@ describe('star lists', () => {
     // 297 adds already in the last hour: the list create is #298, then two repository adds, then the pace is full.
     for (let i = 0; i < 297; i += 1) await recordAdd('github:2', Date.now() - 1000 - i);
     await move('Move 1 item');
-    expect(await eventually('GitHub needs a break. We\'ll remind you when you can move the rest.')).toBeTruthy();
+    expect(await eventually('GitHub lets Magpie move only some items each hour. Magpie must wait a little.')).toBeTruthy();
     expect(screen.getByText('Later')).toBeTruthy();
     expect(graphqlSent('updateUserListsForItem').length).toBeLessThan(3);
     const before = graphqlSent('updateUserListsForItem').length;

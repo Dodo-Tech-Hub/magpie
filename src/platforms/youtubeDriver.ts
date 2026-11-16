@@ -38,6 +38,8 @@ export const youtubeDriver: Driver = {
   id: 'youtube',
   words: youtubeWords,
   kinds: [{ id: 'channel', heading: '' }],
+  // ponytail: the address holds the repository name, a rename needs an app release; a custom domain removes that
+  limitsUrl: 'https://dodo-tech-hub.github.io/magpie/limits/youtube',
 
   async signIn(role) {
     const res = await signIn(role);
