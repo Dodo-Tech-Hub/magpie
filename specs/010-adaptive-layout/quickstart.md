@@ -16,7 +16,7 @@ npm run typecheck
 npm run lint
 ```
 
-All three must pass. The new tests are `tests/components/windowChange.test.tsx`, `tests/components/largeText.test.tsx`, and `tests/unit/itemRow.test.ts`.
+All three must pass. The new tests are `tests/components/windowChange.test.tsx`, `tests/components/twoPane.test.tsx`, `tests/components/largeText.test.tsx`, and `tests/unit/itemRow.test.ts`.
 
 ## Build (local only)
 
@@ -43,12 +43,15 @@ The owner has no foldable phone. Foldable checks run on an Android Studio emulat
 | Book-style foldable, closed and open | Stories 1 and 2 |
 | Flip-style foldable | Story 2 |
 | Resizable emulator | Any size in between |
+| A window 840 points wide or wider: an open foldable in landscape, a tablet emulator, or a large phone in landscape | Story 5 |
+
+Without a wide device, a phone can report a wider window for a check: `adb shell wm density 300` makes most phones wider than 840 points in landscape. `adb shell wm density reset` puts it back.
 
 ## Checks
 
 ### 1. Open foldable (Story 1, SC-001, SC-005)
 
-In a window 600 points wide or wider, visit Home, From, Pick, To, and Settings.
+In a window 600 to 839 points wide, visit Home, From, Pick, To, and Settings. In a window 840 points wide or wider, visit Home and Settings (the flow is check 5).
 
 - Content is in a centered column. Rows, section headings, the search box, the All row, and the Move button have the same left and right edges.
 - The line under the top bar spans the window. The bar's icons line up with the column.
@@ -83,7 +86,22 @@ On a 320-point-wide window, then with the system font size and display size at t
 - Open the app in split-screen at the smallest and the largest split. On Pick, the action bar stays visible and the list scrolls in the space left.
 - With the keyboard open in the search box, change the split: the typed text stays and the box is usable.
 
-### 5. Nothing else changed (FR-014)
+### 5. Two panes (Story 5, SC-006)
+
+In a window 840 points wide or wider, open a platform:
+
+1. From and To are on the left, Pick is on the right, the pair is centered. Pick shows "Sign in to your old account first".
+2. Sign in to the old account on the left: the list loads on the right. The left pane does not change place.
+3. Pick items, then press Move with no new account: the To part on the left asks for the new account, and the list stays.
+4. Sign in to the new account and press Move. The move runs and finishes. No step in the top bar was tapped.
+5. Touch a pane: its step is marked in the top bar. A notice shows in one place only.
+6. Open Settings, then go Home: both use the centered column.
+7. With picks, a collapsed section, and search text on Pick, make the window narrower than 840 (fold, rotate, or drag the split): Pick shows alone with all of these kept. Make it wide again: two panes, all kept.
+8. Touch the left pane, then make the window narrow: From or To shows, and the picks are kept.
+9. During a running move, change between one and two panes 20 times: the move finishes with the right totals.
+10. On a large phone in landscape: the Move button is visible, the list scrolls, the left pane scrolls.
+
+### 6. Nothing else changed (FR-014)
 
 In a normal portrait phone window, every screen looks as it did before this feature, apart from larger touch targets.
 
