@@ -1,15 +1,16 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { driverFor } from '@/platforms/platforms';
+import { driverFor, PLATFORMS } from '@/platforms/platforms';
 import { useApp } from '@/state/AppState';
 import type { StoredItem } from '@/store/progressStore';
-import { allowKind, isMovable, startMove, togglePick } from '@/state/flows';
+import { allowKind, isMovable, openLimits, startMove, togglePick } from '@/state/flows';
 import { timeLeft } from '@/move/pacer';
 import { needAccess, pickedCounter, strings, summary, timeLeftText } from '@/strings';
 import { useTheme, type Colors } from '@/theme/theme';
 import { AccessNote } from '@/ui/AccessNote';
 import { ItemRow, ROW_HEIGHT } from '@/ui/ItemRow';
+import { LimitNote } from '@/ui/LimitNote';
 
 type Row =
   | { item: StoredItem }
@@ -35,6 +36,11 @@ export function PickStep() {
     });
 
   const driver = driverFor(state.platform!);
+  const platformName = PLATFORMS.find((p) => p.id === state.platform)?.name ?? '';
+  const learnMore = (url: string) =>
+    void openLimits(url).then((ok) => {
+      if (!ok) dispatch({ type: 'setNotice', notice: strings.couldntOpenPage });
+    });
   const onToggle = useCallback(
     (id: string, picked: boolean) => void togglePick(state, dispatch, [id], picked),
     [state, dispatch],
@@ -185,7 +191,7 @@ export function PickStep() {
           <Text style={styles.timeLeft}>{timeLeftText(timeLeft(adds), adds)}</Text>
         )}
         {showSummary && <Text style={styles.summary}>{summary(counts)}</Text>}
-        {moveState === 'limit' && <Text style={styles.note}>{words.limitReached}</Text>}
+        {moveState === 'limit' && <LimitNote driver={driver} name={platformName} onLearnMore={learnMore} />}
         {moveState === 'done' && <AccessNote driver={driver} />}
         {state.notice && <Text style={styles.error}>{state.notice}</Text>}
         {!(moveState === 'done' && movable === 0) && items.length > 0 && (
@@ -233,7 +239,6 @@ const makeStyles = (c: Colors) =>
     bar: { padding: 12, borderTopWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     summary: { fontSize: 14, marginBottom: 8, color: c.success },
     timeLeft: { fontSize: 13, color: c.muted, marginBottom: 8 },
-    note: { fontSize: 13, color: c.warning, marginBottom: 8 },
     error: { fontSize: 13, color: c.danger, marginBottom: 8 },
     move: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 44, borderRadius: 8, backgroundColor: c.primary },
     moveText: { color: c.onPrimary, fontSize: 15 },

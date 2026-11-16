@@ -16,15 +16,16 @@ export function initReminders(): void {
   });
 }
 
-// Asked only once, the first time the daily limit is hit (FR-028).
-// Our own question comes first so the phone's permission box makes sense.
-export async function askOnce(): Promise<boolean> {
+// Asked only once, the first time a limit is hit (FR-028).
+// The platform's reason comes first, so the user knows why the move stopped (spec 009, FR-001).
+// Our own question comes before the phone's permission box so that box makes sense.
+export async function askOnce(reason: string): Promise<boolean> {
   if (await getSetting('reminderAsked')) return (await Notifications.getPermissionsAsync()).granted;
   await setSetting('reminderAsked', '1');
   const wants = await new Promise<boolean>((resolve) =>
     Alert.alert(
       strings.reminderTitle,
-      strings.reminderAsk,
+      `${reason}\n\n${strings.reminderAsk}`,
       [
         { text: strings.no, style: 'cancel', onPress: () => resolve(false) },
         { text: strings.yes, onPress: () => resolve(true) },

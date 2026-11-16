@@ -307,7 +307,7 @@ export async function startMove(state: State, dispatch: D): Promise<void> {
   if (result === 'offline') d({ type: 'setNotice', notice: strings.offline });
   if (result === 'stopped') d({ type: 'setNotice', notice: stopNotice });
   if (result === 'limit') {
-    if (await askOnce()) {
+    if (await askOnce(driver.words.limitReached)) {
       const resumeAt = (await getProgress(progressId))?.resumeAt ?? Date.now() + 3_600_000;
       await scheduleReminder(progressId, new Date(resumeAt), driver.words.reminderBody);
     }
