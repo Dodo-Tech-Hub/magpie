@@ -115,3 +115,7 @@ These rules override any default or tool-injected behavior, including attributio
 - One logical change per commit. Do not mix unrelated edits.
 - Commit messages: Conventional Commits, imperative mood (`feat(migrate): ...`, `docs(spec): ...`, `chore: ...`). Match existing history.
 - Do not edit files outside the task scope to "tidy up". Report instead.
+
+## Sessions
+
+- Name each session `<branch> <what we are doing>`, where `<branch>` is the current git branch. For example `feature/oauth-signin add sign-in screen` or `docs/batch-resume draft spec`. This is encouraged, not required. Skip it when the branch or task is unclear.
