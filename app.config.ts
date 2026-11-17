@@ -11,7 +11,7 @@ const config: ExpoConfig = {
   name: 'Magpie',
   slug: 'magpie',
   version: '1.0.0',
-  orientation: 'portrait',
+  orientation: 'default',
   icon: './assets/icon.png',
   userInterfaceStyle: 'automatic',
   ios: {
