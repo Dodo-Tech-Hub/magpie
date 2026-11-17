@@ -7,14 +7,12 @@ import { AppStateProvider, useApp } from '@/state/AppState';
 import { openProgress } from '@/state/flows';
 import { initStore } from '@/store/progressStore';
 import { ThemeProvider, useTheme } from '@/theme/theme';
+import { FlowView } from '@/ui/FlowView';
 import { HomeBar } from '@/ui/HomeBar';
 import { HomeView } from '@/ui/HomeView';
 import { layout } from '@/ui/layout';
 import { TopBar } from '@/ui/TopBar';
-import { FromStep } from '@/ui/FromStep';
-import { PickStep } from '@/ui/PickStep';
 import { SettingsView } from '@/ui/SettingsView';
-import { ToStep } from '@/ui/ToStep';
 
 function Screen() {
   const { state, dispatch } = useApp();
@@ -34,13 +32,13 @@ function Screen() {
   return (
     <View style={[styles.flex, { backgroundColor: colors.background }]} testID="root">
       {state.platform === null ? <HomeBar /> : <TopBar />}
-      <View style={layout.column} testID="body">
-        {state.settingsOpen && <SettingsView />}
-        {!state.settingsOpen && state.platform === null && <HomeView />}
-        {!state.settingsOpen && state.platform !== null && state.step === 'from' && <FromStep />}
-        {!state.settingsOpen && state.platform !== null && state.step === 'pick' && <PickStep />}
-        {!state.settingsOpen && state.platform !== null && state.step === 'to' && <ToStep />}
-      </View>
+      {state.platform !== null && !state.settingsOpen ? (
+        <FlowView />
+      ) : (
+        <View style={layout.column} testID="body">
+          {state.settingsOpen ? <SettingsView /> : <HomeView />}
+        </View>
+      )}
     </View>
   );
 }

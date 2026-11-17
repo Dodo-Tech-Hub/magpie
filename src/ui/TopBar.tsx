@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useApp, type State, type Step } from '@/state/AppState';
 import { strings } from '@/strings';
 import { useTheme, type Colors } from '@/theme/theme';
-import { layout } from '@/ui/layout';
+import { layout, useTwoPane } from '@/ui/layout';
 
 type Icon = keyof typeof Ionicons.glyphMap;
 type StepState = 'current' | 'done' | 'locked' | 'not started';
@@ -29,9 +29,11 @@ export function TopBar() {
   const { state, dispatch } = useApp();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  // As wide as the two panes below it, when they show.
+  const wide = useTwoPane() && !state.settingsOpen;
   return (
     <View style={styles.bar}>
-      <View style={[layout.column, styles.row]} testID="bar-content">
+      <View style={[wide ? layout.panes : layout.column, styles.row]} testID="bar-content">
         <Pressable
           style={styles.gear}
           accessibilityRole="button"

@@ -53,4 +53,17 @@ describe('keep my place on GitHub', () => {
     expect(screen.queryByLabelText('o/r1')).toBeNull();
     expect(screen.getByLabelText('bob')).toBeTruthy();
   });
+
+  it('keeps a collapsed section collapsed between one and two panes', async () => {
+    w.data.old.stars = [repo(1), repo(2)];
+    w.data.old.people = [person(7, 'bob')];
+    await renderGithub();
+    await signInBoth(w);
+    await fireEvent.press(heading('Stars, 2'));
+    await resize(900);
+    expect(heading('Stars, 2').props.accessibilityState.expanded).toBe(false);
+    await resize(360);
+    expect(heading('Stars, 2').props.accessibilityState.expanded).toBe(false);
+    expect(screen.queryByLabelText('o/r1')).toBeNull();
+  });
 });
