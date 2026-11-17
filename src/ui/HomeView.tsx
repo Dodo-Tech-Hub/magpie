@@ -6,6 +6,7 @@ import { leaveFlowFor, openLimits, openProgress } from '@/state/flows';
 import { strings } from '@/strings';
 import { useTheme, type Colors } from '@/theme/theme';
 import { columnsFor } from '@/ui/gridColumns';
+import { MAX_CONTENT_WIDTH } from '@/ui/layout';
 import { PlatformCard } from '@/ui/PlatformCard';
 
 type Unfinished = { left: number; ids: string[] };
@@ -15,7 +16,7 @@ export function HomeView({ platforms = PLATFORMS }: { platforms?: Platform[] }) 
   const { state, dispatch } = useApp();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const columns = columnsFor(useWindowDimensions().width, PixelRatio.getFontScale());
+  const columns = columnsFor(Math.min(useWindowDimensions().width, MAX_CONTENT_WIDTH), PixelRatio.getFontScale());
   const [unfinished, setUnfinished] = useState<Record<string, Unfinished>>({});
   // Local, not state.notice: a move running in the background writes its own notices there (research R6).
   const [pageError, setPageError] = useState(false);

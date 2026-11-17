@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useApp, type State, type Step } from '@/state/AppState';
 import { strings } from '@/strings';
 import { useTheme, type Colors } from '@/theme/theme';
+import { layout } from '@/ui/layout';
 
 type Icon = keyof typeof Ionicons.glyphMap;
 type StepState = 'current' | 'done' | 'locked' | 'not started';
@@ -30,52 +31,56 @@ export function TopBar() {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={styles.bar}>
-      <Pressable
-        style={styles.gear}
-        accessibilityRole="button"
-        accessibilityLabel={strings.home}
-        onPress={() => dispatch({ type: 'goHome' })}
-      >
-        <Ionicons name="home-outline" size={24} color={colors.text} />
-      </Pressable>
-      <View style={styles.tabs} accessibilityRole="tablist">
-        {STEPS.map(({ step, label, icon }) => {
-          const st = stateOf(step, state);
-          const current = st === 'current';
-          const locked = step === 'pick' && !state.oldAccount;
-          const shown: Icon = locked ? 'lock-closed-outline' : st === 'done' ? 'checkmark-circle' : icon;
-          const color = current ? colors.primary : st === 'done' ? colors.success : colors.muted;
-          return (
-            <Pressable
-              key={step}
-              style={[styles.step, current && styles.current]}
-              accessibilityRole="tab"
-              accessibilityLabel={label}
-              accessibilityValue={{ text: st }}
-              accessibilityState={{ selected: current }}
-              onPress={() => dispatch({ type: 'setStep', step })}
-            >
-              <Ionicons name={shown} size={22} color={color} />
-              <Text style={[styles.label, { color }, current && styles.labelCurrent]}>{label}</Text>
-            </Pressable>
-          );
-        })}
+      <View style={[layout.column, styles.row]} testID="bar-content">
+        <Pressable
+          style={styles.gear}
+          accessibilityRole="button"
+          accessibilityLabel={strings.home}
+          onPress={() => dispatch({ type: 'goHome' })}
+        >
+          <Ionicons name="home-outline" size={24} color={colors.text} />
+        </Pressable>
+        <View style={styles.tabs} accessibilityRole="tablist">
+          {STEPS.map(({ step, label, icon }) => {
+            const st = stateOf(step, state);
+            const current = st === 'current';
+            const locked = step === 'pick' && !state.oldAccount;
+            const shown: Icon = locked ? 'lock-closed-outline' : st === 'done' ? 'checkmark-circle' : icon;
+            const color = current ? colors.primary : st === 'done' ? colors.success : colors.muted;
+            return (
+              <Pressable
+                key={step}
+                style={[styles.step, current && styles.current]}
+                accessibilityRole="tab"
+                accessibilityLabel={label}
+                accessibilityValue={{ text: st }}
+                accessibilityState={{ selected: current }}
+                onPress={() => dispatch({ type: 'setStep', step })}
+              >
+                <Ionicons name={shown} size={22} color={color} />
+                <Text style={[styles.label, { color }, current && styles.labelCurrent]}>{label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        <Pressable
+          style={styles.gear}
+          accessibilityRole="button"
+          accessibilityLabel={state.settingsOpen ? strings.back : strings.settings}
+          onPress={() => dispatch({ type: state.settingsOpen ? 'closeSettings' : 'openSettings' })}
+        >
+          <Ionicons name={state.settingsOpen ? 'arrow-back' : 'settings-outline'} size={24} color={colors.text} />
+        </Pressable>
       </View>
-      <Pressable
-        style={styles.gear}
-        accessibilityRole="button"
-        accessibilityLabel={state.settingsOpen ? strings.back : strings.settings}
-        onPress={() => dispatch({ type: state.settingsOpen ? 'closeSettings' : 'openSettings' })}
-      >
-        <Ionicons name={state.settingsOpen ? 'arrow-back' : 'settings-outline'} size={24} color={colors.text} />
-      </Pressable>
     </View>
   );
 }
 
 const makeStyles = (c: Colors) =>
   StyleSheet.create({
-    bar: { flexDirection: 'row', borderBottomWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    bar: { borderBottomWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    // flex 0 cancels the column's flex 1, so the bar keeps its own height.
+    row: { flex: 0, flexDirection: 'row' },
     tabs: { flex: 1, flexDirection: 'row' },
     step: { flex: 1, alignItems: 'center', paddingVertical: 10, borderBottomWidth: 2, borderColor: 'transparent' },
     current: { borderColor: c.primary },

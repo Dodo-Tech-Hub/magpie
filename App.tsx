@@ -9,6 +9,7 @@ import { initStore } from '@/store/progressStore';
 import { ThemeProvider, useTheme } from '@/theme/theme';
 import { HomeBar } from '@/ui/HomeBar';
 import { HomeView } from '@/ui/HomeView';
+import { layout } from '@/ui/layout';
 import { TopBar } from '@/ui/TopBar';
 import { FromStep } from '@/ui/FromStep';
 import { PickStep } from '@/ui/PickStep';
@@ -33,7 +34,7 @@ function Screen() {
   return (
     <View style={[styles.flex, { backgroundColor: colors.background }]} testID="root">
       {state.platform === null ? <HomeBar /> : <TopBar />}
-      <View style={styles.flex}>
+      <View style={layout.column} testID="body">
         {state.settingsOpen && <SettingsView />}
         {!state.settingsOpen && state.platform === null && <HomeView />}
         {!state.settingsOpen && state.platform !== null && state.step === 'from' && <FromStep />}
