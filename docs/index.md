@@ -16,6 +16,10 @@ To ask for a place on the list, [open an issue](https://github.com/Dodo-Tech-Hub
 2. Download `magpie-0.1.0.apk`.
 3. Open the file. If Android asks, allow your browser to install apps.
 
+Every Magpie release is signed with the same certificate. Its SHA-256 fingerprint is:
+
+`16:5B:CF:BC:B1:A4:F1:4C:0A:A3:E2:A6:C0:78:CA:B4:19:B5:D2:2D:B5:E4:60:6E:EA:F5:06:D0:9A:71:CE:FF`
+
 ### Stores
 
 Work in progress.
