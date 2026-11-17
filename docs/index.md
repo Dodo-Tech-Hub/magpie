@@ -1,0 +1,47 @@
+# Magpie
+
+Magpie moves what you follow from one account to another account on the same platform.
+It works with YouTube subscriptions, and with GitHub stars, star lists, starred gists, and the people you follow.
+Magpie is free.
+
+## Get the app
+
+Magpie is for Android 7.0 and newer.
+
+1. Open the [Magpie 0.1.0 release page](https://github.com/Dodo-Tech-Hub/magpie/releases/tag/v0.1.0) on your phone.
+2. Download `magpie-0.1.0.apk`.
+3. Open the file. If Android asks, allow your browser to install apps.
+
+This is an early test version.
+For YouTube, only accounts on the test list can sign in for now.
+To ask for a place on the list, [open an issue](https://github.com/Dodo-Tech-Hub/magpie/issues).
+
+## How it works
+
+1. Choose a platform.
+2. Sign in to your old account. Magpie loads your list.
+3. Pick what you want to move.
+4. Sign in to your new account.
+5. Magpie adds the picked items to your new account, a few at a time.
+6. If the platform asks Magpie to wait, the move pauses. Open Magpie later and tap Continue.
+
+<!-- Screenshots go here: sign-in, list, move in progress, finished. Store the files in docs/assets/. -->
+
+## Limits
+
+Each platform limits how fast an app can work, so a large move can take more than one day.
+Items that already moved stay moved, and no item moves twice.
+
+- [YouTube limits](limits/youtube.md)
+- [GitHub limits](limits/github.md)
+
+## Privacy
+
+Your lists and your sign-in stay on your phone.
+Read the [privacy policy](privacy-policy.md).
+
+## Help
+
+Found a problem or have a question? [Open an issue](https://github.com/Dodo-Tech-Hub/magpie/issues).
+
+Magpie is not made by or linked with YouTube, Google, or GitHub. YouTube is a trademark of Google LLC. GitHub is a trademark of GitHub, Inc.
