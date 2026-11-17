@@ -1,8 +1,7 @@
 # Magpie
 
-Magpie moves what you follow from one account to another account on the same platform.
+Magpie transfer what you follow from one account to another account on the same platform.
 It works with YouTube subscriptions, and with GitHub stars, star lists, starred gists, and the people you follow.
-Magpie is free.
 
 ## Get the app
 
@@ -25,7 +24,9 @@ To ask for a place on the list, [open an issue](https://github.com/Dodo-Tech-Hub
 5. Magpie adds the picked items to your new account, a few at a time.
 6. If the platform asks Magpie to wait, the move pauses. Open Magpie later and tap Continue.
 
-<!-- Screenshots go here: sign-in, list, move in progress, finished. Store the files in docs/assets/. -->
+| 1. Choose | 2. Old account | 3. Pick | 4. New account | 5. Move |
+|:-:|:-:|:-:|:-:|:-:|
+| <img src="https://dodo-tech-hub.github.io/magpie/assets/step-1-home.webp" width="160" alt="Home screen with YouTube and GitHub cards"> | <img src="https://dodo-tech-hub.github.io/magpie/assets/step-2-old-account.webp" width="160" alt="Sign in to your old account"> | <img src="https://dodo-tech-hub.github.io/magpie/assets/step-3-pick.webp" width="160" alt="List of channels with all picked"> | <img src="https://dodo-tech-hub.github.io/magpie/assets/step-4-new-account.webp" width="160" alt="Sign in to your new account"> | <img src="https://dodo-tech-hub.github.io/magpie/assets/step-5-moving.webp" width="160" alt="Move in progress with the daily limit reached"> |
 
 ## Limits
 
