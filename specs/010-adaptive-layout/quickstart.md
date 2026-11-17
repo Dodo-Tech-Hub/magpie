@@ -85,6 +85,7 @@ On a 320-point-wide window, then with the system font size and display size at t
 - Rotate the phone: the app turns with it on every screen.
 - Open the app in split-screen at the smallest and the largest split. On Pick, the action bar stays visible and the list scrolls in the space left.
 - With the keyboard open in the search box, change the split: the typed text stays and the box is usable.
+- On a phone in landscape, tap the search box: the box and the typed text are visible above the keyboard. Close the keyboard: the list and the Move button are back, with the same picks.
 
 ### 5. Two panes (Story 5, SC-006)
 
@@ -92,7 +93,7 @@ In a window 840 points wide or wider, open a platform:
 
 1. From and To are on the left, Pick is on the right, the pair is centered. Pick shows "Sign in to your old account first".
 2. Sign in to the old account on the left: the list loads on the right. The left pane does not change place.
-3. Pick items, then press Move with no new account: the To part on the left asks for the new account, and the list stays.
+3. Pick items, then press Move with no new account: "Sign in to your new account first" shows next to the Move button, and the list stays. The new account's sign-in is on the left.
 4. Sign in to the new account and press Move. The move runs and finishes. No step in the top bar was tapped.
 5. Touch a pane: its step is marked in the top bar. A notice shows in one place only.
 6. Open Settings, then go Home: both use the centered column.

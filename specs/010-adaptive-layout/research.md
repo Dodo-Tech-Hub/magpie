@@ -121,7 +121,7 @@ Jest does not compute real layout, so "nothing overlaps" and "nothing under the 
 
 | Question | Answer | Why |
 | --- | --- | --- |
-| Where is the current step kept? | In the existing `state.step`. | The flows already set it (to Pick after sign-in, to To when Move needs the new account). No new state, and the fallback to one pane (FR-018) needs no code: one pane shows `state.step` as today. |
+| Where is the current step kept? | In the existing `state.step`. | The flows already set it (to Pick after sign-in, to To when a reopened move needs the new account again). Move without a new account does not change it: `startMove` only sets the notice, which shows next to the Move button. No new state, and the fallback to one pane (FR-018) needs no code: one pane shows `state.step` as today. |
 | How does a pane become current? | `onTouchStart` on each pane's wrapper sends the existing `setStep` action when the step differs. | One line per pane. Touch events bubble, so every control inside counts. |
 | How does the notice show once? | From, To, and Pick each show `state.notice` only when `state.step` is their own step. | In one pane this is always true for the step on screen, so one condition serves both layouts. |
 | How does Pick keep its search text, collapsed sections, and scroll position? | Its wrapper has a fixed `key` and the same parent in both layouts, so React keeps `PickStep` mounted when the left pane appears or goes away. | These values are local state of `PickStep`. Moving them into the app state would change spec 008 (they reset when the user leaves Pick). |

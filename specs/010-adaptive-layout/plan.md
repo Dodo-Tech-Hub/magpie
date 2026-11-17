@@ -57,7 +57,7 @@ Technical approach:
 
 **Constraints**: No new dependency, no new permission, no new screen, no stored data, no new app state. Builds are local: the orientation change needs a local prebuild and rebuild. All sizes in density-independent points.
 
-**Scale/Scope**: Part A: 1 new file, 5 edited files, 1 new test file, 1 test file extended. Part B: 1 new file, 6 edited files, 1 new test file. Part C: about 8 edited files, 1 new test file, 2 test files extended. About 220 changed lines of app code in total.
+**Scale/Scope**: Part A: 1 new file, 5 edited files, 2 new test files, 1 new test helper, 1 test file extended. Part B: 1 new file, 6 edited files, 1 new test file, 1 test file extended. Part C: about 8 edited files, 1 new test file, 2 test files extended. About 220 changed lines of app code in total.
 
 ## Constitution Check
 
@@ -133,7 +133,9 @@ src/ui/
 └── AccessNote.tsx           # C: only if a target is under 48 points
 tests/
 ├── components/
-│   ├── windowChange.test.tsx   # A: new. Keep my place across Compact and Medium
+│   ├── window.ts               # A: new. Test helper: the mocked window size, and a function to change it
+│   ├── windowChange.test.tsx   # A: new. The column, and keep my place across Compact and Medium (YouTube)
+│   ├── githubWindowChange.test.tsx # A: new. Keep my place for the sign-in code and collapsed sections. B: extended. Own file, because the GitHub world cannot share a file with the Google mocks
 │   ├── homeLayout.test.tsx     # A: extended. Columns in a wide window
 │   ├── twoPane.test.tsx        # B: new. Story 5, and changes between one and two panes
 │   └── largeText.test.tsx      # C: new. Scrolling screens, one-line names and tags

@@ -66,7 +66,7 @@ flowchart LR
     Wide -->|"window drops below 840: show the step last used"| Narrow
 ```
 
-The app always knows one **current step**, as today. It is the step the user last used (touched, or was taken to by the app, for example to To when the Move button needs a new account). In two panes, the top bar marks it as it does today. When the window drops below Expanded, the app shows that step.
+The app always knows one **current step**, as today. It is the step the user last used (touched, or was taken to by the app, for example to Pick after sign-in to the old account, or to To when a reopened move needs the new account again). In two panes, the top bar marks it as it does today. When the window drops below Expanded, the app shows that step.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -156,7 +156,7 @@ A user opens a move on a large open foldable or a tablet-sized window. Both acco
 1. **Given** the window is Expanded and the user is in a move flow, **When** the flow shows, **Then** From and To are in the left pane, Pick is in the right pane, and the pair is centered with each pane no wider than the maximum content width.
 2. **Given** the window is Expanded and the old account is not signed in, **When** the flow shows, **Then** the right pane shows the locked message "Sign in to your old account first" and the left pane is usable.
 3. **Given** the window is Expanded, **When** the user signs in to the old account in the left pane, **Then** the list loads in the right pane and the left pane stays in place.
-4. **Given** the window is Expanded and no new account is signed in, **When** the user presses Move, **Then** the app asks for the new account in the To part of the left pane, with the same message as today, and the list stays on screen.
+4. **Given** the window is Expanded and no new account is signed in, **When** the user presses Move, **Then** the message "Sign in to your new account first" shows next to the Move button, as today, the list stays on screen, and the new account's sign-in is on screen in the left pane with no step change.
 5. **Given** the window is Expanded, **When** a notice shows, **Then** it shows once, in the pane of the current step, not in every pane.
 6. **Given** the window is Expanded, **When** Home or Settings shows, **Then** it uses the centered column, not two panes.
 7. **Given** the window is Expanded, **When** the user touches a pane, **Then** that pane's step becomes the current step in the top bar.
@@ -174,6 +174,7 @@ A user opens a move on a large open foldable or a tablet-sized window. Both acco
 - **Size change during a dialog or system prompt** (for example, notification permission): the prompt result is still handled when the user answers.
 - **App restored after the system closed it in the background** on a new window size: behavior is the same as resume from feature 001 (saved progress reopens), shown in the new size class.
 - **Dual-screen devices with a gap between two physical screens**: out of scope, as in the half-folded case above.
+- **Keyboard open in a short window** (for example a phone in landscape, about 400 points tall): the search box and the typed text MUST stay visible. The list and the Move button MAY be hidden until the keyboard closes. Closing the keyboard brings them back with nothing lost.
 - **Very wide but short windows** (landscape phone): the column or pane limit keeps rows readable, and the action bar stays visible as in Story 4 and Story 5.
 - **System display size set to its smallest value** on a closed foldable: the window may cross 600 points; the app uses the size class for the reported width and does not assume a device type.
 
@@ -198,9 +199,9 @@ A user opens a move on a large open foldable or a tablet-sized window. Both acco
 
 - **FR-015**: In an Expanded window, the move flow MUST show two panes side by side: From above To in the left pane, Pick in the right pane. Each pane MUST be no wider than the maximum content width, and the pair MUST be centered. The left pane MUST scroll when its content does not fit.
 - **FR-016**: In two panes, Pick MUST show its locked message until the old account is signed in. Every control of From, To, and Pick MUST work as it does in one pane.
-- **FR-017**: The app MUST keep one current step in every layout. In two panes, touching a pane MUST make its step the current step, and the app MUST still change the current step where it does today (for example to To when Move needs a new account). The top bar MUST mark the current step as today.
+- **FR-017**: The app MUST keep one current step in every layout. In two panes, touching a pane MUST make its step the current step, and the app MUST still change the current step where it does today (for example to Pick after sign-in to the old account). The top bar MUST mark the current step as today.
 - **FR-018**: When the window drops below Expanded during a flow, the app MUST show the current step. When the window becomes Expanded, the app MUST show all three steps without changing the current step.
-- **FR-019**: A notice MUST show once on screen, in the pane of the current step.
+- **FR-019**: A notice MUST show once on screen, in the pane of the current step. When another step becomes the current step, by a touch on its pane or a tap in the top bar, the notice goes away, as it does today on a step change.
 - **FR-020**: Home and Settings MUST NOT use two panes. Medium and Compact windows MUST NOT use two panes.
 
 ### Platform-specific behavior
