@@ -6,6 +6,7 @@ import type { AccountInfo } from '@/store/progressStore';
 import * as Clipboard from 'expo-clipboard';
 import { codeLabel, strings } from '@/strings';
 import { useTheme, type Colors } from '@/theme/theme';
+import { TOUCH_TARGET } from '@/ui/layout';
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -118,9 +119,9 @@ const makeStyles = (c: Colors) =>
     hint: { fontSize: 13, color: c.muted, marginTop: 2 },
     avatar: { width: 36, height: 36, borderRadius: 18 },
     fallback: { backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
-    button: { flexDirection: 'row', alignItems: 'center', gap: 4, padding: 8, borderWidth: 1, borderColor: c.border, borderRadius: 8 },
+    button: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, padding: 8, minHeight: TOUCH_TARGET, minWidth: TOUCH_TARGET, borderWidth: 1, borderColor: c.border, borderRadius: 8 },
     buttonText: { fontSize: 13, color: c.text },
-    signIn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 10, height: 44, borderRadius: 8, backgroundColor: c.primary },
+    signIn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 10, minHeight: TOUCH_TARGET, paddingVertical: 8, borderRadius: 8, backgroundColor: c.primary },
     signInText: { color: c.onPrimary, fontSize: 15 },
     off: { opacity: 0.4 },
     code: { fontSize: 32, fontWeight: '600', letterSpacing: 2, color: c.text, marginTop: 8 },

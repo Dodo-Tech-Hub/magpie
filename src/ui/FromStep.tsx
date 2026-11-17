@@ -71,6 +71,8 @@ export function FromStep() {
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={`${strings.deleteProgress} ${label}`}
+                  // The icon is 22 points: 22 + 2 x 13 makes a 48-point target without a taller row.
+                  hitSlop={13}
                   disabled={busy}
                   onPress={() => void remove(p.id)}
                 >

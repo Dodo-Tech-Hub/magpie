@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useApp, type State, type Step } from '@/state/AppState';
 import { strings } from '@/strings';
 import { useTheme, type Colors } from '@/theme/theme';
-import { layout, useTwoPane } from '@/ui/layout';
+import { layout, TOUCH_TARGET, useTwoPane } from '@/ui/layout';
 
 type Icon = keyof typeof Ionicons.glyphMap;
 type StepState = 'current' | 'done' | 'locked' | 'not started';
@@ -60,7 +60,9 @@ export function TopBar() {
                 onPress={() => dispatch({ type: 'setStep', step })}
               >
                 <Ionicons name={shown} size={22} color={color} />
-                <Text style={[styles.label, { color }, current && styles.labelCurrent]}>{label}</Text>
+                <Text style={[styles.label, { color }, current && styles.labelCurrent]} numberOfLines={1}>
+                  {label}
+                </Text>
               </Pressable>
             );
           })}
@@ -84,9 +86,9 @@ const makeStyles = (c: Colors) =>
     // flex 0 cancels the column's flex 1, so the bar keeps its own height.
     row: { flex: 0, flexDirection: 'row' },
     tabs: { flex: 1, flexDirection: 'row' },
-    step: { flex: 1, alignItems: 'center', paddingVertical: 10, borderBottomWidth: 2, borderColor: 'transparent' },
+    step: { flex: 1, alignItems: 'center', paddingVertical: 10, minHeight: TOUCH_TARGET, borderBottomWidth: 2, borderColor: 'transparent' },
     current: { borderColor: c.primary },
     label: { fontSize: 12, marginTop: 2 },
     labelCurrent: { fontWeight: '500' },
-    gear: { width: 52, alignItems: 'center', justifyContent: 'center' },
+    gear: { width: 52, minHeight: TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
   });
