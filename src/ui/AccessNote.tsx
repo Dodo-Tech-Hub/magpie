@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { Driver } from '@/platforms/driver';
 import { strings } from '@/strings';
 import { useTheme, type Colors } from '@/theme/theme';
+import { TOUCH_TARGET } from '@/ui/layout';
 
 // The token is deleted on the phone but runs out on its own. This points to the page that ends it now (FR-GH-019).
 export function AccessNote({ driver }: { driver: Driver }) {
@@ -31,6 +32,6 @@ const makeStyles = (c: Colors) =>
   StyleSheet.create({
     box: { paddingHorizontal: 14, paddingVertical: 8, gap: 8 },
     text: { fontSize: 13, color: c.muted },
-    button: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', padding: 8, borderWidth: 1, borderColor: c.border, borderRadius: 8 },
+    button: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', padding: 8, minHeight: TOUCH_TARGET, borderWidth: 1, borderColor: c.border, borderRadius: 8 },
     buttonText: { fontSize: 13, color: c.text },
   });

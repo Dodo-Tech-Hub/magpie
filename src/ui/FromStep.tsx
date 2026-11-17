@@ -36,7 +36,7 @@ export function FromStep() {
   const driver = driverFor(state.platform!);
   const busy = state.moveState === 'moving';
   return (
-    <View style={styles.flex}>
+    <View>
       <AccountCard
         title={strings.oldTitle}
         words={driver.words}
@@ -50,7 +50,7 @@ export function FromStep() {
         onSwitch={() => void switchAccount(state, dispatch, 'old')}
       />
       {state.loading && <Text style={styles.heading}>{strings.loading}</Text>}
-      {state.notice && <Text style={styles.error}>{state.notice}</Text>}
+      {state.notice && state.step === 'from' && <Text style={styles.error}>{state.notice}</Text>}
       {items.length > 0 && (
         <View>
           <Text style={styles.heading}>{strings.unfinished}</Text>
@@ -71,6 +71,8 @@ export function FromStep() {
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={`${strings.deleteProgress} ${label}`}
+                  // The icon is 22 points: 22 + 2 x 13 makes a 48-point target without a taller row.
+                  hitSlop={13}
                   disabled={busy}
                   onPress={() => void remove(p.id)}
                 >
@@ -87,7 +89,6 @@ export function FromStep() {
 
 const makeStyles = (c: Colors) =>
   StyleSheet.create({
-    flex: { flex: 1 },
     error: { color: c.danger, paddingHorizontal: 14 },
     heading: { fontSize: 13, color: c.muted, paddingHorizontal: 14, marginTop: 12 },
     row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 8, minHeight: 48, borderTopWidth: StyleSheet.hairlineWidth, borderColor: c.border },

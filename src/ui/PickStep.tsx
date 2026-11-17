@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { driverFor, PLATFORMS } from '@/platforms/platforms';
 import { useApp } from '@/state/AppState';
@@ -9,7 +9,8 @@ import { timeLeft } from '@/move/pacer';
 import { needAccess, pickedCounter, strings, summary, timeLeftText } from '@/strings';
 import { useTheme, type Colors } from '@/theme/theme';
 import { AccessNote } from '@/ui/AccessNote';
-import { ItemRow, ROW_HEIGHT } from '@/ui/ItemRow';
+import { ItemRow, rowHeight } from '@/ui/ItemRow';
+import { TOUCH_TARGET } from '@/ui/layout';
 import { LimitNote } from '@/ui/LimitNote';
 
 type Row =
@@ -17,7 +18,6 @@ type Row =
   | { heading: string; key: string; kind: string; locked: boolean; count: number; pickable: string[]; allPicked: boolean };
 
 const LOCKED_HEIGHT = 130;
-const heightOf = (r: Row) => ('item' in r ? ROW_HEIGHT : r.locked ? LOCKED_HEIGHT : ROW_HEIGHT);
 
 export function PickStep() {
   const { state, dispatch } = useApp();
@@ -25,6 +25,11 @@ export function PickStep() {
   const words = driverFor(state.platform!).words;
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  // Known heights that grow with the system text size (spec 010, FR-010).
+  const { fontScale } = useWindowDimensions();
+  const rowH = rowHeight(fontScale);
+  const lockedH = LOCKED_HEIGHT * Math.max(1, fontScale);
+  const heightOf = (r: Row) => ('item' in r || !r.locked ? rowH : lockedH);
   const [query, setQuery] = useState('');
   // Collapsed kinds. Not saved: every section is open each time Pick opens (FR-GH-023).
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
@@ -136,12 +141,12 @@ export function PickStep() {
       <FlatList
         data={rows}
         keyExtractor={(r) => ('item' in r ? r.item.itemId : r.key)}
-        getItemLayout={(_, i) => ({ length: rows[i] ? heightOf(rows[i]) : ROW_HEIGHT, offset: offsets[i] ?? 0, index: i })}
+        getItemLayout={(_, i) => ({ length: rows[i] ? heightOf(rows[i]) : rowH, offset: offsets[i] ?? 0, index: i })}
         renderItem={({ item: r }) =>
           'item' in r ? (
-            <ItemRow item={r.item} laterLabel={words.later} greyed={noAccess(r.item.kind)} onToggle={onToggle} />
+            <ItemRow item={r.item} laterLabel={words.later} height={rowH} greyed={noAccess(r.item.kind)} onToggle={onToggle} />
           ) : (
-            <View style={r.locked ? styles.lockedSection : styles.sectionBox}>
+            <View style={[r.locked ? styles.lockedSection : styles.sectionBox, { height: heightOf(r) }]}>
               <View style={styles.sectionLine}>
                 <Pressable
                   style={styles.sectionRow}
@@ -193,7 +198,7 @@ export function PickStep() {
         {showSummary && <Text style={styles.summary}>{summary(counts)}</Text>}
         {moveState === 'limit' && <LimitNote driver={driver} name={platformName} onLearnMore={learnMore} />}
         {moveState === 'done' && <AccessNote driver={driver} />}
-        {state.notice && <Text style={styles.error}>{state.notice}</Text>}
+        {state.notice && state.step === 'pick' && <Text style={styles.error}>{state.notice}</Text>}
         {!(moveState === 'done' && movable === 0) && items.length > 0 && (
           <Pressable
             style={[styles.move, moving && styles.off]}
@@ -218,12 +223,12 @@ const makeStyles = (c: Colors) =>
     flex: { flex: 1 },
     text: { color: c.text },
     tools: { padding: 12, gap: 8 },
-    search: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 10, height: 40, borderWidth: 1, borderColor: c.border, borderRadius: 8 },
+    search: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 10, minHeight: TOUCH_TARGET, borderWidth: 1, borderColor: c.border, borderRadius: 8 },
     input: { flex: 1, fontSize: 15, color: c.text },
     allRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    all: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    sectionBox: { height: ROW_HEIGHT, justifyContent: 'center' },
-    lockedSection: { height: LOCKED_HEIGHT, justifyContent: 'center', gap: 6, opacity: 1 },
+    all: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: TOUCH_TARGET, minWidth: TOUCH_TARGET },
+    sectionBox: { justifyContent: 'center' },
+    lockedSection: { justifyContent: 'center', gap: 6, opacity: 1 },
     sectionLine: { flexDirection: 'row', alignItems: 'center' },
     sectionRow: { flex: 1, minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10 },
     sectionAll: { minHeight: 48, minWidth: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8, paddingHorizontal: 12 },
@@ -231,7 +236,7 @@ const makeStyles = (c: Colors) =>
     section: { color: c.text, fontSize: 18, fontWeight: '600' },
     sectionCount: { fontSize: 13, color: c.muted },
     lockedText: { paddingHorizontal: 14, fontSize: 13, color: c.text },
-    allow: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginHorizontal: 14, padding: 8, borderWidth: 1, borderColor: c.border, borderRadius: 8 },
+    allow: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginHorizontal: 14, padding: 8, minHeight: TOUCH_TARGET, borderWidth: 1, borderColor: c.border, borderRadius: 8 },
     allowText: { fontSize: 13, color: c.text },
     counter: { fontSize: 13, color: c.muted },
     locked: { alignItems: 'center', padding: 32, gap: 8 },
@@ -240,7 +245,7 @@ const makeStyles = (c: Colors) =>
     summary: { fontSize: 14, marginBottom: 8, color: c.success },
     timeLeft: { fontSize: 13, color: c.muted, marginBottom: 8 },
     error: { fontSize: 13, color: c.danger, marginBottom: 8 },
-    move: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 44, borderRadius: 8, backgroundColor: c.primary },
+    move: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: TOUCH_TARGET, paddingVertical: 8, borderRadius: 8, backgroundColor: c.primary },
     moveText: { color: c.onPrimary, fontSize: 15 },
     off: { opacity: 0.5 },
   });

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { cancelReminder } from '@/reminders/reminder';
 import { PLATFORMS } from '@/platforms/platforms';
@@ -8,6 +8,7 @@ import { deleteAll, listUnfinished } from '@/store/progressStore';
 import { strings } from '@/strings';
 import { AccessNote } from '@/ui/AccessNote';
 import { useTheme, type Colors, type ThemeChoice } from '@/theme/theme';
+import { TOUCH_TARGET } from '@/ui/layout';
 
 type Icon = keyof typeof Ionicons.glyphMap;
 
@@ -40,7 +41,7 @@ export function SettingsView() {
     ]);
 
   return (
-    <View style={styles.flex}>
+    <ScrollView>
       <Text style={styles.heading}>{strings.settings}</Text>
       <View style={styles.block}>
         <Text style={styles.label}>{strings.look}</Text>
@@ -87,21 +88,20 @@ export function SettingsView() {
           </Text>
         ))}
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const makeStyles = (c: Colors) =>
   StyleSheet.create({
-    flex: { flex: 1 },
     heading: { fontSize: 18, fontWeight: '500', color: c.text, padding: 14 },
     block: { padding: 14, borderTopWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     label: { fontSize: 13, color: c.muted, marginBottom: 8 },
     choices: { flexDirection: 'row', gap: 8 },
-    choice: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 44, borderRadius: 8, borderWidth: 1, borderColor: c.border },
+    choice: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: TOUCH_TARGET, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: c.border },
     chosen: { backgroundColor: c.primary, borderColor: c.primary },
     choiceText: { fontSize: 14 },
-    deleteAll: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    deleteAll: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: TOUCH_TARGET },
     notice: { fontSize: 13, color: c.muted },
     deleteText: { color: c.danger, fontSize: 14 },
   });

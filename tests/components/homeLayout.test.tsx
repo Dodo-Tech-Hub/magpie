@@ -3,6 +3,7 @@ import { PixelRatio } from 'react-native';
 import { render, screen } from '@testing-library/react-native';
 import App from '../../App';
 import { resetWorld } from './helpers';
+import { setWindow } from './window';
 
 jest.mock('@/api/youtube', () => ({
   ...jest.requireActual('@/api/youtube'),
@@ -11,11 +12,12 @@ jest.mock('@/api/youtube', () => ({
 }));
 jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
   __esModule: true,
-  default: () => ({ width: 320, height: 640, scale: 2, fontScale: 2 }),
+  default: () => require('./window').mockWindow,
 }));
 
 beforeEach(async () => {
   await resetWorld();
+  setWindow(320, 640, 2);
   jest.spyOn(PixelRatio, 'getFontScale').mockReturnValue(2);
 });
 afterEach(() => jest.restoreAllMocks());
@@ -39,5 +41,23 @@ describe('Home at 320 points wide with the largest text', () => {
     let node = screen.getByTestId('cell-youtube').parent;
     while (node && String(node.type) !== 'RCTScrollView') node = node.parent;
     expect(node).toBeTruthy();
+  });
+});
+
+describe('Home in a wide window', () => {
+  // Columns are counted from the 600-point column, not the window: 600 / (160 * 2) gives 1.
+  it('counts the columns from the column width', async () => {
+    setWindow(900, 800, 2);
+    await render(<App />);
+    await screen.findByText('Automatic');
+    expect(screen.getByTestId('cell-youtube').props.style.width).toBe('100%');
+  });
+
+  it('shows 3 columns at the normal text size', async () => {
+    setWindow(900, 800, 1);
+    jest.spyOn(PixelRatio, 'getFontScale').mockReturnValue(1);
+    await render(<App />);
+    await screen.findByText('Automatic');
+    expect(screen.getByTestId('cell-youtube').props.style.width).toBe(`${100 / 3}%`);
   });
 });

@@ -27,7 +27,7 @@ export function ToStep() {
         onSwitch={() => void switchAccount(state, dispatch, 'new')}
       />
       {state.accessEnded && !state.newAccount && <AccessNote driver={driver} />}
-      {state.notice && <Text style={{ color: colors.danger, paddingHorizontal: 14 }}>{state.notice}</Text>}
+      {state.notice && state.step === 'to' && <Text style={{ color: colors.danger, paddingHorizontal: 14 }}>{state.notice}</Text>}
     </View>
   );
 }
