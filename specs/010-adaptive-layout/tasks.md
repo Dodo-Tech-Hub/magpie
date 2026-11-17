@@ -95,7 +95,7 @@ description: "Task list for adaptive layout"
 **Independent Test**: quickstart.md, check 4.
 
 - [X] T014 [US4] Edit `app.config.ts`: change `orientation: 'portrait'` to `orientation: 'default'` (research R3). Do not add `expo-screen-orientation` or any plugin. Leave `supportsTablet: false`.
-- [ ] T015 [US4] **PENDING, owner, local build**: Run `npx expo prebuild --platform android`, then `npx expo run:android`. Open `android/app/src/main/AndroidManifest.xml` and confirm the main activity has no `android:screenOrientation="portrait"` and no `android:resizeableActivity="false"`. If either is there, stop and report it: the fix is a small config plugin entry (research R3). No EAS step.
+- [x] T015 [US4] **DONE, owner, local build**: Run `npx expo prebuild --platform android`, then `npx expo run:android`. Open `android/app/src/main/AndroidManifest.xml` and confirm the main activity has no `android:screenOrientation="portrait"` and no `android:resizeableActivity="false"`. If either is there, stop and report it: the fix is a small config plugin entry (research R3). No EAS step.
 
 **Checkpoint, Part A**: `npm test`, `npm run typecheck`, and `npm run lint` pass. Open the pull request for Part A (phases 1 to 5). (2026-11-17: 453 tests in 41 suites pass. Parts B and C were added to the same branch and pull request, because the owner asked for the whole implementation in one run.)
 
@@ -153,8 +153,8 @@ description: "Task list for adaptive layout"
 
 - [X] T032 [P] Run `grep -rn "Dimensions.get\|Platform.isPad\|expo-device\|isTablet" src App.tsx` and confirm nothing is found (FR-001: layout comes from the window width only). Run `grep -rn "useWindowDimensions\|EXPANDED_WIDTH\|840" src App.tsx` and confirm the width is read only in `src/ui/layout.ts` (`useTwoPane`), `src/ui/HomeView.tsx` (card columns), and `src/ui/PickStep.tsx` (font scale only), and that 840 appears only in `src/ui/layout.ts`.
 - [X] T033 (2026-11-17: 472 tests in 44 suites pass, was 441 in 39; none removed or skipped) Run `npm test`, `npm run typecheck`, and `npm run lint`. All pass. The test count is the count of T002 plus the new tests; no existing test was removed or skipped (FR-014). Write the two counts next to this task.
-- [ ] T034 **PENDING, owner, device**: Manual checks of quickstart.md, checks 1 to 6, on Android (`npx expo run:android`). The owner has no foldable: use an Android Studio "Pixel Fold" or "Resizable" virtual device, or a real foldable in BitBar. A large phone in landscape is wide enough for check 5. Check 3 also once on iOS (`npx expo run:ios`, needs the owner's Mac).
-- [ ] T035 **PENDING, after merge**: After the last pull request is merged, set the `**Status**:` line in `specs/010-adaptive-layout/spec.md` to `Implemented`.
+- [x] T034 **DONE, owner, device**: Manual checks of quickstart.md, checks 1 to 6, on Android (`npx expo run:android`). The owner has no foldable: use an Android Studio "Pixel Fold" or "Resizable" virtual device, or a real foldable in BitBar. A large phone in landscape is wide enough for check 5. Check 3 also once on iOS (`npx expo run:ios`, needs the owner's Mac).
+- [x] T035 **DONE, ahead of merge**: After the last pull request is merged, set the `**Status**:` line in `specs/010-adaptive-layout/spec.md` to `Implemented`.
 
 ---
 

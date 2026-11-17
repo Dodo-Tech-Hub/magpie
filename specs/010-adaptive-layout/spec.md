@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-12
 
-**Status**: In progress
+**Status**: Implemented
 
 **Input**: User description: "Optimise the UI for foldable phones and phones with different screen sizes"
 
