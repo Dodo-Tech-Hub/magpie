@@ -32,13 +32,13 @@ To ask for a place on the list, [open an issue](https://github.com/Dodo-Tech-Hub
 Each platform limits how fast an app can work, so a large move can take more than one day.
 Items that already moved stay moved, and no item moves twice.
 
-- [YouTube limits](limits/youtube.md)
-- [GitHub limits](limits/github.md)
+- [YouTube limits](https://dodo-tech-hub.github.io/magpie/limits/youtube)
+- [GitHub limits](https://dodo-tech-hub.github.io/magpie/limits/github)
 
 ## Privacy
 
 Your lists and your sign-in stay on your phone.
-Read the [privacy policy](privacy-policy.md).
+Read the [privacy policy](https://dodo-tech-hub.github.io/magpie/privacy-policy).
 
 ## Help
 
