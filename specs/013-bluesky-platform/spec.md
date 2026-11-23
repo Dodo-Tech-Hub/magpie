@@ -24,6 +24,7 @@ Bluesky is a good fit for Automatic: its data is open, it has a modern sign-in f
 - Q: Should the app support accounts on self-hosted servers? → A: Not in the first release. Only Bluesky-hosted accounts, so the app keeps a fixed host list (Principle III, rule 5) with no constitution exception. A self-hosted account gets a plain "not supported yet" message (FR-BS-022). Self-hosted support can come later with its own amendment. The owner asked for a recommendation; this was it.
 - Q: If Bluesky does not let a phone app cancel its access on sign-out, should Bluesky still ship? → A: Decide after the plan tests it. The plan MUST test token revocation with a real account first and, if it fails, stop and ask the owner before any sign-in work (FR-BS-013).
 - Q: On Pick, should blocked people start picked, like every other item, or unpicked? → A: Picked, like every other kind (FR-BS-003).
+- Q: In what order should the move add follows to the new account? → A: Oldest first, so the new account's lists keep the old order (FR-BS-010).
 
 Bluesky's own "account migration" (moving one account to another server and keeping the same handle and followers) is a different job. It is out of scope. Magpie moves what one account follows to a second, separate account.
 
@@ -267,7 +268,7 @@ Mutes and saved feeds are private, so the handle is not enough to read them. On 
 
 **Pace and progress**
 
-- **FR-BS-010**: The app MUST add items one at a time, at no more than 30 per minute, 1,000 per hour, and 8,000 per day per new account. Each list and each list member counts as one add. The plan MAY tune these numbers after testing, but MUST keep them under Bluesky's published limits with a margin.
+- **FR-BS-010**: The app MUST add items one at a time, at no more than 30 per minute, 1,000 per hour, and 8,000 per day per new account. Each list and each list member counts as one add. Within each kind, the app MUST add items in the order the old account made them, oldest first, so the new account shows them in the same order. Rows on Pick still change in place. The plan MAY tune these numbers after testing, but MUST keep them under Bluesky's published limits with a margin.
 - **FR-BS-011**: Pick MUST show the expected time left for the picked items at that pace before the user taps Move.
 - **FR-BS-012**: When Bluesky asks the app to wait for 60 seconds or less, the app MUST wait and try the same item again without a message. When Bluesky asks for a longer wait, asks again for the same item, or the app's pace in FR-BS-010 is reached, the app MUST stop, mark the rest "Later", save the progress, show the limit reason (spec 009), and ask for reminders. The reminder MUST be set for the time Bluesky gave, or the time the app's pace allows the next add, or 1 hour later when Bluesky gave no time, whichever is latest.
 
