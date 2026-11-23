@@ -22,6 +22,7 @@ Bluesky is a good fit for Automatic: its data is open, it has a modern sign-in f
 
 - Q: Which kinds should a Bluesky move cover? → A: Follows, blocks, lists, mutes, and saved feeds. Mutes and saved feeds are private, so they are opt-in: Pick shows them greyed with an "Allow" button that signs in to the old account with read-only access (FR-BS-020).
 - Q: Should the app support accounts on self-hosted servers? → A: Not in the first release. Only Bluesky-hosted accounts, so the app keeps a fixed host list (Principle III, rule 5) with no constitution exception. A self-hosted account gets a plain "not supported yet" message (FR-BS-022). Self-hosted support can come later with its own amendment. The owner asked for a recommendation; this was it.
+- Q: If Bluesky does not let a phone app cancel its access on sign-out, should Bluesky still ship? → A: Decide after the plan tests it. The plan MUST test token revocation with a real account first and, if it fails, stop and ask the owner before any sign-in work (FR-BS-013).
 
 Bluesky's own "account migration" (moving one account to another server and keeping the same handle and followers) is a different job. It is out of scope. Magpie moves what one account follows to a second, separate account.
 
@@ -271,7 +272,7 @@ Mutes and saved feeds are private, so the handle is not enough to read them. On 
 
 **Data, security, and both phone types**
 
-- **FR-BS-013**: Bluesky tokens and the sign-in key MUST be stored only in the phone's secure storage. On Sign out, at the summary, and on Delete all, the app MUST cancel the token on Bluesky and delete the token and key from the phone. If the cancel call fails, the app MUST still delete them and say in one line that access ends on its own when the token runs out.
+- **FR-BS-013**: Bluesky tokens and the sign-in key MUST be stored only in the phone's secure storage. On Sign out, at the summary, and on Delete all, the app MUST cancel the token on Bluesky and delete the token and key from the phone. If the cancel call fails, the app MUST still delete them and say in one line that access ends on its own when the token runs out. The plan MUST test cancelling with a real account before any sign-in work. If Bluesky does not allow it, the plan MUST stop and ask the owner (Clarifications, 2026-11-23).
 - **FR-BS-014**: The app MUST keep only what the move needs: account ID, handle, display name, picture, item IDs, item names and pictures, list names, descriptions, and members, progress, and the times of recent adds for the pace (deleted after 1 day). It MUST NOT log tokens, codes, handles, or item lists.
 - **FR-BS-015**: The app MUST talk to Bluesky only on the hosts in the Bluesky section, over HTTPS (FR-BS-022). The Bluesky logo MUST be the official butterfly, unmodified, used only to name the platform. Settings MUST say that Magpie is not made by or linked with Bluesky. The feature MUST work the same way on Android and iOS.
 - **FR-BS-016**: The app MUST treat every Bluesky answer as untrusted, check its shape before use, and check the sign-in return (state, issuer, and redirect) before using the code.
