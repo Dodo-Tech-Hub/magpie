@@ -31,6 +31,7 @@
 
 ## Notes
 
+- The spec was cancelled on 2026-11-23, so the open questions stay unanswered and the checklist is kept as a record.
 - One open question remains in FR-WA-013: ship as written, ship Change Number steps only, or cancel. Resolve with `/speckit-clarify` before `/speckit-plan`.
 - Feasibility rows marked *unconfirmed* (what Change Number keeps, two accounts on iOS, Channels report) MUST be checked in the plan against real test numbers.
 - WhatsApp link shapes and menu paths appear only in Feasibility and the marked "WhatsApp section", as AGENTS.md asks for platform-specific details.

@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-23
 
-**Status**: Draft
+**Status**: Cancelled. WhatsApp has no API, and its own Change Number feature already moves the account, so the app adds too little value.
 
 **Input**: User description: "wechat, WhatsApp, QQ, douyin. Spec number is 15 onwards" (this spec covers WhatsApp)
 
@@ -21,6 +21,16 @@ Magpie helps in the one case Change Number does not cover: the new number alread
 The intro asks first whether the new number already has WhatsApp. If not, the app shows the Change Number steps and stops there.
 
 The app never signs in to WhatsApp, never calls WhatsApp, and never taps for the user.
+
+## Why cancelled
+
+The project owner cancelled this spec on 2026-11-23. Automatic WhatsApp is not possible (see Feasibility), and WhatsApp's own Change Number already moves the profile, chats, and settings. The Guided checklist would help only when the new number already has an account. The spec is kept as a record of the research and the design, in case the owner revisits it.
+
+## Clarifications
+
+### Session 2026-11-23
+
+- Q: WhatsApp cannot be automated and Change Number covers most users. Ship as written, ship Change Number steps only, or cancel? → A: Cancel.
 
 ## Feasibility
 
@@ -152,7 +162,7 @@ Spec 005 keeps ticks and shows a Continue note on the card. Lists here are usual
 - **FR-WA-010**: The checklist note MUST remind the user to switch WhatsApp to the new account first, and MUST say that some groups need an admin to approve.
 - **FR-WA-011**: The app MUST NOT ask for or keep the WhatsApp password or codes, sign in to WhatsApp, call any WhatsApp endpoint, read WhatsApp's files or backups, or tap any WhatsApp button for the user (spec 005, FR-012 and FR-013; constitution Principle V).
 - **FR-WA-012**: Pasted text MUST be read on the phone only and MUST NOT be uploaded or logged. The app MUST keep only each item's name, kind, link, and tick state. Phone numbers in pasted text MUST NOT be kept.
-- **FR-WA-013**: Whether WhatsApp ships, and in which form: [NEEDS CLARIFICATION: WhatsApp's own Change Number covers most users, and the Guided list helps only when the new number already has an account. A: ship as written (Change Number steps plus a Channels and groups checklist). B: ship only the Change Number steps, with no checklist. C: cancel, because WhatsApp already solves the move.]
+- **FR-WA-013**: Whether WhatsApp ships, and in which form: (never answered, spec cancelled) WhatsApp's own Change Number covers most users, and the Guided list helps only when the new number already has an account. A: ship as written (Change Number steps plus a Channels and groups checklist). B: ship only the Change Number steps, with no checklist. C: cancel, because WhatsApp already solves the move.
 - **FR-WA-014**: Settings MUST say that Magpie is not made by or linked with WhatsApp or Meta. The WhatsApp logo MUST be the official mark, unmodified, used only to name the platform.
 - **FR-WA-015**: The feature MUST work the same way on Android and iOS, following spec 005's Platform differences table and the rows added below. Screens follow the default single column of constitution Principle VI in every size class and orientation.
 
@@ -207,9 +217,9 @@ WhatsApp adds no new entity. It uses spec 005's entities.
 
 ## What the project owner needs to do
 
-These steps need real phone numbers and cannot be done by an agent.
+None while the spec is cancelled. If you revisit it, these steps need your accounts and cannot be done by an agent.
 
-1. **Answer the open question** in FR-WA-013 (run `/speckit-clarify`).
+1. **Answer the open questions** left in the spec (run `/speckit-clarify`).
 2. **Test numbers**: have two numbers with WhatsApp, and a third number with no WhatsApp for the Change Number test.
 3. **Change Number test**: on a test account with a Channel and a group, run Change Number to the third number, and note whether the Channel and the group stay.
 4. **Link test**: on Android and iPhone, copy a Channel link and a group invite link on the old account, open them while signed in to the new account, and note what shows.
