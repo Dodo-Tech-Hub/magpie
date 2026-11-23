@@ -31,6 +31,7 @@
 
 ## Notes
 
+- The spec was cancelled on 2026-11-23, so the open questions stay unanswered and the checklist is kept as a record.
 - Two open questions remain: FR-WC-013 (how to handle Chinese text, shared with 017 QQ and 018 Douyin) and FR-WC-014 (ship WeChat as Guided or cancel). Resolve with `/speckit-clarify` before `/speckit-plan`.
 - Feasibility rows marked *unconfirmed* (export contents, account switch limit) MUST be checked in the plan against real test accounts.
 - WeChat scope names, export path, and app link appear only in Feasibility and the marked "WeChat section", as AGENTS.md asks for platform-specific details.

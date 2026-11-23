@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-23
 
-**Status**: Draft
+**Status**: Cancelled. WeChat has no API, and every row needs copy, switch app, search, and a friend request the other person must accept, so the app adds too little value.
 
 **Input**: User description: "wechat, WhatsApp, QQ, douyin. Spec number is 15 onwards" (this spec covers WeChat)
 
@@ -19,6 +19,16 @@ WeChat (called Weixin in mainland China) has no API that lets an outside app add
 This spec adds WeChat to the Guided section. The user builds a list of what the old account has (contacts, Official Accounts, Channels accounts), from WeChat's personal data export where it holds that data, or by pasting names and IDs. The user then works through a checklist. WeChat does not let an outside app open a person's or an account's page by link, so each row copies the ID or name and opens WeChat, where the user searches for it and taps Add to Contacts or Follow on the new account.
 
 The app never signs in to WeChat, never calls WeChat, never reads WeChat's files on the phone or a computer, and never taps for the user.
+
+## Why cancelled
+
+The project owner cancelled this spec on 2026-11-23. Automatic WeChat is not possible (see Feasibility). In the Guided flow, WeChat profiles cannot be opened by link, so each row needs copy, switch app, search, and tap, and friend requests need the other person to accept. The user can do the same in WeChat without the app. The spec is kept as a record of the research and the design, in case the owner revisits it.
+
+## Clarifications
+
+### Session 2026-11-23
+
+- Q: WeChat cannot be automated and every row needs copy and search. Ship as Guided, or cancel? → A: Cancel.
 
 ## Feasibility
 
@@ -171,8 +181,8 @@ A user with 300 contacts adds 20 a day to stay under WeChat's limits. The WeChat
 - **FR-WC-010**: The checklist note MUST remind the user to switch WeChat to the new account first, MUST say that a friend request needs the other person to accept, and MUST say that adding many contacts fast can get the new account limited.
 - **FR-WC-011**: The app MUST NOT ask for or keep the WeChat password, sign in to WeChat, call any WeChat endpoint, read WeChat's files on the phone or a computer, open a hidden browser, or tap any WeChat button for the user (spec 005, FR-012 and FR-013; constitution Principle V).
 - **FR-WC-012**: The export file and pasted text MUST be read on the phone only and MUST NOT be uploaded or logged. The app MUST keep only each item's name or ID, kind, and tick state, and MUST NOT keep the rest of the file or text. Contacts' phone numbers, if the export has them, MUST NOT be kept or shown.
-- **FR-WC-013**: The intro, guide, checklist notes, and row labels MUST be usable by a user who reads only Chinese. [NEEDS CLARIFICATION: The app is English only today, and most WeChat, QQ, and Douyin users read Chinese. How should Chinese be handled? A: a separate spec adds Simplified Chinese to the whole app, and WeChat, QQ, and Douyin wait for it. B: the app stays English, and the guides quote WeChat's Chinese button names next to the English ones. C: Chinese guide text for these platforms only, the rest of the app in English.]
-- **FR-WC-014**: Whether WeChat ships at all: [NEEDS CLARIFICATION: Every WeChat row needs copy, switch app, search, and tap, and friend requests need the other person to accept, so the value per row is lower than on platforms with profile links. Ship WeChat as Guided as written, or cancel like Steam and Tinder?]
+- **FR-WC-013**: The intro, guide, checklist notes, and row labels MUST be usable by a user who reads only Chinese. (never answered, spec cancelled) The app is English only today, and most WeChat, QQ, and Douyin users read Chinese. How should Chinese be handled? A: a separate spec adds Simplified Chinese to the whole app, and WeChat, QQ, and Douyin wait for it. B: the app stays English, and the guides quote WeChat's Chinese button names next to the English ones. C: Chinese guide text for these platforms only, the rest of the app in English.
+- **FR-WC-014**: Whether WeChat ships at all: (never answered, spec cancelled) Every WeChat row needs copy, switch app, search, and tap, and friend requests need the other person to accept, so the value per row is lower than on platforms with profile links. Ship WeChat as Guided as written, or cancel like Steam and Tinder?
 - **FR-WC-015**: Settings MUST say that Magpie is not made by or linked with Tencent, WeChat, or Weixin. The WeChat logo MUST be the official mark, unmodified, used only to name the platform.
 - **FR-WC-016**: The feature MUST work the same way on Android and iOS, following spec 005's Platform differences table and the rows added below. Screens follow the default single column of constitution Principle VI in every size class and orientation.
 
@@ -232,9 +242,9 @@ WeChat adds no new entity. It uses spec 005's entities.
 
 ## What the project owner needs to do
 
-These steps need your WeChat accounts and cannot be done by an agent.
+None while the spec is cancelled. If you revisit it, these steps need your accounts and cannot be done by an agent.
 
-1. **Answer the open questions** in FR-WC-013 and FR-WC-014 (run `/speckit-clarify`).
+1. **Answer the open questions** left in the spec (run `/speckit-clarify`).
 2. **Test accounts**: have two WeChat accounts, each with its own phone number. The old one should have a few contacts, Official Accounts, and Channels follows.
 3. **Export test**: request the personal data export on the old account, in both WeChat and Weixin if you can, and note whether it lists contacts, Official Accounts, or Channels follows.
 4. **Switch test**: check that you can switch between both accounts on one phone, and note the steps.
