@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain
+- [x] No [NEEDS CLARIFICATION] markers remain
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -31,7 +31,7 @@
 
 ## Notes
 
-- Two open questions remain: FR-AM-001 (yearly Apple Developer Program fee) and FR-AM-006 (iOS account switch). Answer them before `/speckit-plan`.
+- Open questions on FR-AM-001 (pay the Apple Developer Program fee) and FR-AM-006 (iOS device account switch with a warning) were answered on 2026-11-23.
 - Apple Music API, MusicKit, and token details appear only in Feasibility, Platform differences, and the marked "Apple Music section", as AGENTS.md asks for platform-specific details.
 - Facts were checked on 2026-11-23 from Apple developer documentation and developer forums. Favorite artists, rate limits, and the Android sign-in must be confirmed with test accounts in the plan.
 - Spec number 015 follows the highest existing number (014); 013 is unused.
