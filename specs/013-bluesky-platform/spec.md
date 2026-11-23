@@ -23,6 +23,7 @@ Bluesky is a good fit for Automatic: its data is open, it has a modern sign-in f
 - Q: Which kinds should a Bluesky move cover? → A: Follows, blocks, lists, mutes, and saved feeds. Mutes and saved feeds are private, so they are opt-in: Pick shows them greyed with an "Allow" button that signs in to the old account with read-only access (FR-BS-020).
 - Q: Should the app support accounts on self-hosted servers? → A: Not in the first release. Only Bluesky-hosted accounts, so the app keeps a fixed host list (Principle III, rule 5) with no constitution exception. A self-hosted account gets a plain "not supported yet" message (FR-BS-022). Self-hosted support can come later with its own amendment. The owner asked for a recommendation; this was it.
 - Q: If Bluesky does not let a phone app cancel its access on sign-out, should Bluesky still ship? → A: Decide after the plan tests it. The plan MUST test token revocation with a real account first and, if it fails, stop and ask the owner before any sign-in work (FR-BS-013).
+- Q: On Pick, should blocked people start picked, like every other item, or unpicked? → A: Picked, like every other kind (FR-BS-003).
 
 Bluesky's own "account migration" (moving one account to another server and keeping the same handle and followers) is a different job. It is out of scope. Magpie moves what one account follows to a second, separate account.
 
@@ -247,7 +248,7 @@ Mutes and saved feeds are private, so the handle is not enough to read them. On 
 
 - **FR-BS-001**: The Bluesky card MUST appear in the Automatic section of Home, after GitHub, through the one list of platforms (spec 004, FR-003). The app MUST move the kinds in scope in "What Bluesky supports".
 - **FR-BS-002**: Tapping the Bluesky card MUST open the same From, Pick, To flow as YouTube and GitHub, with the same steps, row states, summary, saved progress, unfinished progress list, Home button, Settings, and switching rules (FR-GH-021, FR-GH-022). The flow MUST NOT get Bluesky-only screens. The handle box shows in place on the From and To steps.
-- **FR-BS-003**: Pick MUST split the list into one section per kind ("People", "Blocked", "Lists", "Mutes", "Feeds"), following FR-GH-003, FR-GH-023, and FR-GH-024. Blocked people MUST be in their own section and MUST NOT be mixed with follows.
+- **FR-BS-003**: Pick MUST split the list into one section per kind ("People", "Blocked", "Lists", "Mutes", "Feeds"), following FR-GH-003, FR-GH-023, and FR-GH-024. Blocked people MUST be in their own section and MUST NOT be mixed with follows. Every kind, blocked people included, MUST start picked.
 - **FR-BS-004**: All user-facing text MUST say "items" or the kind name instead of "channels" in the Bluesky flow, and MUST live with the other app text.
 - **FR-BS-018**: Moving a list MUST create a list with the same name, description, and type (people list or moderation list) on the new account, or reuse one with the same name and type, and add every member of the old list who still exists. Picking a list MUST NOT pick its members as follows. Moving a list MUST NOT remove members from a list on the new account. The list's picture is not copied.
 - **FR-BS-017**: When an item fails during the move, its "Couldn't move" row MUST show the reason in simple words (for example "Account was deleted"), never a raw error.
