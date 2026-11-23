@@ -1,0 +1,36 @@
+# Specification Quality Checklist: Bluesky Platform
+
+**Purpose**: Validate specification completeness and quality before proceeding to planning
+**Created**: 2026-11-23
+**Feature**: [spec.md](../spec.md)
+
+## Content Quality
+
+- [x] No implementation details (languages, frameworks, APIs)
+- [x] Focused on user value and business needs
+- [x] Written for non-technical stakeholders
+- [x] All mandatory sections completed
+
+## Requirement Completeness
+
+- [ ] No [NEEDS CLARIFICATION] markers remain
+- [x] Requirements are testable and unambiguous
+- [x] Success criteria are measurable
+- [x] Success criteria are technology-agnostic (no implementation details)
+- [x] All acceptance scenarios are defined
+- [x] Edge cases are identified
+- [x] Scope is clearly bounded
+- [x] Dependencies and assumptions identified
+
+## Feature Readiness
+
+- [x] All functional requirements have clear acceptance criteria
+- [x] User scenarios cover primary flows
+- [x] Feature meets measurable outcomes defined in Success Criteria
+- [x] No implementation details leak into specification
+
+## Notes
+
+- Two open questions remain: Q1 (which kinds to move) and Q2 (Bluesky-hosted accounts only, or any server). Q1 decides the scope and whether the old account needs a sign-in. Q2 decides the host list and whether Principle III, rule 5 needs an exception. Resolve them before `/speckit-plan`.
+- Bluesky scopes, hosts, and limits appear only in Feasibility and the marked "Bluesky section", as AGENTS.md asks for platform-specific details.
+- Token revocation for public apps is expected but not yet confirmed. The plan must confirm it with a real account (FR-BS-013).
