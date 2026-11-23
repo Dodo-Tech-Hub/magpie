@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-23
 
-**Status**: Draft
+**Status**: Cancelled. Douyin has no API to follow or to read the Following list, so users must copy every account by hand, which gives too little value.
 
 **Input**: User description: "wechat, WhatsApp, QQ, douyin. Spec number is 15 onwards" (this spec covers Douyin)
 
@@ -19,6 +19,16 @@ Douyin has no API that lets an outside app follow an account for a user, and no 
 This spec adds Douyin to the Guided section. On the old account, the user opens the Following list and copies each account's profile link (Share > Copy link) or Douyin ID. The user pastes them into the app, which builds a checklist. A row with a link opens the profile in Douyin, or in the browser when Douyin does not open it; a row with an ID copies the ID and opens Douyin for a search. The user taps Follow on the new account and ticks the row.
 
 The app never signs in to Douyin, never calls Douyin, and never taps for the user.
+
+## Why cancelled
+
+The project owner cancelled this spec on 2026-11-23. Automatic Douyin is not possible (see Feasibility), and with no way to read the Following list, the user must copy every followed account by hand before the app can help. The spec is kept as a record of the research and the design, in case the owner revisits it.
+
+## Clarifications
+
+### Session 2026-11-23
+
+- Q: Douyin cannot be automated and the list must be copied by hand. Ship as Guided, or cancel? → A: Cancel.
 
 ## Feasibility
 
@@ -139,8 +149,8 @@ A user who follows 500 accounts follows some each day. The Douyin card shows a C
 - **FR-DY-009**: The checklist note MUST remind the user to switch Douyin to the new account first, and MUST say that following many accounts fast can get the new account limited.
 - **FR-DY-010**: The app MUST NOT ask for or keep the Douyin password or codes, sign in to Douyin, call any Douyin endpoint (including to expand short links), open a hidden browser, or tap any Douyin button for the user (spec 005, FR-012 and FR-013; constitution Principle V).
 - **FR-DY-011**: Pasted text MUST be read on the phone only and MUST NOT be uploaded or logged. The app MUST keep only each item's link or ID, and tick state.
-- **FR-DY-012**: The intro, guide, checklist notes, and row labels MUST be usable by a user who reads only Chinese. [NEEDS CLARIFICATION: same question as spec 015, FR-WC-013; one answer covers 015, 017, and 018. A: a separate spec adds Simplified Chinese to the whole app first. B: English app, guides quote Douyin's Chinese button names. C: Chinese guide text for these platforms only.]
-- **FR-DY-013**: Whether Douyin ships at all: [NEEDS CLARIFICATION: users must copy each followed account's link one by one, which is slow for long lists, but each row then opens the profile directly. Ship Douyin as Guided as written, or cancel like Steam and Tinder?]
+- **FR-DY-012**: The intro, guide, checklist notes, and row labels MUST be usable by a user who reads only Chinese. (never answered, spec cancelled) same question as spec 015, FR-WC-013; one answer covers 015, 017, and 018. A: a separate spec adds Simplified Chinese to the whole app first. B: English app, guides quote Douyin's Chinese button names. C: Chinese guide text for these platforms only.
+- **FR-DY-013**: Whether Douyin ships at all: (never answered, spec cancelled) users must copy each followed account's link one by one, which is slow for long lists, but each row then opens the profile directly. Ship Douyin as Guided as written, or cancel like Steam and Tinder?
 - **FR-DY-014**: Settings MUST say that Magpie is not made by or linked with ByteDance or Douyin. The Douyin logo MUST be the official mark, unmodified, used only to name the platform.
 - **FR-DY-015**: The feature MUST work the same way on Android and iOS, following spec 005's Platform differences table and the rows added below. Screens follow the default single column of constitution Principle VI in every size class and orientation.
 
@@ -199,9 +209,9 @@ Douyin adds no new entity. It uses spec 005's entities.
 
 ## What the project owner needs to do
 
-These steps need your Douyin accounts and cannot be done by an agent.
+None while the spec is cancelled. If you revisit it, these steps need your accounts and cannot be done by an agent.
 
-1. **Answer the open questions** in FR-DY-012 and FR-DY-013 (run `/speckit-clarify`).
+1. **Answer the open questions** left in the spec (run `/speckit-clarify`).
 2. **Test accounts**: have two Douyin accounts. The old one should follow a few accounts, including one private account.
 3. **Link test**: on Android and iPhone, copy a profile link from the old account and open it from another app, with Douyin installed and without. Note what opens.
 4. **Short link test**: copy a profile link and a video link and compare their shape, to see if they can be told apart.

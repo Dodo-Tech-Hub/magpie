@@ -31,6 +31,7 @@
 
 ## Notes
 
+- The spec was cancelled on 2026-11-23, so the open questions stay unanswered and the checklist is kept as a record.
 - Two open questions remain: FR-DY-012 (how to handle Chinese text, same question as 015 FR-WC-013 and 017) and FR-DY-013 (ship Douyin as Guided or cancel). Resolve with `/speckit-clarify` before `/speckit-plan`.
 - Feasibility rows marked *unconfirmed* (developer registration, data export, how profile links open, account switch limit) MUST be checked in the plan against real test accounts.
 - Douyin link shapes, menu paths, and app link appear only in Feasibility and the marked "Douyin section", as AGENTS.md asks for platform-specific details.
