@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-23
 
-**Status**: Draft
+**Status**: Cancelled. QQ has no API, and every row needs copy, switch app, search, and a request the other side must accept, so the app adds too little value.
 
 **Input**: User description: "wechat, WhatsApp, QQ, douyin. Spec number is 15 onwards" (this spec covers QQ)
 
@@ -19,6 +19,16 @@ QQ has no API that lets an outside app add a friend or join a group for a user. 
 This spec adds QQ to the Guided section. A QQ friend and a QQ group each have a number, which QQ shows on the profile and in group info. The user copies the numbers from the old account and pastes them into the app. The app builds a checklist of friends and groups. For each row, the user taps Copy and open; the app copies the number and opens QQ, where the user searches the number and taps Add Friend or Join Group on the new account.
 
 The app never signs in to QQ, never calls QQ or Tencent, never reads QQ's files, and never taps for the user.
+
+## Why cancelled
+
+The project owner cancelled this spec on 2026-11-23. Automatic QQ is not possible (see Feasibility). In the Guided flow, each row needs copy, switch app, search, and tap, and most friends and groups must accept. The user can do the same in QQ without the app. The spec is kept as a record of the research and the design, in case the owner revisits it.
+
+## Clarifications
+
+### Session 2026-11-23
+
+- Q: QQ cannot be automated and every row needs copy and search. Ship as Guided, or cancel? → A: Cancel.
 
 ## Feasibility
 
@@ -136,8 +146,8 @@ A user with many friends adds some each day. The QQ card shows a Continue note w
 - **FR-QQ-009**: The checklist note MUST remind the user to switch QQ to the new account first, MUST say that friends and group admins may need to accept, and MUST say that adding many friends fast can get the new account limited.
 - **FR-QQ-010**: The app MUST NOT ask for or keep the QQ password, sign in to QQ, call any QQ or Tencent endpoint, read QQ's files, open a hidden browser, or tap any QQ button for the user (spec 005, FR-012 and FR-013; constitution Principle V).
 - **FR-QQ-011**: Pasted text MUST be read on the phone only and MUST NOT be uploaded or logged. The app MUST keep only each item's name, number, kind, and tick state.
-- **FR-QQ-012**: The intro, guide, checklist notes, and row labels MUST be usable by a user who reads only Chinese. [NEEDS CLARIFICATION: same question as spec 015, FR-WC-013; one answer covers 015, 017, and 018. A: a separate spec adds Simplified Chinese to the whole app first. B: English app, guides quote QQ's Chinese button names. C: Chinese guide text for these platforms only.]
-- **FR-QQ-013**: Whether QQ ships at all: [NEEDS CLARIFICATION: every QQ row needs copy, switch app, search, and tap, and most rows need the other side to accept. Ship QQ as Guided as written, or cancel like Steam and Tinder?]
+- **FR-QQ-012**: The intro, guide, checklist notes, and row labels MUST be usable by a user who reads only Chinese. (never answered, spec cancelled) same question as spec 015, FR-WC-013; one answer covers 015, 017, and 018. A: a separate spec adds Simplified Chinese to the whole app first. B: English app, guides quote QQ's Chinese button names. C: Chinese guide text for these platforms only.
+- **FR-QQ-013**: Whether QQ ships at all: (never answered, spec cancelled) every QQ row needs copy, switch app, search, and tap, and most rows need the other side to accept. Ship QQ as Guided as written, or cancel like Steam and Tinder?
 - **FR-QQ-014**: Settings MUST say that Magpie is not made by or linked with Tencent or QQ. The QQ logo MUST be the official mark, unmodified, used only to name the platform.
 - **FR-QQ-015**: The feature MUST work the same way on Android and iOS, following spec 005's Platform differences table and the rows added below. Screens follow the default single column of constitution Principle VI in every size class and orientation.
 
@@ -192,9 +202,9 @@ QQ adds no new entity. It uses spec 005's entities.
 
 ## What the project owner needs to do
 
-These steps need your QQ accounts and cannot be done by an agent.
+None while the spec is cancelled. If you revisit it, these steps need your accounts and cannot be done by an agent.
 
-1. **Answer the open questions** in FR-QQ-012 and FR-QQ-013 (run `/speckit-clarify`).
+1. **Answer the open questions** left in the spec (run `/speckit-clarify`).
 2. **Test accounts**: have two QQ accounts. The old one should have a few friends and groups, including a group that needs admin approval.
 3. **Copy test**: on the old account, check where a friend's QQ number and a group's number show, and whether they can be copied.
 4. **Switch test**: check that you can switch between both accounts on one phone.

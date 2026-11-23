@@ -31,6 +31,7 @@
 
 ## Notes
 
+- The spec was cancelled on 2026-11-23, so the open questions stay unanswered and the checklist is kept as a record.
 - Two open questions remain: FR-QQ-012 (how to handle Chinese text, same question as 015 FR-WC-013 and 018) and FR-QQ-013 (ship QQ as Guided or cancel). Resolve with `/speckit-clarify` before `/speckit-plan`.
 - Feasibility rows marked *unconfirmed* (developer check outside mainland China, data export, group share links, account switch limit) MUST be checked in the plan against real test accounts.
 - QQ number formats, menu paths, and app link appear only in Feasibility and the marked "QQ section", as AGENTS.md asks for platform-specific details.
