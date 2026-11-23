@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-23
 
-**Status**: Draft
+**Status**: Cancelled. Steam users keep one account because they have invested heavy money and time in it, so there is no real need to move follows between accounts.
 
 **Input**: User description: "Steam assisted manual migration (second platform). Steam has no third-party write API and no OAuth write scope; third-party sign-in is OpenID identity only. So the app cannot move items automatically. Feature: the user identifies the source Steam account (OpenID sign-in or public profile ID/URL), the app reads public data via official Steam Web API (wishlist via IWishlistService/GetWishlist, friends via ISteamUser/GetFriendList, groups via ISteamUser/GetUserGroupList) — only if that data is public. Followed games, followed curators, and developer/publisher follows have no official read API: let user add them manually (paste store URLs/app IDs) or skip. The app then shows a checklist; each item opens a deep link (Steam app if installed, else web) on the target account, where the user taps Follow/Add to wishlist/Add friend/Join group by hand, then marks the item done. Progress persists locally and resumes. No cookie scraping, no unofficial endpoints, no automated writes. Owned games are out of scope (licenses not transferable). Keep spec platform-neutral where possible with a clearly marked Steam-specific section; cover Android and iOS."
 
@@ -17,6 +17,10 @@
 Steam has no API that lets an outside app follow a game, add to a wishlist, follow a curator, add a friend, or join a group for a user. Steam sign-in for outside apps (OpenID) proves who the user is and grants no access. So Steam cannot be an Automatic platform. This spec adds Steam to the Guided section. The app builds a list of what the old account follows, the user works through a checklist, and each row opens the item on Steam, where the user taps Follow, Add to wishlist, Add friend, or Join group on the new account. The app never signs in to Steam on the user's behalf, never uses Steam web session cookies, and never taps for the user.
 
 Unlike Reddit, Steam gives no export file of follows. The list comes from two sources: the user's own pasted links (always available), and, depending on the open question below, an official read of the old account's public data.
+
+## Why cancelled
+
+The project owner cancelled this spec on 2026-11-23. Steam users rarely move to a new account, because their library, wishlist, friends, and years of play are tied to the one they have, and licenses cannot move. A migration tool has no real demand there. The spec is kept as a record of the feasibility research and the Guided design, in case the owner revisits it. The open question in FR-ST-013 was never answered and is now moot.
 
 ## Feasibility
 
@@ -187,7 +191,7 @@ A user with hundreds of wishlist games stops halfway, closes the app, and comes 
 - **FR-ST-010**: The checklist note MUST remind the user to sign in to the new account in the Steam app and the browser before tapping, and MUST say that friend rows send a request the other person must accept.
 - **FR-ST-011**: The app MUST NOT ask for or keep the Steam password, use Steam web session cookies, open a hidden browser, call any Steam endpoint that changes data, or tap any Steam button for the user (spec 005, FR-012 and FR-013; constitution Principle V).
 - **FR-ST-012**: Pasted text MUST be read on the phone only and MUST NOT be uploaded or logged. The app MUST keep only each item's name, kind, link, and tick state, and MUST NOT keep the rest of the pasted text.
-- **FR-ST-013**: Reading the old account's public lists (User Story 3) MUST use only Steam's official, documented read methods, MUST NOT parse Steam web pages, and MUST follow the answer to this question: [NEEDS CLARIFICATION: Steam's documented read methods for wishlist, friends, and groups need a Steam Web API key, which the terms say must stay confidential, so it cannot ship in the app, and the constitution forbids an own backend. How should the app read public lists? A: no automatic read; paste links only. B: the user enters their own Steam Web API key, kept in secure storage on the phone. C: amend the constitution to allow a small owner-run server that holds the owner's key.]
+- **FR-ST-013**: Reading the old account's public lists (User Story 3) MUST use only Steam's official, documented read methods, MUST NOT parse Steam web pages, and MUST follow the answer to this question (never answered, spec cancelled): Steam's documented read methods for wishlist, friends, and groups need a Steam Web API key, which the terms say must stay confidential, so it cannot ship in the app, and the constitution forbids an own backend. How should the app read public lists? A: no automatic read; paste links only. B: the user enters their own Steam Web API key, kept in secure storage on the phone. C: amend the constitution to allow a small owner-run server that holds the owner's key.
 - **FR-ST-014**: Settings MUST say that Magpie is not made by or linked with Valve or Steam. The Steam logo MUST be the official mark, unmodified, used only to name the platform.
 - **FR-ST-015**: The feature MUST work the same way on Android and iOS, following spec 005's Platform differences table and the rows added below.
 
@@ -247,7 +251,7 @@ Steam adds no new entity. It uses spec 005's entities.
 
 ## What the project owner needs to do
 
-These steps need your Steam accounts and cannot be done by an agent.
+None while the spec is cancelled. If you revisit it, these steps need your Steam accounts and cannot be done by an agent.
 
 1. **Answer the open question** in FR-ST-013 (run `/speckit-clarify`).
 2. **Test accounts**: have two Steam accounts. The old one should have a few wishlist games, followed games, followed curators, a followed developer page, a few friends, and a group. Check whether the new one is a limited account.

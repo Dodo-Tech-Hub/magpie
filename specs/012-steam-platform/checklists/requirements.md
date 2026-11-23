@@ -31,5 +31,6 @@
 
 ## Notes
 
+- The spec was cancelled on 2026-11-23, so the open question below stays unanswered and the checklist is kept as a record.
 - One open question remains in FR-ST-013: how to read the old account's public lists (paste only, the user's own Steam Web API key, or an owner-run server). It decides whether User Story 3 ships. Resolve with `/speckit-clarify` before `/speckit-plan`.
 - Steam host names, link shapes, and the Web API key rule appear only in the marked "Steam section" and Feasibility, as AGENTS.md asks for platform-specific details.
