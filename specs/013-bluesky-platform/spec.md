@@ -226,7 +226,7 @@ Mutes and saved feeds are private, so the handle is not enough to read them. On 
 - The old account is deactivated, suspended, or deleted: From says "This account can't be read right now." and stays open.
 - A followed person deleted or deactivated their account, or blocked the new account: the add may fail or succeed with no effect. A failed row shows "Couldn't move" with the reason in simple words (FR-BS-017).
 - The old account follows the new account: after the To sign-in, that row shows "Already there" and cannot be picked, because an account cannot follow itself.
-- The old account blocks the new account: that block row cannot be picked, and the row says "This is your new account".
+- The old account blocks the new account: after the To sign-in, that block row shows "Already there" and cannot be picked, as for a follow of the new account (plan, research R9).
 - A list the old account made has the same name as a list on the new account: the app reuses that list and adds only missing members.
 - A list member deleted their account: that member is left out, and the list row says how many were left out.
 - The old account has 10,000 follows: the list loads in parts with a loading line and stays searchable. The time-left line shows that the move takes more than one session.
