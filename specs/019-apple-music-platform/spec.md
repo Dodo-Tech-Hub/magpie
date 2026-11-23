@@ -21,7 +21,7 @@ Apple Music has no "follow" in the YouTube sense. The closest items are the user
 ### Session 2026-11-23
 
 - Q: Does the project owner accept the yearly Apple Developer Program fee (99 USD) for Apple Music? → A: Yes, pay it.
-- Q: On iOS, how does the user switch from the old account to the new one? → A: Switch the device's Media & Purchases account, with a clear warning before the switch.
+- Q: On iOS, how does the user switch from the old account to the new one? → A: Use Apple's web sign-in for Apple Music on iOS, so the user signs in to either account without changing the device's account.
 
 ## Feasibility
 
@@ -34,8 +34,8 @@ Checked on 2026-11-23 against Apple's developer documentation and developer foru
 | Is there a test-user cap or app review for the API? | No user cap and no separate API review is documented. The iOS app still goes through normal App Review. | No |
 | Do both accounts need a paid Apple Music subscription? | Yes. A user token is issued only to an account with an active Apple Music subscription, and a library exists only with Sync Library on. | No, but the intro MUST say so (FR-AM-004). |
 | How does the user sign in on Android? | Through Apple's MusicKit for Android, which hands sign-in to the Apple Music app. The Apple Music app MUST be installed and signed in to the account being read or written. Forum reports show this sign-in broke after some Apple Music app updates. | Risk. The plan MUST test it against the current Apple Music app. |
-| How does the user sign in on iOS? | MusicKit uses the Apple Account signed in under Media & Purchases on the device. The app cannot sign in to a second account by itself. | Risk. The user switches the device account, with a warning (FR-AM-006). |
-| Can the app switch between two accounts? | Not inside the app on either system. The user switches the account in the Apple Music app (Android) or in device Settings (iOS) between the From and To steps. | No, but it adds a guided switch step (FR-AM-006). |
+| How does the user sign in on iOS? | Native MusicKit uses only the Apple Account signed in under Media & Purchases on the device. Apple's web sign-in for Apple Music (MusicKit on the web) signs in to any Apple Account without changing the device's account. | Risk. The app uses web sign-in on iOS (FR-AM-005). The plan MUST confirm it works in a visible system browser sheet from a native app. |
+| Can the app switch between two accounts? | On Android, not inside the app: the user switches the account in the Apple Music app between the From and To steps. On iOS, yes: the user signs out of the old account and signs in to the new one in the web sign-in. | No, but Android adds a guided switch step (FR-AM-006). |
 | Can the app read the old library? | Yes: library songs, albums, artists, and playlists. | No |
 | Can the app add songs and albums to the new library? | Yes, by catalog item. | No |
 | Can the app make playlists on the new account? | Yes. It can create a playlist and add songs to it. It cannot edit or delete a playlist afterwards. | No, but a failed move cannot be undone, so the app MUST NOT make duplicates (FR-AM-011). |
@@ -68,8 +68,9 @@ flowchart TD
     Home["Home"] -->|Tap the Apple Music card in Automatic| From
     Home -->|Card with Continue note| Pick
     From["From: sign in with the old account<br/>needs Apple Music subscription"] --> Pick["Pick: songs, albums, playlists, artists"]
-    Pick --> Switch["Switch account<br/>steps for Android or iOS"]
+    Pick -->|Android| Switch["Switch account<br/>in the Apple Music app"]
     Switch -->|User comes back| To["To: sign in with the new account"]
+    Pick -->|iOS: web sign-in| To
     To -->|Same account as From| Switch
     To -->|No Apple Music subscription| To
     To --> Moving["Moving: Moved, Already there, Couldn't move"]
@@ -84,7 +85,7 @@ flowchart TD
 sequenceDiagram
     actor User
     participant App as Magpie
-    participant Sign as Apple sign-in (Apple Music app or device account)
+    participant Sign as Apple sign-in (Apple Music app on Android, web sign-in on iOS)
     participant API as Apple Music API
 
     User->>App: Tap the Apple Music card
@@ -93,7 +94,7 @@ sequenceDiagram
     App->>API: Read library and playlists
     API-->>App: Items
     App->>User: Pick list
-    App->>User: Switch-account steps
+    App->>User: Android: switch-account steps. iOS: sign in again
     User->>Sign: Switch to the new account
     App->>Sign: Ask for access (new account)
     Sign-->>App: User token for the new account
@@ -135,7 +136,7 @@ The user picks what to move, follows the switch-account steps, and signs in with
 
 **Acceptance Scenarios**:
 
-1. **Given** the user has picked items, **When** they tap Next, **Then** the switch-account screen shows numbered steps for their system (Android or iOS) and a button to open the right place.
+1. **Given** the user has picked items on Android, **When** they tap Next, **Then** the switch-account screen shows numbered steps and a button that opens the Apple Music app. On iOS, the To step opens Apple's web sign-in and says to sign in with the new account.
 2. **Given** the user signs in with the same account as From, **When** the app checks, **Then** it says this is the same account and shows the switch steps again.
 3. **Given** a picked song is already in the new library, **When** the app moves it, **Then** the row shows Already there and nothing is added twice.
 4. **Given** a playlist with 120 songs, **When** the app moves it, **Then** the new account has one playlist with the same name and the same songs in the same order.
@@ -165,7 +166,8 @@ A large library takes time, and the user may close the app or lose the connectio
 - The user turned off Sync Library on the new account: the first add fails, and the app says to turn Sync Library on, with the steps.
 - The user's Apple Music subscription ends during the move: the app stops, keeps progress, and says why.
 - The Android sign-in returns cancelled even though the user signed in (known Apple Music app issue): the app says sign-in did not finish and offers to try again; the plan decides if it also shows a known-issue note.
-- On iOS the user does not want to change the device's Media & Purchases account: the switch screen says what that change affects before the user does it.
+- On iOS the web sign-in remembers the old account: the To step signs the old account out of the web sign-in first, so the user can pick the new one.
+- On iOS the user closes the web sign-in before finishing: the app says sign-in did not finish and offers to try again.
 - A playlist name is already used on the new account: the app makes the playlist anyway, because Apple allows repeated names, and the row says a playlist with this name already existed.
 - Two playlists on the old account have the same name: each moves as its own playlist.
 - A token expires during a long move: the app asks the user to sign in again and goes on.
@@ -176,10 +178,10 @@ A large library takes time, and the user may close the app or lose the connectio
 
 - **FR-AM-001**: Apple Music needs a paid Apple Developer Program membership (99 USD per year), paid by the project owner, while the app stays free.
 - **FR-AM-002**: The Apple Music card MUST appear in the Automatic section of Home through the one list of platforms (spec 004, FR-001), only once the move works end to end with two test accounts on Android and iOS.
-- **FR-AM-003**: Tapping the card MUST open the shared Automatic flow (spec 001 and 004) with Apple Music's sign-in, item kinds, and limits. Apple Music MUST NOT get its own screens, except the switch-account screen in FR-AM-006.
+- **FR-AM-003**: Tapping the card MUST open the shared Automatic flow (spec 001 and 004) with Apple Music's sign-in, item kinds, and limits. Apple Music MUST NOT get its own screens, except the Android switch-account screen in FR-AM-006.
 - **FR-AM-004**: The intro MUST state: both accounts need an active Apple Music subscription with Sync Library on; the app never asks for the Apple Account password; purchases, listening history, and uploaded songs do not move; and, on Android, the Apple Music app must be installed.
-- **FR-AM-005**: Sign-in MUST use only Apple's official MusicKit sign-in for the system (Apple Music app on Android, device account on iOS). The app MUST ask only for access to the user's Apple Music library and MUST NOT ask for or keep the Apple Account password.
-- **FR-AM-006**: Between From and To, the app MUST show a switch-account screen with numbered steps for the user's system and a button that opens the right place (Apple Music app on Android, device Settings on iOS). On iOS the user switches the device's Media & Purchases account. Before the steps, the screen MUST warn in plain words that this change can affect purchases and downloads on the device, and that Apple may block switching back for up to 90 days. The user MUST tap I understand before the steps show. After the move, the summary MUST remind the user to switch back if they want.
+- **FR-AM-005**: Sign-in MUST use only Apple's official MusicKit sign-in: the Apple Music app on Android, and Apple's web sign-in for Apple Music in a visible system browser sheet on iOS. On iOS the app MUST NOT use the device's Media & Purchases account and MUST NOT ask the user to change it. The app MUST ask only for access to the user's Apple Music library and MUST NOT ask for or keep the Apple Account password.
+- **FR-AM-006**: On Android, between From and To, the app MUST show a switch-account screen with numbered steps and a button that opens the Apple Music app, where the user signs out and signs in with the new account. On iOS there is no switch screen: the To step MUST sign the old account out of the web sign-in and then open it again for the new account.
 - **FR-AM-007**: The To step MUST refuse the same account as From and say so in plain words.
 - **FR-AM-008**: The app MUST read library songs, library albums, playlists the user made or added, and favorite artists when the plan confirms they can be read and added. Items that cannot move (uploaded or matched songs, removed songs) MUST show in the Pick list as not movable with the reason, and MUST NOT count as picked.
 - **FR-AM-009**: The Pick list MUST group items as Songs, Albums, Playlists, and Artists (when supported), with counts, search, and All, as in the shared flow.
@@ -195,9 +197,9 @@ A large library takes time, and the user may close the app or lose the connectio
 
 | Area | Android | iOS |
 | --- | --- | --- |
-| Sign-in | MusicKit for Android hands sign-in to the Apple Music app, which must be installed and signed in. | MusicKit uses the device's Media & Purchases Apple Account. |
-| Switch account | Sign out and in again in the Apple Music app. | Change the Media & Purchases account in Settings, after the warning in FR-AM-006. |
-| Token renewal | The app keeps and renews the user token itself. | The system renews the user token. |
+| Sign-in | MusicKit for Android hands sign-in to the Apple Music app, which must be installed and signed in. | Apple's web sign-in for Apple Music, in a visible system browser sheet. Any Apple Account; the device's account does not change. |
+| Switch account | Sign out and in again in the Apple Music app. | Sign out and sign in again in the web sign-in, inside the To step. |
+| Token renewal | The app keeps the user token and asks the user to sign in again when it expires. | Same as Android. |
 | Missing Apple Music app | Offer the store page. | Not needed; Apple Music is built in. |
 
 ### Key Entities *(include if feature involves data)*
@@ -218,7 +220,7 @@ erDiagram
 
 ## Adaptive layout
 
-The new switch-account screen uses the default centered column (constitution Principle VI). Other screens are the shared Automatic flow and keep their layout from spec 010.
+The new Android switch-account screen uses the default centered column (constitution Principle VI). Other screens are the shared Automatic flow and keep their layout from spec 010.
 
 ## Apple Music section *(platform-specific)*
 
@@ -226,7 +228,7 @@ The new switch-account screen uses the default centered column (constitution Pri
 - **Items**: library songs, albums, playlists, and (if confirmed) favorite artists. Catalog identity and storefront (region) decide if an item can be added.
 - **Limits**: not published. Apple answers too many requests when a limit is hit.
 - **Playlists**: the API can make a playlist and add songs, but cannot rename, reorder, or delete it.
-- **Network**: adds Apple's Apple Music API host.
+- **Network**: adds Apple's Apple Music API host, and on iOS Apple's web sign-in host.
 
 ## Success Criteria *(mandatory)*
 
