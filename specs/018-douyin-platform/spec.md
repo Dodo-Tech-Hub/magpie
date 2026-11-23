@@ -150,7 +150,7 @@ A user who follows 500 accounts follows some each day. The Douyin card shows a C
 - **FR-DY-010**: The app MUST NOT ask for or keep the Douyin password or codes, sign in to Douyin, call any Douyin endpoint (including to expand short links), open a hidden browser, or tap any Douyin button for the user (spec 005, FR-012 and FR-013; constitution Principle V).
 - **FR-DY-011**: Pasted text MUST be read on the phone only and MUST NOT be uploaded or logged. The app MUST keep only each item's link or ID, and tick state.
 - **FR-DY-012**: The intro, guide, checklist notes, and row labels MUST be usable by a user who reads only Chinese. (never answered, spec cancelled) same question as spec 015, FR-WC-013; one answer covers 015, 017, and 018. A: a separate spec adds Simplified Chinese to the whole app first. B: English app, guides quote Douyin's Chinese button names. C: Chinese guide text for these platforms only.
-- **FR-DY-013**: Whether Douyin ships at all: (never answered, spec cancelled) users must copy each followed account's link one by one, which is slow for long lists, but each row then opens the profile directly. Ship Douyin as Guided as written, or cancel like Steam and Tinder?
+- **FR-DY-013**: Whether Douyin ships at all: answered Cancel on 2026-11-23 (see Clarifications).
 - **FR-DY-014**: Settings MUST say that Magpie is not made by or linked with ByteDance or Douyin. The Douyin logo MUST be the official mark, unmodified, used only to name the platform.
 - **FR-DY-015**: The feature MUST work the same way on Android and iOS, following spec 005's Platform differences table and the rows added below. Screens follow the default single column of constitution Principle VI in every size class and orientation.
 
