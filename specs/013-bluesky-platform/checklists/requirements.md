@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain
+- [x] No [NEEDS CLARIFICATION] markers remain
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -31,6 +31,6 @@
 
 ## Notes
 
-- Two open questions remain: Q1 (which kinds to move) and Q2 (Bluesky-hosted accounts only, or any server). Q1 decides the scope and whether the old account needs a sign-in. Q2 decides the host list and whether Principle III, rule 5 needs an exception. Resolve them before `/speckit-plan`.
+- Q1 and Q2 were answered on 2026-11-23 (see Clarifications in the spec). All items pass.
 - Bluesky scopes, hosts, and limits appear only in Feasibility and the marked "Bluesky section", as AGENTS.md asks for platform-specific details.
 - Token revocation for public apps is expected but not yet confirmed. The plan must confirm it with a real account (FR-BS-013).

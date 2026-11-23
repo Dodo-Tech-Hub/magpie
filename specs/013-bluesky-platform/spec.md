@@ -16,6 +16,13 @@ Bluesky becomes the third Automatic platform. The user taps the Bluesky card on 
 
 Bluesky is a good fit for Automatic: its data is open, it has a modern sign-in for phone apps with fine-grained access, no test-user cap, no app review, and no paid tier. Unlike YouTube and GitHub, the old account's follows, blocks, and lists are public, so the app can read them from the handle alone, with no sign-in to the old account.
 
+## Clarifications
+
+### Session 2026-11-23
+
+- Q: Which kinds should a Bluesky move cover? → A: Follows, blocks, lists, mutes, and saved feeds. Mutes and saved feeds are private, so they are opt-in: Pick shows them greyed with an "Allow" button that signs in to the old account with read-only access (FR-BS-020).
+- Q: Should the app support accounts on self-hosted servers? → A: Not in the first release. Only Bluesky-hosted accounts, so the app keeps a fixed host list (Principle III, rule 5) with no constitution exception. A self-hosted account gets a plain "not supported yet" message (FR-BS-022). Self-hosted support can come later with its own amendment. The owner asked for a recommendation; this was it.
+
 Bluesky's own "account migration" (moving one account to another server and keeping the same handle and followers) is a different job. It is out of scope. Magpie moves what one account follows to a second, separate account.
 
 ## Feasibility
@@ -34,7 +41,7 @@ Checked on 2026-11-23 against the AT Protocol (atproto) docs and Bluesky's devel
 | Are there speed limits? | Yes. About 5,000 write points per hour and 35,000 per day per account. One add costs 3 points, so about 1,666 adds per hour and 11,666 per day. | No. A few thousand items fit in one or two sessions. |
 | Do Bluesky's rules allow automated following? | Bluesky's Community Guidelines forbid spam and mass, unwanted follows. Moving one's own follows once, at a slow pace, is not that, but the new account could still be flagged. | Risk, not a blocker. FR-BS-010 keeps the pace low. |
 | Is the old account's handle enough to find it? | Yes. A handle points to one account ID (DID), which points to the server that holds its data. | No |
-| Can the app talk to a fixed list of hosts? | Only for accounts hosted by Bluesky. An account on its own server (self-hosted) lives on a host the app cannot know in advance. See Question 2. | Depends on the answer |
+| Can the app talk to a fixed list of hosts? | Only for accounts hosted by Bluesky. An account on its own server (self-hosted) lives on a host the app cannot know in advance. | No. The first release supports Bluesky-hosted accounts only (Clarifications, 2026-11-23). |
 
 **Verdict**: Automatic Bluesky is feasible.
 
@@ -43,10 +50,10 @@ Checked on 2026-11-23 against the AT Protocol (atproto) docs and Bluesky's devel
 | Item | Read from old account | Add to new account | Access needed on the new account | Verdict |
 | --- | --- | --- | --- | --- |
 | Followed people | Yes, public | Yes | Create follows | In scope |
-| Blocked people | Yes, public | Yes | Create blocks | In scope [NEEDS CLARIFICATION: Q1] |
-| Lists the old account made (people lists and moderation lists) | Yes, public, with their members | Yes: create the list, then add each member | Create lists and list members | In scope [NEEDS CLARIFICATION: Q1] |
-| Muted people | Only with old account sign-in | Yes | Mute call | [NEEDS CLARIFICATION: Q1] |
-| Saved and pinned feeds | Only with old account sign-in | Yes | Read and write preferences | [NEEDS CLARIFICATION: Q1] |
+| Blocked people | Yes, public | Yes | Create blocks | In scope |
+| Lists the old account made (people lists and moderation lists) | Yes, public, with their members | Yes: create the list, then add each member | Create lists and list members | In scope |
+| Muted people | Only with old account sign-in | Yes | Read mutes, mute call | In scope, opt-in (FR-BS-020) |
+| Saved and pinned feeds | Only with old account sign-in | Yes | Read and write preferences | In scope, opt-in (FR-BS-020, FR-BS-021) |
 | Subscriptions to other people's moderation lists | Partly (block lists are public, mute lists are private) | Yes | Create list blocks, or mute call | Out of scope. Rare, and the user can re-subscribe by hand. |
 | Muted words, content filters, other settings | Only with sign-in | Yes, but they share one settings record with the user's other choices | Write preferences | Out of scope. Not a follow. |
 | Starter packs, posts, likes, reposts | Yes | Posts would be copies with new dates | Broad | Out of scope. Not a follow. |
@@ -65,6 +72,8 @@ flowchart TD
         From ~~~ To ~~~ Pick
     end
 
+    Pick -.->|Optional: tap Allow on Mutes or Feeds| Old["Sign in to the old account<br/>read-only"]
+    Old -.-> Pick
     Pick -->|Tap Move N items| Moving["Moving<br/>Rows change one at a time"]
     Moving -->|All items done| Summary["Summary"]
     Moving -->|Bluesky asks the app to wait| Later["Rows say Later<br/>The app offers a reminder"]
@@ -83,7 +92,14 @@ sequenceDiagram
     Note over User,Bluesky: 1. From (old account), no sign-in
     User->>App: Type the old account's handle
     App->>Bluesky: Who is this handle? Read its public follows, blocks, and lists
-    App->>User: Pick shows the items, all picked
+    App->>User: Pick shows the items, all picked. Mutes and Feeds show greyed.
+
+    opt Only if the user taps Allow on Mutes or Feeds
+        User->>Browser: Sign in to the old account, read-only access
+        App->>Bluesky: Read mutes and saved feeds
+        App->>Bluesky: Cancel the old account token
+        App->>User: Mutes and Feeds become pickable
+    end
 
     Note over User,Bluesky: 2. To (new account)
     User->>App: Type the new account's handle, tap Sign in
@@ -181,6 +197,25 @@ The user signs out of the new account, a move ends, or the user uses Delete all.
 
 ---
 
+### User Story 5 - Move mutes and saved feeds (Priority: P3)
+
+Mutes and saved feeds are private, so the handle is not enough to read them. On Pick, the Mutes and Feeds sections show greyed out with one line, "Sign in to your old account to move these.", and an "Allow" button. Tapping it signs in to the old account with read-only access. The app reads the mutes and saved feeds, cancels the old account's access at once, and the sections become pickable. Moving them needs matching access on the new account, which To asks for only when those kinds are picked.
+
+**Why this priority**: Most users care about follows first. Mutes and feeds save time for heavy users, but need an extra sign-in.
+
+**Independent Test**: With an old account that mutes 3 people and saves 2 feeds (1 pinned), tap "Allow", sign in, and confirm the 5 rows appear and the old token no longer works. Move them, and confirm the new account mutes the 3 people, saves both feeds with the same one pinned, and its other settings are unchanged.
+
+**Acceptance Scenarios**:
+
+1. **Given** the old account is entered by handle, **When** Pick shows, **Then** Mutes and Feeds show greyed with an "Allow" button, and the other kinds work without them.
+2. **Given** the user taps "Allow", **When** Bluesky's page opens, **Then** it is set to the old account's handle and lists only read access to mutes and settings.
+3. **Given** the user signs in as a different account than the old one, **When** sign-in ends, **Then** the app refuses it with "Use your old account here." and reads nothing.
+4. **Given** the mutes and feeds are read, **When** Pick shows them, **Then** the app holds no token for the old account.
+5. **Given** saved feeds are moved, **When** the user checks the new account, **Then** each feed is saved, feeds pinned on the old account are pinned, feeds the new account already had are unchanged, and no other setting changed.
+6. **Given** the user never taps "Allow", **When** the move ends, **Then** the summary does not count Mutes and Feeds as failed.
+
+---
+
 ### Edge Cases
 
 - The old account follows nothing: Pick says "This account doesn't follow anything yet" and Move is not offered.
@@ -196,6 +231,9 @@ The user signs out of the new account, a move ends, or the user uses Delete all.
 - Bluesky flags the new account (for example as spam or for unusual activity): the next add fails, the app stops, saves the progress, and shows "Bluesky paused your account's activity. Try again later." It does not retry in a loop.
 - The handle changed after the progress started: the app keys the progress by account ID (DID), not by handle, and shows the new handle.
 - The user types a handle with a leading `@`, extra spaces, or capital letters: the app accepts it.
+- The old or new handle belongs to a self-hosted account: the step says "Magpie works only with accounts hosted by Bluesky for now." and stays open (FR-BS-022). A Bluesky-hosted account with a personal domain handle (for example `alice.com`) works.
+- A saved feed was deleted by its maker: it is still saved on the new account, as Bluesky allows, and Bluesky shows it as unavailable. The row shows Moved.
+- The new account saves settings in Bluesky's app while the move writes saved feeds: the app reads the settings right before each write, so the newer change is kept.
 - The user types only a name (for example `alice`): the app tries `alice.bsky.social`.
 - The internet drops during a move: the move pauses, unfinished rows go back to waiting, and the user sees "No internet. Try again when you're online."
 - The user taps another platform's card with an unfinished Bluesky progress: the app asks "Save your Bluesky progress?" (FR-GH-022).
@@ -208,18 +246,22 @@ The user signs out of the new account, a move ends, or the user uses Delete all.
 
 - **FR-BS-001**: The Bluesky card MUST appear in the Automatic section of Home, after GitHub, through the one list of platforms (spec 004, FR-003). The app MUST move the kinds in scope in "What Bluesky supports".
 - **FR-BS-002**: Tapping the Bluesky card MUST open the same From, Pick, To flow as YouTube and GitHub, with the same steps, row states, summary, saved progress, unfinished progress list, Home button, Settings, and switching rules (FR-GH-021, FR-GH-022). The flow MUST NOT get Bluesky-only screens. The handle box shows in place on the From and To steps.
-- **FR-BS-003**: Pick MUST split the list into one section per kind ("People", "Blocked", "Lists", and any other kind in scope), following FR-GH-003, FR-GH-023, and FR-GH-024. Blocked people MUST be in their own section and MUST NOT be mixed with follows.
+- **FR-BS-003**: Pick MUST split the list into one section per kind ("People", "Blocked", "Lists", "Mutes", "Feeds"), following FR-GH-003, FR-GH-023, and FR-GH-024. Blocked people MUST be in their own section and MUST NOT be mixed with follows.
 - **FR-BS-004**: All user-facing text MUST say "items" or the kind name instead of "channels" in the Bluesky flow, and MUST live with the other app text.
 - **FR-BS-018**: Moving a list MUST create a list with the same name, description, and type (people list or moderation list) on the new account, or reuse one with the same name and type, and add every member of the old list who still exists. Picking a list MUST NOT pick its members as follows. Moving a list MUST NOT remove members from a list on the new account. The list's picture is not copied.
 - **FR-BS-017**: When an item fails during the move, its "Couldn't move" row MUST show the reason in simple words (for example "Account was deleted"), never a raw error.
 
 **Accounts and sign-in**
 
-- **FR-BS-005**: From MUST take the old account's handle, with no sign-in, unless a kind in scope needs one (Question 1). It MUST accept a leading `@`, spaces, and capital letters, and MUST add `.bsky.social` to a bare name. It MUST show the found account's picture, display name, and handle, and a Change button.
+- **FR-BS-005**: From MUST take the old account's handle, with no sign-in (the opt-in sign-in in FR-BS-020 is the only exception). It MUST accept a leading `@`, spaces, and capital letters, and MUST add `.bsky.social` to a bare name. It MUST show the found account's picture, display name, and handle, and a Change button.
 - **FR-BS-006**: To MUST take the new account's handle and sign in through Bluesky's sign-in page in the system browser, set to that handle. The app MUST check the account that actually signed in, and MUST refuse the same account on From and To with a simple message. Each signed-in step MUST show a Sign out button.
 - **FR-BS-007**: The app MUST compare accounts by their account ID (DID), never by handle.
-- **FR-BS-008**: The app MUST ask the new account only for the access of the kinds picked at that moment (all kinds in scope when the old list is not read yet), using Bluesky's fine-grained access, never Bluesky's full-account access. The exact access per kind is in the Bluesky section. If a kind is picked after sign-in and its access is missing, that kind MUST show greyed out with an "Allow" button, as in FR-GH-020.
+- **FR-BS-008**: The app MUST ask the new account only for the access of the kinds picked at that moment (follows, blocks, and lists when the old list is not read yet; mutes and feeds only once read and picked), using Bluesky's fine-grained access, never Bluesky's full-account access. The exact access per kind is in the Bluesky section. If a kind is picked after sign-in and its access is missing, that kind MUST show greyed out with an "Allow" button, as in FR-GH-020.
 - **FR-BS-009**: The move MUST only add items to the new account. It MUST NOT change or remove anything on the old account, and MUST NOT remove anything on the new account.
+
+- **FR-BS-020**: Mutes and Feeds MUST show greyed on Pick with an "Allow" button until the old account signs in. "Allow" MUST open Bluesky's sign-in for the old account's handle, asking only for the read access in the Bluesky section. The app MUST refuse any account other than the old one, read the mutes and saved feeds, then cancel and delete the old token at once. Re-reading them later MUST need a new "Allow" sign-in.
+- **FR-BS-021**: Moving saved feeds MUST add each picked feed to the new account's saved feeds, keep it pinned when it was pinned on the old account, keep the old account's pin order after the new account's own pinned feeds, and leave feeds the new account already saves unchanged. It MUST read the new account's settings right before each write and change only the saved feeds part.
+- **FR-BS-022**: The app MUST support only accounts hosted by Bluesky. When a handle on From, To, or "Allow" belongs to an account on another server, the step MUST say "Magpie works only with accounts hosted by Bluesky for now." and MUST NOT call that server.
 
 **Pace and progress**
 
@@ -231,15 +273,15 @@ The user signs out of the new account, a move ends, or the user uses Delete all.
 
 - **FR-BS-013**: Bluesky tokens and the sign-in key MUST be stored only in the phone's secure storage. On Sign out, at the summary, and on Delete all, the app MUST cancel the token on Bluesky and delete the token and key from the phone. If the cancel call fails, the app MUST still delete them and say in one line that access ends on its own when the token runs out.
 - **FR-BS-014**: The app MUST keep only what the move needs: account ID, handle, display name, picture, item IDs, item names and pictures, list names, descriptions, and members, progress, and the times of recent adds for the pace (deleted after 1 day). It MUST NOT log tokens, codes, handles, or item lists.
-- **FR-BS-015**: The app MUST talk to Bluesky only on the hosts in the Bluesky section, over HTTPS (Question 2). The Bluesky logo MUST be the official butterfly, unmodified, used only to name the platform. Settings MUST say that Magpie is not made by or linked with Bluesky. The feature MUST work the same way on Android and iOS.
+- **FR-BS-015**: The app MUST talk to Bluesky only on the hosts in the Bluesky section, over HTTPS (FR-BS-022). The Bluesky logo MUST be the official butterfly, unmodified, used only to name the platform. Settings MUST say that Magpie is not made by or linked with Bluesky. The feature MUST work the same way on Android and iOS.
 - **FR-BS-016**: The app MUST treat every Bluesky answer as untrusted, check its shape before use, and check the sign-in return (state, issuer, and redirect) before using the code.
 - **FR-BS-019**: Bluesky MUST have a limits page (spec 009) that explains its pace and why the app is slower than Bluesky allows.
 
 ### Key Entities *(include if feature involves data)*
 
 - **Platform**: Bluesky is a new entry in the existing list of platforms, in the Automatic section.
-- **Account**: A Bluesky account on From or To, with an account ID (DID), a handle, a display name, and a picture. The old account has no token unless Question 1 needs one.
-- **Item**: Something the old account follows, blocks, or made that can be moved. It has a kind (person, blocked person, list, and any other kind in scope), a name, and a picture. A list item also has its type, description, and members.
+- **Account**: A Bluesky account on From or To, with an account ID (DID), a handle, a display name, and a picture. The old account has no token, except for the short read in FR-BS-020.
+- **Item**: Something the old account follows, blocks, or made that can be moved. It has a kind (person, blocked person, list, muted person, or feed), a name, and a picture. A list item also has its type, description, and members.
 - **Progress**: As in FR-GH-021, keyed by the old and new account IDs.
 
 ### Row states
@@ -277,12 +319,12 @@ These details come from the atproto docs ([OAuth for AT Protocol](https://atprot
 | Sign-in | Scopes | Why | Broader than needed? |
 | --- | --- | --- | --- |
 | Old (From) | None. No sign-in. | Follows, blocks, and lists are public records. | No |
-| Old (From), only if mutes or saved feeds are in scope | `rpc:app.bsky.graph.getMutes?aud=*`, `rpc:app.bsky.actor.getPreferences?aud=*` | Read private mutes and saved feeds. Read-only. | No |
+| Old, after "Allow" (FR-BS-020) | `rpc:app.bsky.graph.getMutes?aud=*`, `rpc:app.bsky.actor.getPreferences?aud=*` | Read private mutes and saved feeds. Read-only. The token is cancelled right after. | `getPreferences` returns all settings, not only feeds. The app keeps only the saved feeds and drops the rest at once. |
 | New (To), People | `repo:app.bsky.graph.follow?action=create` | Follow people. | No |
 | New (To), Blocked | `repo:app.bsky.graph.block?action=create` | Block people. | No |
 | New (To), Lists | `repo:app.bsky.graph.list?action=create`, `repo:app.bsky.graph.listitem?action=create` | Create lists and add members. | No |
-| New (To), Mutes, if in scope | `rpc:app.bsky.graph.muteActor?aud=*` | Mute people. | No |
-| New (To), Saved feeds, if in scope | `rpc:app.bsky.actor.getPreferences?aud=*`, `rpc:app.bsky.actor.putPreferences?aud=*` | Bluesky stores feeds in one settings record, so the app reads it, adds the feeds, and writes it back. | Yes. Writing settings can change other settings. The app MUST change only the saved feeds part. |
+| New (To), Mutes | `rpc:app.bsky.graph.muteActor?aud=*`, `rpc:app.bsky.graph.getMutes?aud=*` | Mute people, and check who is already muted. | No |
+| New (To), Feeds | `rpc:app.bsky.actor.getPreferences?aud=*`, `rpc:app.bsky.actor.putPreferences?aud=*` | Bluesky stores feeds in one settings record, so the app reads it, adds the feeds, and writes it back. | Yes. Writing settings can change other settings. The app MUST change only the saved feeds part. |
 
 The plan MUST replace `aud=*` with Bluesky's app service ID where Bluesky accepts it.
 
@@ -292,7 +334,7 @@ The plan MUST replace `aud=*` with Bluesky's app service ID where Bluesky accept
 
 **Cancelling access (Principle III, rule 3)**: the sign-in server is expected to offer token revocation for public apps. The plan MUST confirm it with a real account. If it does not, the plan MUST stop and ask the owner for an exception like FR-GH-019.
 
-**Hosts (Principle III, rule 5)**: depends on Question 2. For Bluesky-hosted accounts:
+**Hosts (Principle III, rule 5)**: Bluesky-hosted accounts only (FR-BS-022). An account is Bluesky-hosted when its account ID is a `did:plc` and its server is under `host.bsky.network`. The app checks this before any sign-in or write.
 
 | Host | Used for |
 | --- | --- |
@@ -300,7 +342,7 @@ The plan MUST replace `aud=*` with Bluesky's app service ID where Bluesky accept
 | `plc.directory` | Find which server holds an account |
 | `bsky.social` | Sign-in server for Bluesky-hosted accounts |
 | `*.host.bsky.network` | The servers that hold Bluesky-hosted accounts (writes go here) |
-| `api.bsky.app` | Signed-in calls that the account's server passes on (mutes, settings), if in scope |
+| `api.bsky.app` | Not called directly. Named as the service that the account's server passes mutes calls on to. |
 | `cdn.bsky.app` | Pictures |
 
 The client metadata file lives on the project's public site. The app never calls that host; Bluesky's sign-in server reads it.
@@ -329,40 +371,15 @@ The client metadata file lives on the project's public site. The app never calls
 
 - Bluesky reuses the Automatic flow from specs 001, 004, and 008. Parts still tied to one platform are made platform-neutral in the plan without changing YouTube or GitHub behavior.
 - The app has no server. The client metadata file is a static file on the project's public site.
-- Fine-grained access is live on Bluesky's servers and stays supported. If a self-hosted server does not support it (Question 2), sign-in to that account fails with a plain message.
+- Fine-grained access is live on Bluesky's servers and stays supported. Self-hosted accounts are not supported in this release (FR-BS-022).
 - Bluesky's own account migration (same handle, new server) is out of scope.
 - Followers cannot be moved. The summary does not promise it.
 - The old account's handle is enough, because its follows, blocks, and lists are public.
-
-## Open questions
-
-### Question 1: Which kinds to move
-
-**Context**: "What Bluesky supports" lists follows, blocks, and lists as public, and mutes and saved feeds as private. Private kinds need a sign-in to the old account, and saved feeds need write access to the new account's settings record.
-
-**What we need to know**: [NEEDS CLARIFICATION: Q1. Which kinds should a Bluesky move cover?]
-
-| Option | Answer | Implications |
-| --- | --- | --- |
-| A | Follows only | Smallest feature. No sign-in to the old account. One scope on the new account. |
-| B | Follows, blocks, and lists | All public kinds. Still no sign-in to the old account. Narrow scopes only. |
-| C | B plus mutes and saved feeds | Most complete. Adds a read-only sign-in to the old account and a broader settings scope on the new account. |
-
-### Question 2: Which accounts to support
-
-**Context**: Principle III, rule 5 requires a fixed list of hosts. Bluesky-hosted accounts use known hosts. Self-hosted accounts live on any host, and their handle may be a personal domain.
-
-**What we need to know**: [NEEDS CLARIFICATION: Q2. Should the app support accounts on self-hosted servers?]
-
-| Option | Answer | Implications |
-| --- | --- | --- |
-| A | Bluesky-hosted accounts only | Fixed host list. Most users are covered. A self-hosted account gets a plain "Not supported yet" message. |
-| B | Any server | Every Bluesky user is covered. Needs a constitution exception to rule 5, because hosts are found at run time. |
 
 ## What the project owner needs to do
 
 These steps need your accounts and cannot be done by an agent. They block the plan's sign-in work, not this spec.
 
 1. **Client metadata file**: confirm the project's public site URL (for example the GitHub Pages site for this repository). The plan adds the metadata file there; you check that it is served over HTTPS at a stable URL that will not change, because the URL is the app's ID.
-2. **Test accounts**: have two Bluesky accounts ready, one that follows, blocks, and has a list, and one new.
+2. **Test accounts**: have two Bluesky-hosted accounts ready, one that follows, blocks, mutes, saves feeds (one pinned), and has a list, and one new.
 3. **No secrets**: Bluesky needs no client secret, API key, or developer account. Nothing goes in `.env` for Bluesky, except the client metadata URL if the plan chooses to keep it there.
