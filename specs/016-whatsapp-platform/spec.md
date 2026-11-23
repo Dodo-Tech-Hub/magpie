@@ -162,7 +162,7 @@ Spec 005 keeps ticks and shows a Continue note on the card. Lists here are usual
 - **FR-WA-010**: The checklist note MUST remind the user to switch WhatsApp to the new account first, and MUST say that some groups need an admin to approve.
 - **FR-WA-011**: The app MUST NOT ask for or keep the WhatsApp password or codes, sign in to WhatsApp, call any WhatsApp endpoint, read WhatsApp's files or backups, or tap any WhatsApp button for the user (spec 005, FR-012 and FR-013; constitution Principle V).
 - **FR-WA-012**: Pasted text MUST be read on the phone only and MUST NOT be uploaded or logged. The app MUST keep only each item's name, kind, link, and tick state. Phone numbers in pasted text MUST NOT be kept.
-- **FR-WA-013**: Whether WhatsApp ships, and in which form: (never answered, spec cancelled) WhatsApp's own Change Number covers most users, and the Guided list helps only when the new number already has an account. A: ship as written (Change Number steps plus a Channels and groups checklist). B: ship only the Change Number steps, with no checklist. C: cancel, because WhatsApp already solves the move.
+- **FR-WA-013**: Whether WhatsApp ships, and in which form: answered Cancel on 2026-11-23 (see Clarifications).
 - **FR-WA-014**: Settings MUST say that Magpie is not made by or linked with WhatsApp or Meta. The WhatsApp logo MUST be the official mark, unmodified, used only to name the platform.
 - **FR-WA-015**: The feature MUST work the same way on Android and iOS, following spec 005's Platform differences table and the rows added below. Screens follow the default single column of constitution Principle VI in every size class and orientation.
 
