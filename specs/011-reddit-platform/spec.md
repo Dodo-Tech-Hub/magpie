@@ -18,13 +18,19 @@ Spec 004 planned Reddit as an Automatic platform, where the app joins communitie
 
 ## Feasibility
 
-These facts come from news reports of Reddit's 2025 and 2026 announcements (checked 2026-11-23), not from a Reddit page the agent could open. The project owner should confirm them on r/redditdev or Reddit's help site before the plan.
+These facts come from Reddit's own admin posts on r/redditdev, checked on 2026-11-23: [Our Plans for the Future of Reddit's Public Data API and the Developer Platform](https://www.reddit.com/r/redditdev/comments/1vgbm9c/our_plans_for_the_future_of_reddits_public_data/), [Moving Data API Apps to the Developer Platform: migration dates and next steps](https://www.reddit.com/r/redditdev/comments/1wubcvf/moving_data_api_apps_to_the_developer_platform/) (2026-09-30), and [Data API migration reminder](https://www.reddit.com/r/redditdev/comments/1xulk8k/data_api_migration_reminder_register_your_apps/) (2026-11-12).
+
+> **October 31, 2026**: New requests for public API access will no longer be accepted.
+>
+> **March 2027**: Public access will close for all remaining apps and users.
+>
+> [...] third-party apps will be required to port and operate through our Developer Platform.
 
 | Question | Answer | Blocks Automatic? | Blocks Guided? |
 | --- | --- | --- | --- |
 | Can a new app get API access? | No. Since 2025-11-11 (Responsible Builder Policy) every new app needs Reddit's manual approval, and Reddit stopped accepting new requests on 2026-10-31. Magpie never registered. | Yes | No. Guided needs no API. |
-| How long does the public API last for apps that have access? | Removals of unregistered apps start 2027-01-12. Public access closes for remaining apps and users in March 2027. Only partners with written agreements keep access. | Yes | No |
-| What does Reddit offer instead? | Its Developer Platform (Devvit), which runs apps inside Reddit, not in a phone app. | Yes. Devvit cannot act for a user in an outside app. | No |
+| How long does the public API last for apps that have access? | Removals of unregistered apps start 2027-01-12. Public access closes for all remaining apps and users in March 2027. | Yes | No |
+| What does Reddit offer instead? | Third-party apps must move to its Developer Platform (Devvit), which runs apps inside Reddit, not in a phone app. | Yes. Devvit cannot act for a user in an outside app. | No |
 | Can the user get their own list without the API? | Yes. Reddit's "Request your data" page sends a file with the account's data, including the communities it joined. | n/a | No |
 | Can the app join a community for the user? | Only through the API. | Yes | No. In Guided, the user taps Join. |
 | Does the app need the user's password? | No. | n/a | No |
@@ -195,7 +201,6 @@ Reddit adds no new entity. It uses spec 005's entities.
 ## Assumptions
 
 - Spec 005 (Guided flow) is planned and built before Reddit ships. Reddit is one more Guided platform within it.
-- The news reports in Feasibility are correct. If Reddit's announcements differ, the owner updates this spec before the plan.
 - Reddit's export lists joined communities by name, so a link can be built from it. If it does not, Reddit needs a different approach and this spec is revised.
 - Reddit's "Request your data" page stays available to users in every region. Reports describe it as available to all users.
 - The user knows how to switch accounts in the Reddit app. The guide shows how in one picture.
@@ -205,6 +210,5 @@ Reddit adds no new entity. It uses spec 005's entities.
 
 These steps need your Reddit account and cannot be done by an agent.
 
-1. **Confirm the API closure**: read Reddit's own announcement on r/redditdev or Reddit's help site and confirm the dates in Feasibility.
-2. **Request a test export**: on a test Reddit account that joined some communities and follows some people, request your data and share the file layout (file names and column names, no real data) for the plan.
-3. **Test accounts**: have two Reddit accounts ready, the old one with the test export and one new.
+1. **Request a test export**: on a test Reddit account that joined some communities and follows some people, request your data and share the file layout (file names and column names, no real data) for the plan.
+2. **Test accounts**: have two Reddit accounts ready, the old one with the test export and one new.

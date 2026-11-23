@@ -32,5 +32,5 @@
 ## Notes
 
 - 1 open question: ship Reddit as Guided, cancel, or wait for a partner agreement. Automatic Reddit is blocked by Reddit's API closure (Feasibility).
-- Feasibility facts come from news reports, not Reddit's own pages. The owner confirms them before the plan.
+- Feasibility facts are confirmed from Reddit's admin posts on r/redditdev (2026-11-23).
 - The Reddit section names the export format, page, and link shapes. These are platform facts the Guided reader needs, kept in the platform-specific section as the constitution asks.
