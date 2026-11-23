@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain
+- [x] No [NEEDS CLARIFICATION] markers remain
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -31,6 +31,6 @@
 
 ## Notes
 
-- 1 open question: ship Reddit as Guided, cancel, or wait for a partner agreement. Automatic Reddit is blocked by Reddit's API closure (Feasibility).
+- Spec cancelled on 2026-11-23. Automatic Reddit is blocked by Reddit's API closure (Feasibility), and the owner chose not to ship it as Guided.
 - Feasibility facts are confirmed from Reddit's admin posts on r/redditdev (2026-11-23).
 - The Reddit section names the export format, page, and link shapes. These are platform facts the Guided reader needs, kept in the platform-specific section as the constitution asks.

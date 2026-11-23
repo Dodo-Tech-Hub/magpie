@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-23
 
-**Status**: Draft
+**Status**: Cancelled. Reddit closed its public API to new apps on 2026-10-31 and closes it for all apps in March 2027, so the app cannot join communities for the user.
 
 **Input**: User description: "reddit platform"
 
@@ -14,7 +14,15 @@
 
 Spec 004 planned Reddit as an Automatic platform, where the app joins communities for the user through Reddit's API. That is no longer possible for a new app: Reddit stopped accepting new requests for API access on 2026-10-31 and closes its public API in March 2027 (see Feasibility). This spec therefore adds Reddit to the Guided section. The user requests their data from Reddit on the old account, picks the export file in the app, and works through a checklist of their communities and followed people. Each row opens the community or profile in the Reddit app or the browser, where the user taps Join or Follow on the new account. The app never signs in to Reddit and never calls Reddit's API.
 
-[NEEDS CLARIFICATION: Automatic Reddit is blocked. Should Reddit ship as a Guided platform (this draft), be cancelled like Spotify, or wait for a Reddit partner agreement?]
+## Why cancelled
+
+The project owner cancelled this spec on 2026-11-23. Automatic Reddit is not possible (see Feasibility). The owner chose not to ship Reddit as a Guided platform either, and a partner agreement is unlikely because Reddit requires every third-party app to move to its Developer Platform. The spec is kept as a record of the research and of the Guided design, in case the owner revisits it.
+
+## Clarifications
+
+### Session 2026-11-23
+
+- Q: Automatic Reddit is blocked. Should Reddit ship as a Guided platform, be cancelled like Spotify, or wait for a Reddit partner agreement? → A: Cancel.
 
 ## Feasibility
 
