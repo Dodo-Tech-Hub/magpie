@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-23
 
-**Status**: Draft
+**Status**: Cancelled. Tinder has no API and matches cannot move, so only a manual profile rebuild is possible, which gives too little value.
 
 **Input**: User description: "Tinder platform. Spec number should be 14"
 
@@ -20,6 +20,16 @@ What a user can move is their own profile: photos, bio, job and school, interest
 
 Tinder allows one account per person at a time. The app MUST tell the user this before they start, and MUST NOT help a banned user make a new account.
 
+## Why cancelled
+
+The project owner cancelled this spec on 2026-11-23. Automatic Tinder is not possible (see Feasibility), and matches, the part of a Tinder account that users value most, cannot move by any means. What is left is a manual profile rebuild that the user can do in Tinder without the app. The spec is kept as a record of the research and the design, in case the owner revisits it.
+
+## Clarifications
+
+### Session 2026-11-23
+
+- Q: Tinder cannot move matches, and its one-account rule makes a move a profile rebuild. Ship as a Guided profile move, cancel, or ship a guide card only? → A: Cancel.
+
 ## Feasibility
 
 Checked on 2026-11-23 against Tinder's Terms of Use, Community Guidelines, and help center. The plan MUST check each row again against a real export from a test account.
@@ -32,7 +42,7 @@ Checked on 2026-11-23 against Tinder's Terms of Use, Community Guidelines, and h
 | May one person have two Tinder accounts? | No. The Community Guidelines allow one account per person at a time. Making a new account after a ban breaks the terms. | n/a | Partly. The user must delete or close the old account before making the new one, and banned users are out of scope. |
 | Can paid subscriptions (Plus, Gold, Platinum) or Super Likes move? | No. Purchases are tied to the account and the store. | Yes | Yes. Out of scope. |
 
-**Verdict**: Automatic Tinder is not feasible and never will be under the current terms. Guided Tinder is feasible only as a profile move, which is smaller than every other platform's Guided flow. See the open question in FR-TN-001.
+**Verdict**: Automatic Tinder is not feasible and never will be under the current terms. Guided Tinder is feasible only as a profile move, which is smaller than every other platform's Guided flow. The project owner cancelled it (see Why cancelled).
 
 ## What Tinder items this feature covers
 
@@ -160,7 +170,7 @@ The export link can take a while to arrive, and the user may fill in the profile
 
 ### Functional Requirements
 
-- **FR-TN-001**: Scope of Tinder support MUST follow the answer to this question: [NEEDS CLARIFICATION: Tinder cannot move matches, and its one-account rule means a "move" is really a profile rebuild after deleting the old account. Should Tinder ship as a Guided profile move (this spec), or be cancelled like 011 and 012? A: ship the Guided profile move. B: cancel; record the research. C: ship only a short guide card (how to request the export and the one-account rule) with no file reading.]
+- **FR-TN-001**: Tinder MUST NOT ship. The project owner cancelled it (see Clarifications). The requirements below are kept as a record of the Guided profile move design.
 - **FR-TN-002**: The Tinder card MUST appear in the Guided section of Home through the one list of platforms (spec 004, FR-001), only once its guide and file reader are checked against a real export from a test account (spec 005, FR-001). It MUST NOT appear in the Automatic section.
 - **FR-TN-003**: Tapping the Tinder card MUST open the shared Guided flow (spec 005, FR-002) with Tinder's guide text, pictures, and file reader. Tinder MUST NOT get Tinder-only screens, except the row actions in FR-TN-008.
 - **FR-TN-004**: The intro MUST state: Tinder allows one account per person at a time; delete the old account before making the new one; download the data first; matches, messages, swipes, and paid plans cannot move; a banned account cannot be replaced; and the app never asks for the Tinder password or signs in to Tinder. The user MUST tap I understand to go on.
@@ -228,6 +238,7 @@ erDiagram
 
 ## What the project owner needs to do
 
-1. **Answer the open question** in FR-TN-001 (run `/speckit-clarify`).
-2. **Test export**: on a test Tinder account with a full profile, request a copy of the data and keep the file for the plan. Do not commit it; it holds personal data.
-3. **Read the terms**: read Tinder's current [Terms of Use](https://policies.tinder.com/terms) and [Community Guidelines](https://policies.tinder.com/community-guidelines) and confirm that a tool which only reads the user's own export file, and never talks to Tinder, does not need Tinder's written consent. If unsure, ask a lawyer before shipping.
+None while the spec is cancelled. If you revisit it, these steps need your Tinder account and cannot be done by an agent.
+
+1. **Test export**: on a test Tinder account with a full profile, request a copy of the data and keep the file for the plan. Do not commit it; it holds personal data.
+2. **Read the terms**: read Tinder's current [Terms of Use](https://policies.tinder.com/terms) and [Community Guidelines](https://policies.tinder.com/community-guidelines) and confirm that a tool which only reads the user's own export file, and never talks to Tinder, does not need Tinder's written consent. If unsure, ask a lawyer before shipping.

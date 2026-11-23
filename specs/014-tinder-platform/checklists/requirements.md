@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain
+- [x] No [NEEDS CLARIFICATION] markers remain
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -31,6 +31,6 @@
 
 ## Notes
 
-- One open question remains in FR-TN-001: ship Tinder as a Guided profile move, cancel it, or ship a guide card only. It decides the whole scope. Resolve with `/speckit-clarify` before `/speckit-plan`.
+- The open question in FR-TN-001 was answered on 2026-11-23: Cancel. The spec and this checklist are kept as a record.
 - Tinder export details, the one-account rule, and terms appear only in Feasibility and the marked "Tinder section", as AGENTS.md asks for platform-specific details.
 - Facts were checked on 2026-11-23 from Tinder's Terms of Use summaries, Community Guidelines, and help center; the plan must confirm the export contents against a real export.
