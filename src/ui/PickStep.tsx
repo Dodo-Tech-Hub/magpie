@@ -197,7 +197,7 @@ export function PickStep() {
         )}
         {showSummary && <Text style={styles.summary}>{summary(counts)}</Text>}
         {moveState === 'limit' && <LimitNote driver={driver} name={platformName} onLearnMore={learnMore} />}
-        {moveState === 'done' && <AccessNote driver={driver} />}
+        {moveState === 'done' && state.accessEnded && <AccessNote driver={driver} />}
         {state.notice && state.step === 'pick' && <Text style={styles.error}>{state.notice}</Text>}
         {!(moveState === 'done' && movable === 0) && items.length > 0 && (
           <Pressable

@@ -11,12 +11,14 @@ export const strings = {
   signOut: 'Sign out',
   allow: 'Allow',
   allowOtherAccount: 'Use your new account here too.',
-  openAccessPage: 'Open GitHub settings',
   loading: 'Loading your list…',
   loadPartial: "Some items couldn't load. The rest can still move.",
   copyCode: 'Copy code',
   waitingForYou: 'Waiting for you to allow it in the browser…',
   signInFailed: "Sign-in didn't finish. Try again.",
+  notFound: "We can't find that account. Check the name.",
+  notSupported: 'Magpie works only with accounts hosted by Bluesky for now.',
+  unavailable: "This account can't be read right now.",
   sameAsOld: 'This is your old account. Pick a different one.',
   sameAsNew: 'This is your new account. Pick a different one.',
   pickLocked: 'Sign in to your old account first',
@@ -119,6 +121,7 @@ export const githubWords: Words = {
   moveButton: (n) => `Move ${n} item${n === 1 ? '' : 's'}`,
   notAffiliated: 'Magpie is not made by or linked with GitHub. GitHub is a trademark of GitHub, Inc.',
   accessNote: "Magpie's access ends on its own within 8 hours. To end it now, open GitHub settings.",
+  accessButton: 'Open GitHub settings',
 };
 
 // The sign-in code panel. The hint is for the second sign-in, when the browser may remember the first account.

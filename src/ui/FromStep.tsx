@@ -43,7 +43,9 @@ export function FromStep() {
         hint={driver.words.oldHint}
         account={state.oldAccount}
         disabled={busy}
-        onSignIn={() => void signInOld(state, dispatch)}
+        onSignIn={(handle) => void signInOld(state, dispatch, handle)}
+        handleInput={driver.handleInput}
+        changeLabel={driver.words.changeOld}
         code={state.signInCode?.role === 'old' ? state.signInCode : null}
         onCancel={cancelSignIn}
         signsOut={driver.switchSignsOut}

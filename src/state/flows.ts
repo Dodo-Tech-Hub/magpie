@@ -55,7 +55,7 @@ let waiting: AbortController | null = null;
 export const cancelSignIn = () => waiting?.abort();
 
 // One sign-in. A code (device sign-in) shows in place, is copied, and opens the browser.
-async function signInAs(state: State, dispatch: D, role: Role, kinds: string[]): Promise<SignInResult> {
+async function signInAs(state: State, dispatch: D, role: Role, kinds: string[], handle?: string): Promise<SignInResult> {
   const driver = driverOf(state);
   const ctl = new AbortController();
   waiting = ctl;
@@ -75,10 +75,20 @@ async function signInAs(state: State, dispatch: D, role: Role, kinds: string[]):
         }
       },
       ctl.signal,
+      handle,
     );
   } finally {
     if (waiting === ctl) waiting = null;
   }
+}
+
+// The line to show when a sign-in did not end with an account. A cancel shows nothing.
+function failNotice(reason: 'cancelled' | 'failed' | 'not_found' | 'not_supported' | 'unavailable'): string | null {
+  if (reason === 'cancelled') return null;
+  if (reason === 'not_found') return strings.notFound;
+  if (reason === 'not_supported') return strings.notSupported;
+  if (reason === 'unavailable') return strings.unavailable;
+  return strings.signInFailed;
 }
 
 // The kinds the new account is asked for: the picked ones, never an optional one (FR-GH-020).
@@ -90,12 +100,12 @@ function kindsToAsk(state: State, driver: Driver): string[] {
 }
 
 // Old account: read-only. Its list is loaded once and kept (research R2).
-export async function signInOld(state: State, dispatch: D): Promise<void> {
+export async function signInOld(state: State, dispatch: D, handle?: string): Promise<void> {
   const driver = driverOf(state);
   dispatch({ type: 'setNotice', notice: null });
-  const res = await signInAs(state, dispatch, 'old', []);
+  const res = await signInAs(state, dispatch, 'old', [], handle);
   if (!res.ok) {
-    if (res.reason === 'failed') dispatch({ type: 'setNotice', notice: strings.signInFailed });
+    dispatch({ type: 'setNotice', notice: failNotice(res.reason) });
     return;
   }
   if (state.newAccount && res.account.id === state.newAccount.id) {
@@ -126,12 +136,12 @@ export async function signInOld(state: State, dispatch: D): Promise<void> {
 }
 
 // New account: needs add access. Creates or opens the progress for the pair.
-export async function signInNew(state: State, dispatch: D): Promise<void> {
+export async function signInNew(state: State, dispatch: D, handle?: string): Promise<void> {
   const driver = driverOf(state);
   dispatch({ type: 'setNotice', notice: null });
-  const res = await signInAs(state, dispatch, 'new', kindsToAsk(state, driver));
+  const res = await signInAs(state, dispatch, 'new', kindsToAsk(state, driver), handle);
   if (!res.ok) {
-    if (res.reason === 'failed') dispatch({ type: 'setNotice', notice: strings.signInFailed });
+    dispatch({ type: 'setNotice', notice: failNotice(res.reason) });
     return;
   }
   if (state.expectedNew && res.account.id !== state.expectedNew.id) {
@@ -190,8 +200,9 @@ async function checkNew(progressId: string, driver: Driver, items: StoredItem[])
 // A move ended with nothing left: the platform drops what it holds for the new account.
 async function endMove(driver: Driver, dispatch: D) {
   if (!driver.endMove) return;
-  await driver.endMove();
-  dispatch({ type: 'setAccessEnded', ended: true });
+  // false: the platform could not cancel the access, so the screen says it ends on its own.
+  const cancelled = await driver.endMove();
+  dispatch({ type: 'setAccessEnded', ended: cancelled === false });
 }
 
 // The Switch button. A platform whose sign-in cannot be switched in place signs out instead (US4).
@@ -201,11 +212,11 @@ export async function switchAccount(state: State, dispatch: D, role: Role): Prom
     await (role === 'old' ? signInOld(state, dispatch) : signInNew(state, dispatch));
     return;
   }
-  await driver.signOut(role);
+  const cancelled = await driver.signOut(role);
   if (role === 'new') {
     dispatch({ type: 'setNew', account: null });
     dispatch({ type: 'setGranted', kinds: [] });
-    dispatch({ type: 'setAccessEnded', ended: true });
+    dispatch({ type: 'setAccessEnded', ended: cancelled === false });
   } else {
     dispatch({ type: 'setOld', account: null, items: [] });
   }
@@ -219,7 +230,7 @@ export async function allowKind(state: State, dispatch: D, kind: string): Promis
   dispatch({ type: 'setNotice', notice: null });
   const res = await signInAs(state, dispatch, 'new', [...state.granted, kind]);
   if (!res.ok) {
-    if (res.reason === 'failed') dispatch({ type: 'setNotice', notice: strings.signInFailed });
+    dispatch({ type: 'setNotice', notice: failNotice(res.reason) });
     return;
   }
   // The driver kept the old token for a different account, so there is nothing to undo.

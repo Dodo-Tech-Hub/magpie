@@ -119,10 +119,13 @@ export const githubDriver: Driver = {
     return { ok: true, account: res.account };
   },
 
+  // false: GitHub cannot cancel a token without the client secret, so the new token only runs out (FR-GH-019).
   async signOut(role) {
     strikes = 0;
     if (role !== 'new') dropOld();
-    if (role !== 'old') await dropNew();
+    if (role === 'old') return;
+    await dropNew();
+    return false;
   },
 
   granted: async () => kindsOf((await getNew())?.scopes ?? []),
@@ -197,6 +200,7 @@ export const githubDriver: Driver = {
   async endMove() {
     strikes = 0;
     await dropNew();
+    return false;
   },
 };
 

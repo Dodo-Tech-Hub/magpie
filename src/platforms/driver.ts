@@ -51,6 +51,8 @@ export type Words = {
   moveButton: (n: number) => string;
   notAffiliated: string;
   accessNote?: string;
+  // The button under accessNote that opens the page where the user ends the access (needs removeAccessUrl).
+  accessButton?: string;
   // For a platform with handleInput: the label and the placeholder of the handle box.
   handleLabel?: string;
   handlePlaceholder?: string;

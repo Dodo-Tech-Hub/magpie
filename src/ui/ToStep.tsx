@@ -20,7 +20,8 @@ export function ToStep() {
         hint={driver.words.newHint}
         account={state.newAccount}
         disabled={state.moveState === 'moving'}
-        onSignIn={() => void signInNew(state, dispatch)}
+        onSignIn={(handle) => void signInNew(state, dispatch, handle)}
+        handleInput={driver.handleInput}
         code={state.signInCode?.role === 'new' ? state.signInCode : null}
         onCancel={cancelSignIn}
         signsOut={driver.switchSignsOut}
