@@ -45,7 +45,7 @@ Technical approach:
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-Checked against `.specify/memory/constitution.md` v1.6.0.
+Checked against `.specify/memory/constitution.md` v1.7.0.
 
 | Principle / rule | How the plan complies | Status |
 | --- | --- | --- |
@@ -59,7 +59,7 @@ Checked against `.specify/memory/constitution.md` v1.6.0.
 | III.2 Sign-in flow | Authorization Code with PKCE (plus PAR and DPoP) in the system browser. Bluesky has no native SDK. `state`, `iss`, issuer host, and DID are checked (R5). | Pass |
 | III.3 Token storage | New session in `expo-secure-store`; old session and sign-in state in memory. Revoked and deleted at the summary, on Sign out, on Delete all, and on "Don't save". Revocation confirmed by the Check before Part B; if it fails, work stops for the owner (spec Clarifications). | Pass, pending Check item 2 |
 | III.4 No secrets | Public client: no secret, no key. The client ID is a public URL. | Pass |
-| III.5 Network | Five hosts, listed in the spec and the API contract. The app checks the account's server host before use. HTTPS only. The metadata host is read by Bluesky, not by the app. | Pass |
+| III.5 Network | Four hosts and one host range (`*.host.bsky.network`), listed in the spec and the API contract. v1.7.0 allows a range when a platform's account hosts cannot be listed one by one; the app checks every server host against the range before use and refuses any other. HTTPS only. The metadata host is read by Bluesky, not by the app. | Pass |
 | III.6 Data | DID, handle, name, picture, item IDs, names, pictures, list members, progress, add times (1 day). Delete all removes all of it and the session. | Pass |
 | III.7 Logging | The Bluesky modules log nothing. Mutes and feeds are never logged. | Pass |
 | III.8 Untrusted input | Every answer is shape-checked; DIDs and at-uris match a pattern; picture URLs must be on `cdn.bsky.app`. The redirect route is the only deep link handled. | Pass |
