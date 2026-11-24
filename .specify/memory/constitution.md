@@ -88,6 +88,7 @@ The app MUST follow each platform's terms with no exceptions.
 - The app MUST NOT script taps, drive a WebView bot, use an accessibility service, or scrape pages to follow or subscribe on a platform. This applies to every platform that has no official follow API or whose terms forbid automation.
 - Platforms without an official follow API (for example Facebook, Instagram, Threads, TikTok, X, and Twitch) MUST use a guided manual flow: the app shows the list and opens each profile, and the user taps Follow. The app MUST NOT ask for or store the user's password for these platforms.
 - A platform's automatic flow MUST use only that platform's official API, within its quota, rate limits, and terms.
+- Before the app adds payment, ads, or collection of extra user data anywhere, check each supported platform's terms. Some platforms (for example Apple Music) forbid charging for, or monetizing, access to their service.
 - Platform logos MUST be official and unmodified, follow each brand's guidelines, and be used only to name the platform. They MUST NOT appear in the app icon or the app name.
 
 Rationale: automation breaks platform terms and gets users' accounts banned. A guided flow is slower but safe, and it keeps the user in control.
