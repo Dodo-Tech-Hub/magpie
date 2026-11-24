@@ -41,9 +41,32 @@ Checked on 2026-11-23 against Apple's developer documentation and developer foru
 | Can the app make playlists on the new account? | Yes. It can create a playlist and add songs to it. It cannot edit or delete a playlist afterwards. | No, but a failed move cannot be undone, so the app MUST NOT make duplicates (FR-AM-011). |
 | Can the app add favorite artists? | Apple documents an "add resource to favorites" request. Whether it accepts artists, and whether favorite artists can be read from the old account, is not confirmed; a forum answer calls reading them private. | Partly. Favorite artists are in scope only if the plan confirms both. |
 | Are there speed limits? | Apple does not publish them. The API answers "too many requests" when a limit is hit. | No. The app paces itself and waits (FR-AM-012). |
-| Do Apple's terms allow this use? | The Apple Music API terms allow apps to add to a user's library with the user's consent. Copying the library to another account is not named as allowed or forbidden. | Risk. The owner reads the terms before release. |
+| Do Apple's terms allow this use? | Apple names adding songs to a library and making playlists as intended uses. Copying a library to another account is not named as allowed or forbidden. See Apple terms below. | Risk, not a blocker, if the app stays free and asks for consent. |
 
 **Verdict**: Automatic Apple Music is feasible if the owner pays for the Apple Developer Program. The main risks are the in-between account switch and the Android sign-in through the Apple Music app.
+
+### Apple terms
+
+Read on 2026-11-24 from the [Apple Developer Program License Agreement](https://developer.apple.com/support/terms/apple-developer-program-license-agreement/) (web version; the [Agreements and Guidelines](https://developer.apple.com/support/terms/) index lists it as last updated 2026-10-29) and the [MusicKit](https://developer.apple.com/musickit/) page. Apple has no separate Apple Music API terms: `developer.apple.com/terms/apple-music-api/` opens the same index. Sections 4 to 14 and the Schedules and Attachments of the agreement were not read yet.
+
+| Section | What it says (short quote) | What it means for Apple Music in Magpie |
+| --- | --- | --- |
+| [MusicKit page](https://developer.apple.com/musickit/) | Users "can use your app or website to create playlists, add songs to their library", with permission. | Apple names the exact actions the move uses. Supports the feature. |
+| 3.3.6(D), purpose | MusicKit may not be used "for purposes unrelated to facilitating access to Your end users' Apple Music subscriptions." | Moving a user's own library to their other subscription is related, but Apple decides. Risk. |
+| 3.3.6(D), user metadata | "Metadata from users (such as playlists and favorites) may be used only to provide a service or function" that is clearly disclosed and directly relevant to the app, "as determined in Apple's sole discretion." | The intro MUST say what the app reads and why (FR-AM-004). Apple can still say no. |
+| 3.3.6(D), catalog metadata | Catalog metadata "may not be used separately from music playback or managing playlists." | Managing playlists is allowed. The Pick list shows names only to choose what to move. |
+| 3.3.6(D), content | "You may not... download, upload, or modify any MusicKit Content", and MusicKit Content "cannot be synchronized with any other content." | The app moves catalog references, never audio, video, or artwork files. Fits. |
+| 3.3.6(D), no charging | "You agree not to require payment for or indirectly monetize access to the Apple Music service" (for example in-app purchase, advertising, requesting user info). | Apple Music MUST stay free, with no ads (FR-AM-017). |
+| 2.8, no charging | "You agree not to charge any fees to end users solely for access to or use of the Apple Services." Also "You agree not to sell access to the Apple Services in any way." | Same as above. |
+| 2.8, Apple products | Apple Services are "only for use on Apple-branded products." | Conflicts on paper with Apple's own MusicKit for Android. Apple Music on Android rests on Apple offering that SDK and its documentation. The owner checks this before the Android release. |
+| 3.3.6(D), branding | "You must follow the Apple Music Identity Guidelines." | The card and Settings use the Apple Music mark per the [Apple Music Identity Guidelines](https://marketing.services.apple/apple-music-identity-guidelines) (FR-AM-015). |
+| 3.3.6(D), MusicKit JS | "You may use MusicKit JS only as a stand-alone library in Your Application, website, or web application." | The iOS web sign-in (FR-AM-005) is allowed if MusicKit JS is used unchanged. The plan confirms. |
+| 3.3.3(B), consent | Apps "may not collect user or device data without prior user consent" and "may not broaden or otherwise change the scope of usage." | The user agrees before the app reads the library. A later new use needs new consent. |
+| 3.3.3(C), privacy policy | The privacy policy must explain "collection, use, disclosure, sharing, retention, and deletion". Use must "promptly cease" if consent is withdrawn. | The privacy policy adds Apple Music. Start again and Delete all remove the data (FR-AM-014). |
+| 3.3.3(D), caching | Apps may not "scrape, mine, retrieve, cache, analyze or index" Apple data, "except the data that Apple expressly provides or makes available". | Keeping the read list on the phone for the move uses data the API returns. The app MUST delete it when the move is cleared (FR-AM-014). |
+| 2.8, limits | "there may be storage capacity, transmission, and/or transactional limits". No numbers. | Matches the unpublished speed limits (FR-AM-012). |
+
+**Terms verdict**: nothing read so far allows or forbids moving a library between a user's own accounts. A free, consent-based tool that only adds catalog items and makes playlists is the safest reading, because Apple advertises those uses. Open risks: Apple's "sole discretion" on purpose, and the "Apple-branded products" line for Android.
 
 ## What Apple Music supports
 
@@ -192,6 +215,7 @@ A large library takes time, and the user may close the app or lose the connectio
 - **FR-AM-014**: Tokens MUST stay on the phone only, in the system's secure storage, and MUST be deleted on sign-out, Start again, and Delete all in Settings. The developer token's private key MUST NOT ship in the app or be committed; how the app gets a developer token is a plan decision.
 - **FR-AM-015**: Settings MUST say that Magpie is not made by or linked with Apple. The Apple Music mark MUST be the official mark, unmodified, used only to name the platform, following Apple's marketing guidelines.
 - **FR-AM-016**: The feature MUST work on Android and iOS, following the Platform differences table below.
+- **FR-AM-017**: Apple Music MUST be free to use, with no payment, ads, or extra personal data asked for in return (Apple terms 2.8 and 3.3.6(D)).
 
 ### Platform differences (Android and iOS)
 
@@ -258,4 +282,4 @@ These steps need your Apple account and cannot be done by an agent.
 2. **MusicKit key**: in the Apple Developer account, create a Media ID with MusicKit and a private key for it. Keep the key file off the repository and out of the app.
 3. **Test accounts**: two Apple Accounts with an active Apple Music subscription (a family plan covers both) and Sync Library on, with a small test library on the old one.
 4. **Android**: the Apple Music app on the Android test phone.
-5. **Terms**: read the current Apple Music API and MusicKit terms and confirm that copying a user's own library to their other account, with their consent, is allowed.
+5. **Terms**: see Apple terms above. Before release, read the rest of the agreement (Sections 4 to 14, Schedules, Attachments) and the [Apple Music Identity Guidelines](https://marketing.services.apple/apple-music-identity-guidelines). If unsure about the "Apple-branded products" line for Android, ask Apple Developer Support or a lawyer.
