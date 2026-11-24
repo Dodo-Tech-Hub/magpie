@@ -228,17 +228,21 @@ A large library takes time, and the user may close the app or lose the connectio
 
 ### Key Entities *(include if feature involves data)*
 
-Apple Music adds item kinds to the entities of spec 001 and 004.
+Apple Music adds item kinds to the entities of spec 001, 004, and 008.
 
 - **Platform**: Apple Music is a new entry in the list of platforms, in the Automatic section.
+- **Account**: A signed-in Apple Account on From or To. Used to stop the same account being used twice (FR-AM-007).
+- **Progress**: The saved state of a move for one old and new account pair, as in spec 001 and 008: both accounts, the picked items, and each item's status. Kept on the phone only.
 - **Library Item**: One song, album, or favorite artist from the old account, with its catalog identity, name, artist, kind, and move state.
 - **Playlist Item**: One playlist from the old account, with its name, kind (made by the user, or added from Apple or another user), its songs in order, the new playlist once made, and how many songs were added.
 
 ```mermaid
 erDiagram
-    PLATFORM ||--o{ MIGRATION : has
-    MIGRATION ||--|{ LIBRARY_ITEM : moves
-    MIGRATION ||--o{ PLAYLIST_ITEM : moves
+    PLATFORM ||--o{ PROGRESS : has
+    PROGRESS }o--|| ACCOUNT : "from (old)"
+    PROGRESS }o--o| ACCOUNT : "to (new)"
+    PROGRESS ||--o{ LIBRARY_ITEM : moves
+    PROGRESS ||--o{ PLAYLIST_ITEM : moves
     PLAYLIST_ITEM ||--|{ LIBRARY_ITEM : lists
 ```
 
