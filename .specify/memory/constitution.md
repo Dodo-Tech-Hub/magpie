@@ -159,4 +159,4 @@ Rationale: a spec is read by people who are new to the feature. A flow, a state 
 - Reviews of every spec, plan, and pull request MUST check compliance. Any exception MUST be written
   in the plan with its reason and approved by the project owner.
 
-**Version**: 1.7.0 | **Ratified**: 2026-11-08 | **Last Amended**: 2026-11-24
+**Version**: 1.8.0 | **Ratified**: 2026-11-08 | **Last Amended**: 2026-11-24
