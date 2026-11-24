@@ -193,7 +193,7 @@ export function PickStep() {
       />
       <View style={styles.bar}>
         {driver.pace && !moving && !showSummary && movable > 0 && (
-          <Text style={styles.timeLeft}>{timeLeftText(timeLeft(adds), adds)}</Text>
+          <Text style={styles.timeLeft}>{timeLeftText(timeLeft(adds, driver.pace), adds, driver.pace.perHour)}</Text>
         )}
         {showSummary && <Text style={styles.summary}>{summary(counts)}</Text>}
         {moveState === 'limit' && <LimitNote driver={driver} name={platformName} onLearnMore={learnMore} />}

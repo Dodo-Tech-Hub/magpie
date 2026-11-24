@@ -88,7 +88,8 @@ export const githubDriver: Driver = {
   ],
   moveOrder: ['repo', 'person', 'gist', 'list'],
   pace: {
-    perMinute: 20,
+    // ponytail: fixed numbers, tune them from real runs if GitHub's limits change
+    gapMs: 3000, // 20 per minute
     perHour: 300,
     // One add per item, plus one per repository of each list.
     adds: (items) =>

@@ -285,8 +285,9 @@ export async function startMove(state: State, dispatch: D): Promise<void> {
   let stopNotice: string | null = null;
   const done = runMove(progressId, {
     add: (item, all, pacer) => driver.add(item, all, pacer),
-    pacer: driver.pace ? createPacer(`${driver.id}:${newAccount.id}`) : undefined,
+    pacer: driver.pace ? createPacer(`${driver.id}:${newAccount.id}`, driver.pace) : undefined,
     kindOrder: driver.moveOrder ?? pickOrder(driver),
+    itemOrder: driver.itemOrder,
     onUpdate: () => void reload(progressId, driver, d),
     onStop: (notice) => (stopNotice = notice),
     signal: ctl.signal,

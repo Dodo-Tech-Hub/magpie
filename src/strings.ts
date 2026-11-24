@@ -64,8 +64,9 @@ export const learnMoreLabel = (name: string) => `Learn more about ${name} limits
 export const signInTo = (handle: string) => `Sign in to ${handle} to keep going.`;
 export const wrongAccount = (handle: string) => `This one needs ${handle}. Pick that account.`;
 // How long the picked adds take at the pace of the platform (FR-GH-011).
-export const timeLeftText = (seconds: number, adds: number) => {
-  if (adds > 300) return 'More than one session';
+// perHour: the most adds a platform allows in an hour. More than that takes more than one session.
+export const timeLeftText = (seconds: number, adds: number, perHour: number) => {
+  if (adds > perHour) return 'More than one session';
   const minutes = Math.ceil(seconds / 60);
   return seconds < 60 ? 'Less than a minute' : `About ${minutes} minute${minutes === 1 ? '' : 's'}`;
 };

@@ -284,10 +284,11 @@ export async function getProgress(id: string): Promise<UnfinishedProgress | null
 }
 
 // The times of recent adds, for the pace (FR-GH-010). Rows older than 1 hour go on every write.
-export async function recordAdd(accountKey: string, at: number) {
+// keepMs: how long the pace needs this add on record (1 hour for GitHub, 1 day for Bluesky). Gone after that.
+export async function recordAdd(accountKey: string, at: number, keepMs = 3_600_000) {
   const db = await initStore();
-  await db.runAsync('DELETE FROM add_log WHERE at < ?', [now() - 3_600_000]);
-  await db.runAsync('INSERT INTO add_log (account_key, at) VALUES (?, ?)', [accountKey, at]);
+  await db.runAsync('DELETE FROM add_log WHERE keep_until < ?', [now()]);
+  await db.runAsync('INSERT INTO add_log (account_key, at, keep_until) VALUES (?, ?, ?)', [accountKey, at, at + keepMs]);
 }
 
 export async function addsSince(accountKey: string, since: number): Promise<number[]> {

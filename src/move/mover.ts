@@ -15,6 +15,8 @@ export type MoveOptions = {
   pacer?: Pacer;
   // The order items move in (kind IDs). Default: the order they are stored in.
   kindOrder?: string[];
+  // The order items of one kind move in (for example oldest first). Default: the order they are stored in.
+  itemOrder?: (a: StoredItem, b: StoredItem) => number;
   onUpdate?: () => void;
   // Aborted by "Don't save": the move stops before the next item (FR-GH-022).
   signal?: AbortSignal;
@@ -43,6 +45,13 @@ export async function runMove(progressId: string, opts: MoveOptions): Promise<Mo
   const simulate = opts.simulateQuotaAfter ?? devQuotaSwitch();
   const all = await getItems(progressId, opts.kindOrder);
   const todo = all.filter((c) => c.picked && c.status === 'waiting');
+  // Array sort is stable, so the kind order from getItems is kept and the driver orders only inside a kind.
+  const rank = (k: string) => {
+    const i = opts.kindOrder?.indexOf(k) ?? -1;
+    return i < 0 ? (opts.kindOrder?.length ?? 0) : i;
+  };
+  const itemOrder = opts.itemOrder;
+  if (itemOrder) todo.sort((a, b) => rank(a.kind) - rank(b.kind) || itemOrder(a, b));
   let moved = 0;
 
   // Keep the list the driver sees in step with the saved statuses.
