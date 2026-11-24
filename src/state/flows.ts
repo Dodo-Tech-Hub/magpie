@@ -222,6 +222,40 @@ export async function switchAccount(state: State, dispatch: D, role: Role): Prom
   }
 }
 
+// "Allow" on a kind that needs the old account (FR-BS-020): sign in to the old account for every such kind not read yet,
+// read it, and add its rows. Rows already on the list stay, with their picks.
+export async function allowOld(state: State, dispatch: D): Promise<void> {
+  const driver = driverOf(state);
+  const { progressId, oldAccount } = state;
+  if (!oldAccount || !progressId) return;
+  const kinds = driver.kinds.filter((k) => k.needsOld && !state.oldRead.includes(k.id)).map((k) => k.id);
+  dispatch({ type: 'setNotice', notice: null });
+  const res = await signInAs(state, dispatch, 'old', kinds, oldAccount.handle);
+  if (!res.ok) {
+    dispatch({ type: 'setNotice', notice: failNotice(res.reason) });
+    return;
+  }
+  if (res.account.id !== oldAccount.id) {
+    await driver.signOut('old');
+    dispatch({ type: 'setNotice', notice: strings.allowOldOther });
+    return;
+  }
+  dispatch({ type: 'setLoading', loading: true });
+  try {
+    const { items, missing } = await driver.listOld();
+    // Saving the rows on the list too keeps the rows of kinds this read did not return.
+    await saveItems(progressId, [...state.items, ...items]);
+    dispatch({ type: 'setOldRead', kinds: [...state.oldRead, ...kinds.filter((k) => !missing.includes(k))] });
+    if (state.newAccount) await openPair(driver, dispatch, progressId);
+    else await reload(progressId, driver, dispatch);
+    if (missing.length > 0) dispatch({ type: 'setNotice', notice: strings.loadPartial });
+  } catch (e) {
+    dispatch({ type: 'setNotice', notice: noticeFor(e, driver) });
+  } finally {
+    dispatch({ type: 'setLoading', loading: false });
+  }
+}
+
 // "Allow" on a kind the new account has no access for: sign in again, asking for what it had plus this kind (FR-GH-020).
 export async function allowKind(state: State, dispatch: D, kind: string): Promise<void> {
   const driver = driverOf(state);

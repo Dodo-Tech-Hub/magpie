@@ -16,6 +16,8 @@ export const strings = {
   copyCode: 'Copy code',
   waitingForYou: 'Waiting for you to allow it in the browser…',
   signInFailed: "Sign-in didn't finish. Try again.",
+  needsOldLine: 'Sign in to your old account to move these.',
+  allowOldOther: 'Use your old account here.',
   notFound: "We can't find that account. Check the name.",
   notSupported: 'Magpie works only with accounts hosted by Bluesky for now.',
   unavailable: "This account can't be read right now.",

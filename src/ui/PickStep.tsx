@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { driverFor, PLATFORMS } from '@/platforms/platforms';
 import { useApp } from '@/state/AppState';
 import type { StoredItem } from '@/store/progressStore';
-import { allowKind, isMovable, openLimits, startMove, togglePick } from '@/state/flows';
+import { allowKind, allowOld, isMovable, openLimits, startMove, togglePick } from '@/state/flows';
 import { timeLeft } from '@/move/pacer';
 import { needAccess, pickedCounter, strings, summary, timeLeftText } from '@/strings';
 import { useTheme, type Colors } from '@/theme/theme';
@@ -69,9 +69,15 @@ export function PickStep() {
   // One section per kind when there is more than one kind. A kind with no items has none (FR-GH-003).
   // A kind the new account has no access for is greyed out with an Allow button (FR-GH-020).
   const noAccess = (kind: string) => !!state.newAccount && !state.granted.includes(kind);
-  const kinds = driver.kinds.filter((k) => shown.some((c) => c.kind === k.id));
+  // A kind that needs the old account and was not read yet has no rows. It shows greyed with its own Allow (FR-BS-020).
+  const oldLocked = (kind: string) =>
+    !query &&
+    !!driver.kinds.find((k) => k.id === kind)?.needsOld &&
+    !state.oldRead.includes(kind) &&
+    !items.some((c) => c.kind === kind);
+  const kinds = driver.kinds.filter((k) => shown.some((c) => c.kind === k.id) || oldLocked(k.id));
   const rows: Row[] =
-    kinds.length < 2 && !kinds.some((k) => noAccess(k.id))
+    kinds.length < 2 && !kinds.some((k) => noAccess(k.id) || oldLocked(k.id))
       ? shown.map((item) => ({ item }))
       : kinds.flatMap((k) => {
           const inKind = shown.filter((c) => c.kind === k.id);
@@ -84,7 +90,7 @@ export function PickStep() {
               heading: k.heading,
               key: `h:${k.id}`,
               kind: k.id,
-              locked: noAccess(k.id),
+              locked: noAccess(k.id) || oldLocked(k.id),
               count: inKind.length,
               pickable: canPick.map((c) => c.itemId),
               allPicked: canPick.length > 0 && canPick.every((c) => c.picked),
@@ -151,13 +157,13 @@ export function PickStep() {
                 <Pressable
                   style={styles.sectionRow}
                   accessibilityRole="button"
-                  accessibilityLabel={`${r.heading}, ${r.count}`}
+                  accessibilityLabel={r.count > 0 ? `${r.heading}, ${r.count}` : r.heading}
                   accessibilityState={{ expanded: isOpen(r.kind) }}
                   onPress={() => toggleKind(r.kind)}
                 >
                   <Ionicons name={isOpen(r.kind) ? 'chevron-down' : 'chevron-forward'} size={20} color={colors.text} />
                   <Text style={styles.section}>{r.heading}</Text>
-                  <Text style={styles.sectionCount}>{r.count}</Text>
+                  {r.count > 0 && <Text style={styles.sectionCount}>{r.count}</Text>}
                 </Pressable>
                 {!r.locked && r.pickable.length > 0 && (
                   <Pressable
@@ -174,12 +180,12 @@ export function PickStep() {
               </View>
               {r.locked && (
                 <>
-                  <Text style={styles.lockedText}>{needAccess(r.heading)}</Text>
+                  <Text style={styles.lockedText}>{oldLocked(r.kind) ? strings.needsOldLine : needAccess(r.heading)}</Text>
                   <Pressable
                     style={styles.allow}
                     accessibilityRole="button"
                     accessibilityLabel={`${strings.allow} ${r.heading}`}
-                    onPress={() => void allowKind(state, dispatch, r.kind)}
+                    onPress={() => void (oldLocked(r.kind) ? allowOld(state, dispatch) : allowKind(state, dispatch, r.kind))}
                   >
                     <Ionicons name="key-outline" size={18} color={colors.text} />
                     <Text style={styles.allowText}>{strings.allow}</Text>

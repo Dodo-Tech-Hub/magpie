@@ -24,6 +24,9 @@ export type State = {
   signInCode: { role: 'old' | 'new'; code: string; hint: string | null } | null;
   // Kinds the new account has access for, from the platform.
   granted: string[];
+  // Kinds that need an old-account sign-in and were read in this app run. ponytail: not saved, so after a restart an
+  // empty section of such a kind asks for "Allow" again; save it on the progress if users notice.
+  oldRead: string[];
   // The old list is being read.
   loading: boolean;
   // The new account's token was deleted from the phone (summary or Sign out), so the remove-access note shows.
@@ -49,6 +52,7 @@ export type Action =
   | { type: 'setNotice'; notice: string | null }
   | { type: 'setSignInCode'; code: State['signInCode'] }
   | { type: 'setGranted'; kinds: string[] }
+  | { type: 'setOldRead'; kinds: string[] }
   | { type: 'setLoading'; loading: boolean }
   | { type: 'setAccessEnded'; ended: boolean }
   | { type: 'reset' };
@@ -67,6 +71,7 @@ export const initialState: State = {
   notice: null,
   signInCode: null,
   granted: [],
+  oldRead: [],
   loading: false,
   accessEnded: false,
 };
@@ -95,6 +100,7 @@ export function reducer(state: State, action: Action): State {
         items: action.items,
         progressId: null,
         expectedNew: null,
+        oldRead: [],
         moveState: 'idle',
         notice: null,
       };
@@ -121,6 +127,8 @@ export function reducer(state: State, action: Action): State {
       return { ...state, granted: action.kinds };
     case 'setAccessEnded':
       return { ...state, accessEnded: action.ended };
+    case 'setOldRead':
+      return { ...state, oldRead: action.kinds };
     case 'setLoading':
       return { ...state, loading: action.loading };
     case 'reset':
