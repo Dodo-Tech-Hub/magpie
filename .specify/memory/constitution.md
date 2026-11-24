@@ -50,7 +50,7 @@ until the rule is met or the constitution is amended.
 4. **No secrets in the app**: the app is a public OAuth client. Never ship client secrets, API keys
    with write access, or private credentials. Everything in `app.json`, `app.config.*`, and
    `EXPO_PUBLIC_*` variables is public. Never commit `.env` files with secrets.
-5. **Network**: HTTPS only. Keep iOS App Transport Security on and Android cleartext traffic off. The app talks only to an allowlist of hosts: the OAuth and API hosts of each supported platform (for Google: `accounts.google.com`, `oauth2.googleapis.com`, `www.googleapis.com`), plus one static host for guide content (`guides.json` and images). The guide host is read-only: the app sends it no user data and no identifiers. Every host MUST be listed in the spec or plan of the feature that adds it. No own backend, analytics, ads, or crash-reporting SDKs without a constitution amendment.
+5. **Network**: HTTPS only. Keep iOS App Transport Security on and Android cleartext traffic off. The app talks only to an allowlist of hosts: the OAuth and API hosts of each supported platform (for Google: `accounts.google.com`, `oauth2.googleapis.com`, `www.googleapis.com`), plus one static host for guide content (`guides.json` and images). The guide host is read-only: the app sends it no user data and no identifiers. Every host MUST be listed in the spec or plan of the feature that adds it. When a platform serves accounts from many hosts that cannot be listed one by one, the spec MAY list a host range as a domain suffix (for example `*.host.bsky.network`). The app MUST check every host against the range before it sends a request there, and MUST refuse any host outside it. No own backend, analytics, ads, or crash-reporting SDKs without a constitution amendment.
 6. **Data minimization**: keep only the data the migration needs (account IDs, names, thumbnails, progress). User data never leaves the device except to the APIs of the platforms being migrated between. User data exports (such as JSON or zip files from a platform) MUST be parsed on the device only and never uploaded. The user MUST be able to delete all local data from inside the app.
 7. **Logging**: never log tokens, authorization codes, email addresses, usernames, follow lists, or export contents. Production builds MUST NOT include debug logging of API payloads.
 8. **Untrusted input**: treat API responses and deep link parameters as untrusted. Validate their
@@ -158,4 +158,4 @@ Rationale: a spec is read by people who are new to the feature. A flow, a state 
 - Reviews of every spec, plan, and pull request MUST check compliance. Any exception MUST be written
   in the plan with its reason and approved by the project owner.
 
-**Version**: 1.6.0 | **Ratified**: 2026-11-08 | **Last Amended**: 2026-11-16
+**Version**: 1.7.0 | **Ratified**: 2026-11-08 | **Last Amended**: 2026-11-24
