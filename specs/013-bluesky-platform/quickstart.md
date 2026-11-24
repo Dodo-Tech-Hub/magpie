@@ -39,7 +39,7 @@ The script opens the browser for each sign-in and prints one line per question w
 | 6 | On To, sign in with the old account instead | "Use a different account here." |
 | 7 | Tap "Allow" on Mutes | Browser asks for the old account, read-only access. Mutes and Feeds fill in and are picked. They are greyed again, now with "Allow" for the new account. |
 | 8 | Tap "Allow" on Mutes again (new account) | Browser asks for the new account with mute access added. Mutes become pickable. Repeat for Feeds. |
-| 9 | Tap Move | Rows change one at a time, about 2 seconds apart. Summary at the end. |
+| 9 | Tap Move | Rows change one at a time, quickly (up to 500 per minute). Summary at the end. |
 | 10 | Check the new account in the Bluesky app | Follows (oldest first in the new account's list), blocks, the list with 3 members, 3 mutes, 2 saved feeds with the same one pinned. Other settings unchanged. The old account unchanged. |
 | 11 | After the summary | To shows signed out. The session key is gone from secure storage. A call with the old token is refused (seen in the Check). |
 | 12 | Start a move of 30, turn on flight mode after 5 | "No internet. Try again when you're online." Continue moves only the rest. |

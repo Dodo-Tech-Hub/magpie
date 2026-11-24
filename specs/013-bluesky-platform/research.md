@@ -129,11 +129,11 @@ Feeds are written one at a time, each with a fresh read just before the write (F
 
 ## R10. Pace (FR-BS-010)
 
-**Decision**: one shared pacer, configured per driver: 2 seconds apart (30 per minute), 1,000 per hour, 8,000 per day for Bluesky; GitHub keeps 3 seconds and 300 per hour with no daily cap. The add log gets a `keep_until` column so each platform's entries are deleted on time: 1 hour for GitHub (FR-GH-014), 1 day for Bluesky (FR-BS-014).
+**Decision**: one shared pacer, configured per driver: 120 ms apart (500 per minute), 1,500 per hour, 10,000 per day for Bluesky; GitHub keeps 3 seconds and 300 per hour with no daily cap. The add log gets a `keep_until` column so each platform's entries are deleted on time: 1 hour for GitHub (FR-GH-014), 1 day for Bluesky (FR-BS-014).
 
 **Rationale**: the pacer today has GitHub's numbers as constants and ignores `driver.pace`. Making it read `driver.pace` is the change the second paced platform needs; there is no second pacer.
 
-At 2 seconds per add, 100 follows take about 3.5 minutes, inside SC-001's 6 minutes. 8,000 adds a day uses 24,000 of Bluesky's 35,000 daily points, which leaves room for the user's own posting.
+Bluesky publishes no per-minute limit, and the owner chose speed (spec Clarifications, 2026-11-24). 100 follows take about 12 seconds. 1,500 adds an hour use 4,500 of Bluesky's 5,000 hourly points, and 10,000 a day use 30,000 of 35,000, which leaves room for the user's own posts. The hourly cap is what a large move hits: 1,500 adds take about 3 minutes, then the move waits for the hour to pass. Risk: a burst of follows on a new account may trip Bluesky's spam checks; the `stop` outcome covers it, and the numbers live in the driver if they need to come down.
 
 **Bluesky's wait answer**: 429 with `ratelimit-reset` (seconds since 1970). Up to 60 seconds away: `wait`. Later: `later` at that time.
 

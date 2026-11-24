@@ -26,6 +26,11 @@ Bluesky is a good fit for Automatic: its data is open, it has a modern sign-in f
 - Q: On Pick, should blocked people start picked, like every other item, or unpicked? → A: Picked, like every other kind (FR-BS-003).
 - Q: In what order should the move add follows to the new account? → A: Oldest first, so the new account's lists keep the old order (FR-BS-010).
 
+### Session 2026-11-24
+
+- Q: Bluesky publishes no per-minute limit. How fast should the move be? → A: Fast: 500 per minute, capped at 1,500 per hour and 10,000 per day, under Bluesky's hourly and daily limits (FR-BS-010).
+- Q: From has no sign-in. What does its account button say? → A: "Change". It brings the handle box back; To keeps "Sign out" (FR-BS-005).
+
 Bluesky's own "account migration" (moving one account to another server and keeping the same handle and followers) is a different job. It is out of scope. Magpie moves what one account follows to a second, separate account.
 
 ## Feasibility
@@ -42,7 +47,7 @@ Checked on 2026-11-23 against the AT Protocol (atproto) docs and Bluesky's devel
 | Can a phone app sign in without a secret? | Yes. Bluesky's sign-in treats phone apps as public apps, with PKCE and a key that stays on the phone (DPoP). | No |
 | Can the app cancel its access on sign-out? | Expected yes: the sign-in server offers token revocation for public apps. The plan MUST confirm it. | No, if confirmed. Otherwise the same exception and safeguards as GitHub (FR-GH-019) need owner approval. |
 | Are there speed limits? | Yes. About 5,000 write points per hour and 35,000 per day per account. One add costs 3 points, so about 1,666 adds per hour and 11,666 per day. | No. A few thousand items fit in one or two sessions. |
-| Do Bluesky's rules allow automated following? | Bluesky's Community Guidelines forbid spam and mass, unwanted follows. Moving one's own follows once, at a slow pace, is not that, but the new account could still be flagged. | Risk, not a blocker. FR-BS-010 keeps the pace low. |
+| Do Bluesky's rules allow automated following? | Bluesky's Community Guidelines forbid spam and mass, unwanted follows. Moving one's own follows once is not that, but a fast burst of follows could still get the new account flagged. | Risk, not a blocker. FR-BS-010 stays under Bluesky's hourly and daily limits; the owner chose speed over a slow pace (Clarifications, 2026-11-24). |
 | Is the old account's handle enough to find it? | Yes. A handle points to one account ID (DID), which points to the server that holds its data. | No |
 | Can the app talk to a fixed list of hosts? | Only for accounts hosted by Bluesky. An account on its own server (self-hosted) lives on a host the app cannot know in advance. | No. The first release supports Bluesky-hosted accounts only (Clarifications, 2026-11-23). |
 
@@ -166,11 +171,11 @@ The user types the new account's handle and taps Sign in. The app opens Bluesky'
 
 ---
 
-### User Story 3 - Slow pace, wait, and continue later (Priority: P2)
+### User Story 3 - Pace, wait, and continue later (Priority: P2)
 
-The app adds items one at a time at a steady, slow pace. When Bluesky asks the app to wait, or the app's own hourly or daily pace is reached, the app stops, marks the rest "Later", saves the progress, and offers a reminder, as YouTube and GitHub do.
+The app adds items one at a time, as fast as FR-BS-010 allows. When Bluesky asks the app to wait, or the app's own hourly or daily pace is reached, the app stops, marks the rest "Later", saves the progress, and offers a reminder, as YouTube and GitHub do.
 
-**Why this priority**: Most users finish in one session. Users with thousands of follows need it to finish at all, and the slow pace protects the new account from being flagged as spam.
+**Why this priority**: Most users finish in one session. Users with more than about 1,500 items hit Bluesky's hourly limit and need it to finish at all.
 
 **Independent Test**: Start a move of 30 items and confirm the pace stays at or under FR-BS-010. Simulate a wait answer after 6 items, confirm the message and "Later" rows, close the app, tap the reminder, and confirm Continue moves only the rest.
 
@@ -268,7 +273,7 @@ Mutes and saved feeds are private, so the handle is not enough to read them. On 
 
 **Pace and progress**
 
-- **FR-BS-010**: The app MUST add items one at a time, at no more than 30 per minute, 1,000 per hour, and 8,000 per day per new account. Each list and each list member counts as one add. Within each kind, the app MUST add items in the order the old account made them, oldest first, so the new account shows them in the same order. Rows on Pick still change in place. The plan MAY tune these numbers after testing, but MUST keep them under Bluesky's published limits with a margin.
+- **FR-BS-010**: The app MUST add items one at a time, at no more than 500 per minute, 1,500 per hour, and 10,000 per day per new account. These stay under Bluesky's limits of about 1,666 adds per hour and 11,666 per day, and leave room for the user's own posts. Each list and each list member counts as one add. Within each kind, the app MUST add items in the order the old account made them, oldest first, so the new account shows them in the same order. Rows on Pick still change in place. The plan MAY tune these numbers after testing, but MUST keep them under Bluesky's published limits with a margin.
 - **FR-BS-011**: Pick MUST show the expected time left for the picked items at that pace before the user taps Move.
 - **FR-BS-012**: When Bluesky asks the app to wait for 60 seconds or less, the app MUST wait and try the same item again without a message. When Bluesky asks for a longer wait, asks again for the same item, or the app's pace in FR-BS-010 is reached, the app MUST stop, mark the rest "Later", save the progress, show the limit reason (spec 009), and ask for reminders. The reminder MUST be set for the time Bluesky gave, or the time the app's pace allows the next add, or 1 hour later when Bluesky gave no time, whichever is latest.
 
@@ -278,7 +283,7 @@ Mutes and saved feeds are private, so the handle is not enough to read them. On 
 - **FR-BS-014**: The app MUST keep only what the move needs: account ID, handle, display name, picture, item IDs, item names and pictures, list names, descriptions, and members, progress, and the times of recent adds for the pace (deleted after 1 day). It MUST NOT log tokens, codes, handles, or item lists.
 - **FR-BS-015**: The app MUST talk to Bluesky only on the hosts in the Bluesky section, over HTTPS (FR-BS-022). The Bluesky logo MUST be the official butterfly, unmodified, used only to name the platform. Settings MUST say that Magpie is not made by or linked with Bluesky. The feature MUST work the same way on Android and iOS.
 - **FR-BS-016**: The app MUST treat every Bluesky answer as untrusted, check its shape before use, and check the sign-in return (state, issuer, and redirect) before using the code.
-- **FR-BS-019**: Bluesky MUST have a limits page (spec 009) that explains its pace and why the app is slower than Bluesky allows.
+- **FR-BS-019**: Bluesky MUST have a limits page (spec 009) that explains Bluesky's hourly and daily limits and why a large move takes more than one session.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -354,7 +359,7 @@ The client metadata file lives on the project's public site. The app never calls
 
 - About 5,000 write points per hour and 35,000 per day per account. A create costs 3 points: about 1,666 adds per hour and 11,666 per day. Bluesky says these limits may change. When hit, Bluesky answers 429, usually with a reset time.
 - Per-IP limits also apply (about 3,000 requests per 5 minutes), which one user's move does not reach.
-- Bluesky's Community Guidelines forbid spam and mass, unwanted following. FR-BS-010 keeps the pace low.
+- Bluesky's Community Guidelines forbid spam and mass, unwanted following. Bluesky publishes no per-minute limit. FR-BS-010 caps each hour and day below Bluesky's own limits; a fast burst may still get a new account flagged (edge case "Bluesky flags the new account").
 
 **Redirect back to the app**: the custom scheme above. The app MUST accept only that route and MUST check `state` and `iss` before use.
 
@@ -362,7 +367,7 @@ The client metadata file lives on the project's public site. The app never calls
 
 ### Measurable Outcomes
 
-- **SC-001**: A user can move 100 follows from one Bluesky account to another in under 6 minutes, from tapping the Bluesky card to seeing the summary.
+- **SC-001**: A user can move 100 follows from one Bluesky account to another in under 2 minutes, from tapping the Bluesky card to seeing the summary.
 - **SC-002**: After a move, the new account has 100% of the picked items that did not show "Couldn't move", and the old account is unchanged.
 - **SC-003**: The YouTube and GitHub flows pass all their existing tests with no change to what they check.
 - **SC-004**: Adding Bluesky needs no change to Home beyond the new entry in the list of platforms (spec 004, SC-003).

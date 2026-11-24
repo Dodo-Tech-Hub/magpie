@@ -19,7 +19,7 @@ Technical approach:
 - **Sign-in** (research R1 to R4, R12): Bluesky's official `@atproto/oauth-client` (PAR, PKCE, DPoP) with Magpie's own runtime (`@noble/curves` for the ES256 key, `expo-crypto` for random bytes) and a session store in `expo-secure-store`. The browser opens with `expo-web-browser`. The Expo variant of the client is not used: it saves tokens and the private key in MMKV files, which breaks III.3. Sign-out revokes, then deletes.
 - **Accounts** (R5): the app resolves every handle itself through `public.api.bsky.app` and `plc.directory`, accepts only `did:plc` accounts on `*.host.bsky.network`, and passes the DID to the client, so no call leaves the host list.
 - **Access** (R6): granular scopes per kind, built from one table. The old account needs no sign-in for follows, blocks, and lists. Mutes and saved feeds use an opt-in, read-only old sign-in, revoked right after the read.
-- **Move** (R8 to R10): one `createRecord` per follow, block, list, and list member; `muteActor` per mute; read-then-write of preferences per feed. Oldest first within each kind. 2 seconds apart, 1,000 per hour, 8,000 per day.
+- **Move** (R8 to R10): one `createRecord` per follow, block, list, and list member; `muteActor` per mute; read-then-write of preferences per feed. Oldest first within each kind. Up to 500 per minute, 1,500 per hour, 10,000 per day.
 
 ## Technical Context
 
@@ -35,7 +35,7 @@ Technical approach:
 
 **Project Type**: Mobile app (single Expo project, no backend)
 
-**Performance Goals**: 100 follows move in about 3.5 minutes (SC-001 allows 6). A list of 10,000 follows reads in 100 pages. Sign-in returns to the app in one tap after Accept.
+**Performance Goals**: 100 follows move in about 12 seconds of adds (SC-001 allows 2 minutes with sign-in). A list of 10,000 follows reads in 100 pages. Sign-in returns to the app in one tap after Accept.
 
 **Constraints**: Hosts: `public.api.bsky.app`, `plc.directory`, `*.host.bsky.network`, `bsky.social`, `cdn.bsky.app` (spec, Bluesky section). Pace in FR-BS-010. No client secret, no API key, no `.env` value. All text in `src/strings.ts`.
 
@@ -161,7 +161,7 @@ Done when: the Bluesky tests pass, all other tests pass, and quickstart rows 1 t
 | Area | Test | Kind |
 | --- | --- | --- |
 | Migration | Version 2 database opens as version 3; old add rows keep 1 hour | Unit |
-| Pacer | 2 seconds apart; 1,000 per hour; 8,000 per day gives `later` at the right time; GitHub numbers unchanged; time left | Unit |
+| Pacer | 120 ms apart; 1,500 per hour; 10,000 per day gives `later` at the right time; GitHub numbers unchanged; time left | Unit |
 | Mover | `itemOrder` sorts within a kind and keeps kind order | Unit |
 | Handle cleanup | `@`, spaces, capitals, bare name gets `.bsky.social` | Unit |
 | Lookup | Unknown handle, `did:web`, server off `*.host.bsky.network`, deactivated account, bad shapes | Unit |

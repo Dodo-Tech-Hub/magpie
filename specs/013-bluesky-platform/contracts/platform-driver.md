@@ -37,7 +37,7 @@ type SignInResult =
   | { ok: false; reason: 'cancelled' | 'failed' | 'not_found' | 'not_supported' | 'unavailable' };
 ```
 
-`perMinute` in 008's contract becomes `gapMs` (60,000 / per minute), because the pacer works in gaps. GitHub: `gapMs: 3000, perHour: 300`. Bluesky: `gapMs: 2000, perHour: 1000, perDay: 8000`.
+`perMinute` in 008's contract becomes `gapMs` (60,000 / per minute), because the pacer works in gaps. GitHub: `gapMs: 3000, perHour: 300`. Bluesky: `gapMs: 120, perHour: 1500, perDay: 10000`.
 
 ## New rules
 
