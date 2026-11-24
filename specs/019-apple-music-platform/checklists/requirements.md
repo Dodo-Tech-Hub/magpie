@@ -33,5 +33,6 @@
 
 - Open questions on FR-AM-001 (pay the Apple Developer Program fee) and FR-AM-006 (iOS uses Apple's web sign-in, no device account switch) were answered on 2026-11-23.
 - Apple Music API, MusicKit, and token details appear only in Feasibility, Platform differences, and the marked "Apple Music section", as AGENTS.md asks for platform-specific details.
-- Facts were checked on 2026-11-23 from Apple developer documentation and developer forums. Favorite artists, rate limits, the Android sign-in, and the iOS web sign-in from a native app must be confirmed with test accounts in the plan.
+- Facts were checked on 2026-11-23 from Apple developer documentation and developer forums. Favorite artists, rate limits, and the web sign-in from a native app must be confirmed with test accounts in the plan.
 - Spec number 019 was chosen by the project owner.
+- 2026-11-24: Apple Music limited to iOS (Apple terms 2.8). The iOS-only scope is flagged in "Platform scope", as AGENTS.md asks for platform-specific behavior. The owner accepted the other Apple terms.
