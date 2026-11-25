@@ -14,6 +14,7 @@ jest.mock('@/auth/bluesky', () => ({
   signIn: jest.fn(),
   signOut: jest.fn(),
   newAccountFetch: jest.fn(),
+  oldAccountFetch: jest.fn(),
 }));
 jest.mock('@/auth/blueskyLookup', () => ({ ...jest.requireActual('@/auth/blueskyLookup'), lookup: jest.fn() }));
 jest.mock('@/api/bluesky', () => ({
@@ -25,10 +26,15 @@ jest.mock('@/api/bluesky', () => ({
   followPerson: jest.fn(),
   blockPerson: jest.fn(),
   addList: jest.fn(),
+  readMutes: jest.fn(),
+  readFeeds: jest.fn(),
+  muteActor: jest.fn(),
+  addFeed: jest.fn(),
 }));
 const signIn = auth.signIn as jest.Mock;
 const signOut = auth.signOut as jest.Mock;
 const newFetch = auth.newAccountFetch as jest.Mock;
+const oldFetch = auth.oldAccountFetch as jest.Mock;
 const lookup = lookups.lookup as jest.Mock;
 const mocked = (f: unknown) => f as jest.Mock;
 
@@ -54,7 +60,9 @@ beforeEach(async () => {
   signOut.mockReset();
   newFetch.mockReset();
   lookup.mockReset();
-  for (const f of ['readFollows', 'readBlocks', 'readLists', 'haveOnNew', 'followPerson', 'blockPerson', 'addList'] as const) mocked(api[f]).mockReset();
+  for (const f of ['readFollows', 'readBlocks', 'readLists', 'haveOnNew', 'followPerson', 'blockPerson', 'addList', 'readMutes', 'readFeeds', 'muteActor', 'addFeed'] as const) mocked(api[f]).mockReset();
+  oldFetch.mockReset();
+  oldFetch.mockResolvedValue(null);
   newFetch.mockResolvedValue({ did: ALICE, fetch: fetcher });
   await driver.signOut('old'); // forgets the old account
 });
@@ -202,7 +210,7 @@ describe('the Bluesky driver, checking the new account', () => {
     mocked(api.haveOnNew).mockResolvedValue(new Set(['person:a', 'person:zzz', `block:${ALICE}`]));
     const items = [row('person', 'a'), row('person', 'b'), row('block', ALICE)];
     expect(await driver.checkNew(items, ['person'])).toEqual(['person:a', `block:${ALICE}`]);
-    expect(api.haveOnNew).toHaveBeenCalledWith(ALICE, SERVER);
+    expect(api.haveOnNew).toHaveBeenCalledWith(ALICE, SERVER, undefined);
   });
 
   it('says the sign-in ran out when there is no new account session', async () => {
@@ -213,6 +221,70 @@ describe('the Bluesky driver, checking the new account', () => {
     await saveNew(ALICE, 'atproto');
     lookup.mockResolvedValue({ ok: false, reason: 'unavailable' });
     await expect(driver.checkNew([row('person', 'a')], [])).rejects.toEqual(new DriverError('retry'));
+  });
+});
+
+describe('the Bluesky driver, the private kinds', () => {
+  const oldFetcher = jest.fn();
+
+  it('reads mutes and feeds with the old account session when there is one, then cancels and drops the session', async () => {
+    await asOld();
+    oldFetch.mockResolvedValue(oldFetcher);
+    mocked(api.readFollows).mockResolvedValue([row('person', 'a')]);
+    mocked(api.readBlocks).mockResolvedValue([]);
+    mocked(api.readLists).mockResolvedValue([]);
+    mocked(api.readMutes).mockResolvedValue([row('mute', 'm')]);
+    mocked(api.readFeeds).mockResolvedValue([row('feed', 'f')]);
+    signOut.mockResolvedValue(true);
+    const res = await driver.listOld();
+    expect(res.items.map((i) => i.itemId)).toEqual(['person:a', 'mute:m', 'feed:f']);
+    expect(api.readMutes).toHaveBeenCalledWith(oldFetcher);
+    expect(api.readFeeds).toHaveBeenCalledWith(oldFetcher);
+    expect(signOut).toHaveBeenCalledWith('old');
+  });
+
+  it('cancels and drops the old account session even when a read fails, and reports the kind that failed', async () => {
+    await asOld();
+    oldFetch.mockResolvedValue(oldFetcher);
+    mocked(api.readFollows).mockResolvedValue([]);
+    mocked(api.readBlocks).mockResolvedValue([]);
+    mocked(api.readLists).mockResolvedValue([]);
+    mocked(api.readMutes).mockResolvedValue([row('mute', 'm')]);
+    mocked(api.readFeeds).mockRejectedValue(new Error('no access'));
+    const res = await driver.listOld();
+    expect(res.missing).toEqual(['feed']);
+    expect(signOut).toHaveBeenCalledWith('old');
+  });
+
+  it('does not read them, and has nothing to drop, without the old account session', async () => {
+    await asOld();
+    mocked(api.readFollows).mockResolvedValue([]);
+    mocked(api.readBlocks).mockResolvedValue([]);
+    mocked(api.readLists).mockResolvedValue([]);
+    signOut.mockClear();
+    await driver.listOld();
+    expect(api.readMutes).not.toHaveBeenCalled();
+    expect(api.readFeeds).not.toHaveBeenCalled();
+    expect(signOut).not.toHaveBeenCalled();
+  });
+
+  it('checks the new account for mutes and feeds only with the kinds it was granted', async () => {
+    await saveNew(ALICE, 'atproto');
+    lookup.mockResolvedValue({ ok: true, account: { id: ALICE }, server: SERVER });
+    mocked(api.haveOnNew).mockResolvedValue(new Set(['mute:m']));
+    expect(await driver.checkNew([row('mute', 'm'), row('person', 'a')], ['person', 'mute'])).toEqual(['mute:m']);
+    expect(api.haveOnNew).toHaveBeenCalledWith(ALICE, SERVER, { fetch: fetcher, kinds: ['mute'] });
+  });
+
+  it('mutes people and saves feeds in the new account with its own session', async () => {
+    mocked(api.muteActor).mockResolvedValue({ kind: 'moved' });
+    mocked(api.addFeed).mockResolvedValue({ kind: 'moved' });
+    const m = row('mute', 'm', { did: did(101), handle: 'm.bsky.social', seq: 0 });
+    expect(await driver.add(m, [m])).toEqual({ kind: 'moved' });
+    expect(api.muteActor).toHaveBeenCalledWith(fetcher, did(101));
+    const f = row('feed', 'f', { type: 'feed', value: 'at://x', pinned: true, seq: 0 });
+    await driver.add(f, [f]);
+    expect(api.addFeed).toHaveBeenCalledWith(fetcher, f);
   });
 });
 

@@ -1,5 +1,5 @@
-import { addList, blockPerson, followPerson, haveOnNew, readBlocks, readFollows, readLists } from '@/api/bluesky';
-import { grantedScope, kindsOf, newAccountFetch, signIn, signOut } from '@/auth/bluesky';
+import { addFeed, addList, blockPerson, followPerson, haveOnNew, muteActor, readBlocks, readFeeds, readFollows, readLists, readMutes } from '@/api/bluesky';
+import { grantedScope, kindsOf, newAccountFetch, oldAccountFetch, signIn, signOut } from '@/auth/bluesky';
 import { lookup } from '@/auth/blueskyLookup';
 import { blueskyStores } from '@/auth/blueskySession';
 import { DriverError, type Driver, type Outcome } from '@/platforms/driver';
@@ -102,22 +102,33 @@ export const blueskyDriver: Driver = {
       ['block', readBlocks(did, server)],
       ['list', readLists(did)],
     ];
-    const done = await Promise.allSettled(reads.map(([, p]) => p));
-    const items: NewItem[] = [];
-    const missing: string[] = [];
-    done.forEach((r, i) => (r.status === 'fulfilled' ? items.push(...r.value) : missing.push(reads[i][0])));
-    // Every read failed: show the reason instead of an empty list.
-    const first = done.find((r) => r.status === 'rejected');
-    if (missing.length === reads.length && first?.status === 'rejected') throw first.reason;
-    return { items, missing };
+    // After "Allow" there is a session for the private kinds. It is used for this one read, then cancelled and dropped
+    // (FR-BS-020). Without it, mutes and feeds are simply not read.
+    const signedIn = await oldAccountFetch(did);
+    if (signedIn) reads.push(['mute', readMutes(signedIn)], ['feed', readFeeds(signedIn)]);
+    try {
+      const done = await Promise.allSettled(reads.map(([, p]) => p));
+      const items: NewItem[] = [];
+      const missing: string[] = [];
+      done.forEach((r, i) => (r.status === 'fulfilled' ? items.push(...r.value) : missing.push(reads[i][0])));
+      // Every read failed: show the reason instead of an empty list.
+      const first = done.find((r) => r.status === 'rejected');
+      if (missing.length === reads.length && first?.status === 'rejected') throw first.reason;
+      return { items, missing };
+    } finally {
+      if (signedIn) await signOut('old');
+    }
   },
 
-  async checkNew(items) {
+  async checkNew(items, granted) {
     const did = await blueskyStores.getNewDid();
     if (!did || !(await blueskyStores.hasSession(did))) throw new DriverError('auth');
     const where = await lookup(did);
     if (!where.ok) throw new DriverError('retry');
-    const have = await haveOnNew(did, where.server);
+    // Mutes and feeds are private: read them with the new account's session, and only if it was granted them.
+    const privateKinds = granted.filter((k) => k === 'mute' || k === 'feed');
+    const signedIn = privateKinds.length > 0 ? await newAccountFetch() : null;
+    const have = await haveOnNew(did, where.server, signedIn ? { fetch: signedIn.fetch, kinds: privateKinds } : undefined);
     const mine = new Set(items.map((i) => i.itemId));
     return [...have].filter((id) => mine.has(id));
   },
@@ -134,8 +145,11 @@ export const blueskyDriver: Driver = {
         return subject ? blockPerson(fetch, did, subject) : { kind: 'couldnt_move', reason: GENERIC };
       case 'list':
         return addList(fetch, did, item, pacer);
+      case 'mute':
+        return subject ? muteActor(fetch, subject) : { kind: 'couldnt_move', reason: GENERIC };
+      case 'feed':
+        return addFeed(fetch, item);
       default:
-        // ponytail: mutes and saved feeds come with the private kinds (T054).
         return { kind: 'couldnt_move', reason: GENERIC };
     }
   },

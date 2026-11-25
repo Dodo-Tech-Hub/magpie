@@ -1,3 +1,4 @@
+import * as Crypto from 'expo-crypto';
 import { DID, PUBLIC, blueskyServer, isRecord, picture } from '@/auth/blueskyLookup';
 import { DriverError, type Outcome, type Pacer } from '@/platforms/driver';
 import type { NewItem, StoredItem } from '@/store/progressStore';
@@ -28,11 +29,11 @@ async function getJson(url: string): Promise<Record<string, unknown>> {
   return body;
 }
 
-// Every page of a list, until the answer has no cursor.
-async function* pages(url: (cursor?: string) => string): AsyncGenerator<Record<string, unknown>> {
+// Every page of a list, until the answer has no cursor. `get`: how a page is fetched (public, or with a session).
+async function* pages(url: (cursor?: string) => string, get: (url: string) => Promise<Record<string, unknown>> = getJson): AsyncGenerator<Record<string, unknown>> {
   let cursor: string | undefined;
   for (let n = 0; n < MAX_PAGES; n += 1) {
-    const page = await getJson(url(cursor));
+    const page = await get(url(cursor));
     yield page;
     cursor = str(page.cursor) ?? undefined;
     if (!cursor) return;
@@ -152,16 +153,101 @@ export async function readLists(did: string): Promise<NewItem[]> {
 
 // ---- Check the new account ----------------------------------------------------------------------------------
 
-// The item IDs the new account already has, from public reads only. The new account itself counts as there,
-// because an account cannot follow or block itself.
-export async function haveOnNew(did: string, server: string): Promise<Set<string>> {
+// The item IDs the new account already has. Follows and blocks are public reads. Mutes and saved feeds are private, so
+// they are read with the new account's session, and only for kinds it was granted. The new account itself counts as
+// there, because an account cannot follow or block itself.
+export async function haveOnNew(did: string, server: string, signedIn?: { fetch: Fetcher; kinds: string[] }): Promise<Set<string>> {
   const [follows, blocks] = await Promise.all([readFollows(did), subjectsOf(did, server, 'app.bsky.graph.block')]);
-  return new Set([
-    ...follows.map((f) => f.itemId),
-    ...blocks.map((d) => `block:${d}`),
-    `person:${did}`,
-    `block:${did}`,
-  ]);
+  const have = new Set([...follows.map((f) => f.itemId), ...blocks.map((d) => `block:${d}`), `person:${did}`, `block:${did}`]);
+  if (signedIn?.kinds.includes('mute')) for (const m of await readMutes(signedIn.fetch)) have.add(m.itemId);
+  if (signedIn?.kinds.includes('feed')) for (const item of await savedFeeds(signedIn.fetch)) have.add(`feed:${item.value}`);
+  return have;
+}
+
+// ---- Private kinds: read with a session --------------------------------------------------------------------
+
+// The app view answers these, so the account's own server passes them on (this header says to which).
+const PROXY = { 'atproto-proxy': 'did:web:api.bsky.app#bsky_appview' };
+
+// A read with a session. A dead sign-in is auth, no answer is retry, a limit is later.
+async function signedJson(f: Fetcher, path: string): Promise<Record<string, unknown>> {
+  let res: Response;
+  try {
+    res = await f(path, { headers: { Accept: 'application/json', ...PROXY } });
+  } catch (e) {
+    throw new DriverError(e instanceof Error && /^Token(Refresh|Revoked|Invalid)Error$/.test(e.name) ? 'auth' : 'retry');
+  }
+  if (res.status === 401) throw new DriverError('auth');
+  if (res.status === 429) throw new DriverError('later');
+  if (res.status >= 500) throw new DriverError('retry');
+  if (!res.ok) throw BAD();
+  const body: unknown = await res.json().catch(() => null);
+  if (!isRecord(body)) throw BAD();
+  return body;
+}
+
+// The people the account mutes, newest first.
+export async function readMutes(f: Fetcher): Promise<NewItem[]> {
+  const found: Profile[] = [];
+  for await (const page of pages((c) => `/xrpc/app.bsky.graph.getMutes?limit=${PAGE}${c ? `&cursor=${encodeURIComponent(c)}` : ''}`, (u) => signedJson(f, u))) {
+    for (const m of arrayOf(page.mutes)) {
+      const p = profileOf(m);
+      if (p) found.push(p);
+    }
+  }
+  return found.map((p, i) => personItem('mute', p, seqOf(i, found.length, 'newest-first')));
+}
+
+type Saved = { type: 'feed' | 'list'; value: string; pinned: boolean; id: string };
+const SAVED_FEEDS = 'app.bsky.actor.defs#savedFeedsPrefV2';
+
+// The settings the account has. Only `preferences` is read; the caller decides what to keep.
+async function preferencesOf(f: Fetcher): Promise<Record<string, unknown>[]> {
+  return arrayOf((await signedJson(f, '/xrpc/app.bsky.actor.getPreferences')).preferences).filter(isRecord);
+}
+
+const savedOf = (preferences: Record<string, unknown>[]): Saved[] => {
+  const pref = preferences.find((p) => p.$type === SAVED_FEEDS);
+  return (Array.isArray(pref?.items) ? pref.items : []).flatMap((i): Saved[] =>
+    isRecord(i) && (i.type === 'feed' || i.type === 'list') && typeof i.value === 'string' && AT_URI.test(i.value) && typeof i.pinned === 'boolean'
+      ? [{ type: i.type, value: i.value, pinned: i.pinned, id: typeof i.id === 'string' ? i.id : '' }]
+      : [],
+  );
+};
+
+// The saved feeds and lists of the account. The timeline is left out: every account has it.
+async function savedFeeds(f: Fetcher): Promise<Saved[]> {
+  return savedOf(await preferencesOf(f));
+}
+
+// Names and pictures for feeds (25 at a time) and lists. A feed that no longer exists has no entry.
+async function namesOf(saved: Saved[]): Promise<Map<string, { name: string; avatar: unknown }>> {
+  const out = new Map<string, { name: string; avatar: unknown }>();
+  const feeds = saved.filter((s) => s.type === 'feed').map((s) => s.value);
+  for (let i = 0; i < feeds.length; i += PROFILE_BATCH) {
+    const query = feeds.slice(i, i + PROFILE_BATCH).map((u) => `feeds=${encodeURIComponent(u)}`).join('&');
+    for (const g of arrayOf((await getJson(`${PUBLIC}/app.bsky.feed.getFeedGenerators?${query}`)).feeds)) {
+      if (isRecord(g) && typeof g.uri === 'string' && str(g.displayName)) out.set(g.uri, { name: String(g.displayName), avatar: g.avatar });
+    }
+  }
+  for (const l of saved.filter((s) => s.type === 'list')) {
+    const found = (await getJson(`${PUBLIC}/app.bsky.graph.getList?list=${encodeURIComponent(l.value)}&limit=1`)).list;
+    if (isRecord(found) && str(found.name)) out.set(l.value, { name: String(found.name), avatar: found.avatar });
+  }
+  return out;
+}
+
+// The saved feeds of the account, in the order it saved them. Every other setting is dropped here, at once.
+export async function readFeeds(f: Fetcher): Promise<NewItem[]> {
+  const saved = await savedFeeds(f);
+  const names = await namesOf(saved);
+  return saved.map((s, seq) => ({
+    itemId: `feed:${s.value}`,
+    kind: 'feed',
+    title: names.get(s.value)?.name ?? s.value.split('/').pop() ?? s.value,
+    thumbnailUrl: picture(names.get(s.value)?.avatar),
+    data: JSON.stringify({ type: s.type, value: s.value, pinned: s.pinned, seq }),
+  }));
 }
 
 // ---- Add to the new account ---------------------------------------------------------------------------------
@@ -292,4 +378,51 @@ export async function addList(f: Fetcher, repo: string, item: StoredItem, pacer?
     else if (out.kind !== 'moved') return out;
   }
   return leftOut > 0 ? { kind: 'moved', reason: `${leftOut} left out` } : { kind: 'moved' };
+}
+
+export async function muteActor(f: Fetcher, subject: string): Promise<Outcome> {
+  return (await send(f, '/xrpc/app.bsky.graph.muteActor', { actor: subject }, PROXY)).outcome;
+}
+
+// What a failed read of the settings means for a row.
+const outcomeOfRead = (e: unknown): Outcome => {
+  if (e instanceof DriverError) return e.kind === 'auth' ? { kind: 'auth' } : e.kind === 'later' ? { kind: 'later', resumeAt: Date.now() + HOUR } : { kind: 'retry' };
+  return { kind: 'couldnt_move', reason: GENERIC };
+};
+
+const feedData = (raw: string | null): { type: 'feed' | 'list'; value: string; pinned: boolean } | null => {
+  try {
+    const v: unknown = JSON.parse(raw ?? '');
+    return isRecord(v) && (v.type === 'feed' || v.type === 'list') && typeof v.value === 'string' && AT_URI.test(v.value) && typeof v.pinned === 'boolean'
+      ? { type: v.type, value: v.value, pinned: v.pinned }
+      : null;
+  } catch {
+    return null;
+  }
+};
+
+const randomId = () => [...Crypto.getRandomValues(new Uint8Array(8))].map((b) => b.toString(16).padStart(2, '0')).join('');
+
+// Save a feed in the new account. Settings are one record that holds everything, so the app reads them right before
+// the write (a change made meanwhile is kept), changes only the saved feeds part, and writes every other setting back
+// unchanged (FR-BS-021). A pinned feed goes after the account's own pinned feeds, so the old pin order is kept.
+export async function addFeed(f: Fetcher, item: StoredItem): Promise<Outcome> {
+  const data = feedData(item.data);
+  if (!data) return { kind: 'couldnt_move', reason: GENERIC };
+  let preferences: Record<string, unknown>[];
+  try {
+    preferences = await preferencesOf(f);
+  } catch (e) {
+    return outcomeOfRead(e);
+  }
+  const index = preferences.findIndex((p) => p.$type === SAVED_FEEDS);
+  const current = index >= 0 ? preferences[index] : { $type: SAVED_FEEDS, items: [] };
+  const items = Array.isArray(current.items) ? [...current.items] : [];
+  if (items.some((i) => isRecord(i) && i.value === data.value)) return { kind: 'moved' };
+  const added = { type: data.type, value: data.value, pinned: data.pinned, id: randomId() };
+  const lastPinned = items.reduce<number>((at, i, n) => (isRecord(i) && i.pinned === true ? n : at), -1);
+  items.splice(data.pinned ? lastPinned + 1 : items.length, 0, added);
+  const next = { ...current, items };
+  const written = index >= 0 ? preferences.map((p, n) => (n === index ? next : p)) : [...preferences, next];
+  return (await send(f, '/xrpc/app.bsky.actor.putPreferences', { preferences: written }, PROXY)).outcome;
 }

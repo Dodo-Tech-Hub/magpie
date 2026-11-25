@@ -266,7 +266,8 @@ export async function allowKind(state: State, dispatch: D, kind: string): Promis
   const { progressId, newAccount } = state;
   if (!newAccount || !progressId) return;
   dispatch({ type: 'setNotice', notice: null });
-  const res = await signInAs(state, dispatch, 'new', [...state.granted, kind]);
+  // The handle is passed for a platform where the user types it, so Allow signs in to the same account.
+  const res = await signInAs(state, dispatch, 'new', [...state.granted, kind], newAccount.handle);
   if (!res.ok) {
     dispatch({ type: 'setNotice', notice: failNotice(res.reason) });
     return;

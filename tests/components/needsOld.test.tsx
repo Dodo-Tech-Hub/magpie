@@ -146,7 +146,8 @@ describe.each([
     granted = ['person', 'mute'];
     await fireEvent.press(screen.getByLabelText('Allow Mutes'));
     await waitFor(() => expect(screen.getByLabelText('Move 4 items')).toBeTruthy());
-    expect(signIn).toHaveBeenLastCalledWith('new', ['person', 'mute'], expect.any(Function), expect.anything(), undefined);
+    // The new account's handle goes along, so a platform where the user types it signs in to the same account.
+    expect(signIn).toHaveBeenLastCalledWith('new', ['person', 'mute'], expect.any(Function), expect.anything(), 'new-handle');
   });
 });
 

@@ -1,5 +1,5 @@
 import { DriverError } from '@/platforms/driver';
-import { addList, blockPerson, followPerson, haveOnNew, mapAnswer, readBlocks, readFollows, readLists } from '@/api/bluesky';
+import { addFeed, addList, blockPerson, followPerson, haveOnNew, mapAnswer, muteActor, readBlocks, readFeeds, readFollows, readLists, readMutes } from '@/api/bluesky';
 import type { Pacer } from '@/platforms/driver';
 import type { StoredItem } from '@/store/progressStore';
 import { PUBLIC, did, mockBluesky, type Answer, type Req } from '../mocks/blueskyFetch';
@@ -345,5 +345,194 @@ describe('adding a list', () => {
     const f = mockBluesky({ ...empty, [CREATE]: json({ uri: `at://${NEW_ME}/app.bsky.graph.list/1` }) });
     await addList(signedIn, NEW_ME, stored(members));
     expect(f.calls.every((c) => c.method === 'GET' || c.url.endsWith('createRecord'))).toBe(true);
+  });
+});
+
+
+// ---- Mutes and saved feeds (private: they need a session) -----------------------------------------------------
+
+const PROXY = 'did:web:api.bsky.app#bsky_appview';
+const PREFS_GET = `GET ${SERVER}/xrpc/app.bsky.actor.getPreferences`;
+const PREFS_PUT = `POST ${SERVER}/xrpc/app.bsky.actor.putPreferences`;
+const SAVED = 'app.bsky.actor.defs#savedFeedsPrefV2';
+const feedUri = (n: number) => `at://${did(50 + n)}/app.bsky.feed.generator/f${n}`;
+const savedPref = (items: unknown[]) => ({ $type: SAVED, items });
+const feedItem = (n: number, pinned = false, type = 'feed') => ({ type, value: type === 'list' ? `at://${did(50 + n)}/app.bsky.graph.list/l${n}` : feedUri(n), pinned, id: `id${n}` });
+const puts = (f: ReturnType<typeof mockBluesky>) => f.callsTo('POST', `${SERVER}/xrpc/app.bsky.actor.putPreferences`).map((c) => (c.body as { preferences: Record<string, unknown>[] }).preferences);
+
+describe('reading mutes', () => {
+  it('pages the muted people through the session with the proxy header, newest first, and numbers them so the oldest is 0', async () => {
+    const all = Array.from({ length: 3 }, (_, i) => person(i + 1));
+    const f = mockBluesky({ [`GET ${SERVER}/xrpc/app.bsky.graph.getMutes*`]: paged('mutes', all, 2, (items, cursor) => ({ mutes: items, cursor })) });
+    const items = await readMutes(signedIn);
+    expect(f.calls).toHaveLength(2);
+    expect(f.calls.every((c) => c.headers['atproto-proxy'] === PROXY)).toBe(true);
+    expect(items.map((i) => [i.itemId, JSON.parse(i.data!).seq])).toEqual([[`mute:${did(101)}`, 2], [`mute:${did(102)}`, 1], [`mute:${did(103)}`, 0]]);
+    expect(items[0]).toMatchObject({ kind: 'mute', title: 'Person 1', thumbnailUrl: AV });
+  });
+
+  it('says auth when the session cannot read, and drops entries that are not accounts', async () => {
+    mockBluesky({ [`GET ${SERVER}/xrpc/app.bsky.graph.getMutes*`]: { status: 401, json: {} } });
+    await expect(readMutes(signedIn)).rejects.toEqual(new DriverError('auth'));
+    mockBluesky({ [`GET ${SERVER}/xrpc/app.bsky.graph.getMutes*`]: json({ mutes: [person(1), { did: 'did:web:x', handle: 'x' }, null] }) });
+    expect(await readMutes(signedIn)).toHaveLength(1);
+  });
+});
+
+describe('reading saved feeds', () => {
+  it('takes only the saved feeds part, skips the timeline, names feeds and lists, keeps the saved order, and drops every other setting', async () => {
+    const f = mockBluesky({
+      [PREFS_GET]: json({
+        preferences: [
+          { $type: 'app.bsky.actor.defs#adultContentPref', enabled: true },
+          { $type: 'app.bsky.actor.defs#mutedWordsPref', items: [{ value: 'secret word' }] },
+          savedPref([{ type: 'timeline', value: 'following', pinned: true, id: 't' }, feedItem(1, true), feedItem(2, false), feedItem(3, true, 'list')]),
+        ],
+      }),
+      [`GET ${PUBLIC}/app.bsky.feed.getFeedGenerators*`]: json({ feeds: [{ uri: feedUri(1), displayName: 'Cats', avatar: AV }, { uri: feedUri(2), displayName: 'Dogs' }] }),
+      [`GET ${PUBLIC}/app.bsky.graph.getList*`]: json({ list: { uri: 'x', name: 'Birds', avatar: AV }, items: [] }),
+    });
+    const items = await readFeeds(signedIn);
+    expect(items.map((i) => [i.itemId, i.title, JSON.parse(i.data!)])).toEqual([
+      [`feed:${feedUri(1)}`, 'Cats', { type: 'feed', value: feedUri(1), pinned: true, seq: 0 }],
+      [`feed:${feedUri(2)}`, 'Dogs', { type: 'feed', value: feedUri(2), pinned: false, seq: 1 }],
+      [`feed:at://${did(53)}/app.bsky.graph.list/l3`, 'Birds', { type: 'list', value: `at://${did(53)}/app.bsky.graph.list/l3`, pinned: true, seq: 2 }],
+    ]);
+    expect(JSON.stringify(items)).not.toMatch(/secret word|adultContent/);
+    expect(f.callsTo('GET', PREFS_GET.slice(4))[0].headers['atproto-proxy']).toBe(PROXY);
+  });
+
+  it('uses the end of the address as the name of a feed that no longer exists, and finds no feeds when none are saved', async () => {
+    mockBluesky({
+      [PREFS_GET]: json({ preferences: [savedPref([feedItem(1)])] }),
+      [`GET ${PUBLIC}/app.bsky.feed.getFeedGenerators*`]: json({ feeds: [] }),
+    });
+    expect((await readFeeds(signedIn))[0].title).toBe('f1');
+    mockBluesky({ [PREFS_GET]: json({ preferences: [] }) });
+    expect(await readFeeds(signedIn)).toEqual([]);
+  });
+
+  it('drops a feed whose address is not one of an account', async () => {
+    mockBluesky({
+      [PREFS_GET]: json({ preferences: [savedPref([{ type: 'feed', value: 'https://evil.example/x', pinned: false, id: 'z' }, feedItem(1)])] }),
+      [`GET ${PUBLIC}/app.bsky.feed.getFeedGenerators*`]: json({ feeds: [] }),
+    });
+    expect(await readFeeds(signedIn)).toHaveLength(1);
+  });
+});
+
+describe('muting a person', () => {
+  it('posts the mute with the proxy header', async () => {
+    const f = mockBluesky({ [`POST ${SERVER}/xrpc/app.bsky.graph.muteActor`]: { status: 200 } });
+    expect(await muteActor(signedIn, did(101))).toEqual({ kind: 'moved' });
+    const [call] = f.calls;
+    expect(call.body).toEqual({ actor: did(101) });
+    expect(call.headers['atproto-proxy']).toBe(PROXY);
+  });
+
+  it('maps a missing account to a plain reason', async () => {
+    mockBluesky({ [`POST ${SERVER}/xrpc/app.bsky.graph.muteActor`]: { status: 404, json: { error: 'NotFound' } } });
+    expect(await muteActor(signedIn, did(101))).toEqual({ kind: 'couldnt_move', reason: 'Account was deleted.' });
+  });
+});
+
+describe('adding a saved feed', () => {
+  const stored = (n: number, pinned: boolean, type = 'feed'): StoredItem => ({
+    itemId: `feed:${feedItem(n, pinned, type).value}`,
+    kind: 'feed',
+    title: `Feed ${n}`,
+    thumbnailUrl: null,
+    data: JSON.stringify({ type, value: feedItem(n, pinned, type).value, pinned, seq: n }),
+    picked: true,
+    status: 'waiting',
+    reason: null,
+  });
+  const other = [{ $type: 'app.bsky.actor.defs#adultContentPref', enabled: false }, { $type: 'app.bsky.actor.defs#mutedWordsPref', items: [{ value: 'x', targets: ['content'] }] }];
+
+  it('reads the settings right before the write, adds the feed with its pin, and writes every other setting back unchanged', async () => {
+    const f = mockBluesky({ [PREFS_GET]: json({ preferences: [...other, savedPref([feedItem(9, true)])] }), [PREFS_PUT]: { status: 200 } });
+    expect(await addFeed(signedIn, stored(1, false))).toEqual({ kind: 'moved' });
+    const [written] = puts(f);
+    expect(written.slice(0, 2)).toEqual(other);
+    const items = (written[2] as { items: Record<string, unknown>[] }).items;
+    expect(items.map((i) => i.value)).toEqual([feedItem(9).value, feedUri(1)]);
+    expect(items[1]).toMatchObject({ type: 'feed', value: feedUri(1), pinned: false });
+    expect(typeof items[1].id).toBe('string');
+    expect(items[1].id).not.toBe('id9');
+    // The read came before the write, in this order, with the proxy header on both.
+    expect(f.calls.map((c) => c.method)).toEqual(['GET', 'POST']);
+    expect(f.calls.every((c) => c.headers['atproto-proxy'] === PROXY)).toBe(true);
+  });
+
+  it("puts a pinned feed after the new account's own pinned feeds and before the unpinned ones", async () => {
+    const f = mockBluesky({ [PREFS_GET]: json({ preferences: [savedPref([feedItem(8, true), feedItem(9, true), feedItem(7, false)])] }), [PREFS_PUT]: { status: 200 } });
+    await addFeed(signedIn, stored(1, true));
+    const items = (puts(f)[0][0] as { items: { value: string }[] }).items;
+    expect(items.map((i) => i.value)).toEqual([feedUri(8), feedUri(9), feedUri(1), feedUri(7)]);
+  });
+
+  it('keeps the old pin order when several feeds are added one after the other', async () => {
+    let current = [feedItem(9, true)];
+    mockBluesky({
+      [PREFS_GET]: () => json({ preferences: [savedPref(current)] }),
+      [PREFS_PUT]: (r) => {
+        current = ((r.body as { preferences: { items: typeof current }[] }).preferences[0]).items;
+        return { status: 200 };
+      },
+    });
+    for (const n of [1, 2, 3]) await addFeed(signedIn, stored(n, true));
+    expect(current.map((i) => i.value)).toEqual([feedUri(9), feedUri(1), feedUri(2), feedUri(3)]);
+  });
+
+  it('leaves a feed the new account already saves as it is, with no write', async () => {
+    const f = mockBluesky({ [PREFS_GET]: json({ preferences: [savedPref([feedItem(1, false)])] }), [PREFS_PUT]: { status: 200 } });
+    expect(await addFeed(signedIn, stored(1, true))).toEqual({ kind: 'moved' });
+    expect(puts(f)).toEqual([]);
+  });
+
+  it('makes the saved feeds setting when the new account has none, and never writes fewer settings than it read', async () => {
+    const f = mockBluesky({ [PREFS_GET]: json({ preferences: other }), [PREFS_PUT]: { status: 200 } });
+    await addFeed(signedIn, stored(1, false));
+    const [written] = puts(f);
+    expect(written).toHaveLength(3);
+    expect(written.slice(0, 2)).toEqual(other);
+    expect((written[2] as { $type: string }).$type).toBe(SAVED);
+  });
+
+  it('writes nothing when the settings cannot be read, and gives the outcome of the failed read', async () => {
+    const f = mockBluesky({ [PREFS_GET]: { status: 500, json: {} }, [PREFS_PUT]: { status: 200 } });
+    expect(await addFeed(signedIn, stored(1, false))).toEqual({ kind: 'retry' });
+    mockBluesky({ [PREFS_GET]: { status: 401, json: {} } });
+    expect(await addFeed(signedIn, stored(1, false))).toEqual({ kind: 'auth' });
+    expect(puts(f)).toEqual([]);
+  });
+
+  it('maps a rate limit on the write, and says it could not move a feed whose saved data is wrong, with no call', async () => {
+    mockBluesky({ [PREFS_GET]: json({ preferences: [] }), [PREFS_PUT]: { status: 429, headers: { 'ratelimit-reset': String(Math.floor(Date.now() / 1000) + 5) }, json: {} } });
+    expect(await addFeed(signedIn, stored(1, false))).toMatchObject({ kind: 'wait' });
+    const f = mockBluesky({});
+    expect(await addFeed(signedIn, { ...stored(1, false), data: '{"type":"x"}' })).toMatchObject({ kind: 'couldnt_move' });
+    expect(f.calls).toHaveLength(0);
+  });
+});
+
+describe('what the new account already has: mutes and feeds', () => {
+  it('adds muted people and saved feeds when the new account was granted those kinds', async () => {
+    mockBluesky({
+      [`GET ${PUBLIC}/app.bsky.graph.getFollows*`]: json({ follows: [] }),
+      [`GET ${SERVER}/xrpc/com.atproto.repo.listRecords*`]: json({ records: [] }),
+      [`GET ${SERVER}/xrpc/app.bsky.graph.getMutes*`]: json({ mutes: [person(1)] }),
+      [PREFS_GET]: json({ preferences: [savedPref([feedItem(2), { type: 'timeline', value: 'following', pinned: true, id: 't' }])] }),
+    });
+    const have = await haveOnNew(ME, SERVER, { fetch: signedIn, kinds: ['mute', 'feed'] });
+    expect(have.has(`mute:${did(101)}`)).toBe(true);
+    expect(have.has(`feed:${feedUri(2)}`)).toBe(true);
+    expect([...have].some((id) => id.includes('following'))).toBe(false);
+  });
+
+  it('does not read them when the new account has no access for them', async () => {
+    const f = mockBluesky({ [`GET ${PUBLIC}/app.bsky.graph.getFollows*`]: json({ follows: [] }), [`GET ${SERVER}/xrpc/com.atproto.repo.listRecords*`]: json({ records: [] }) });
+    await haveOnNew(ME, SERVER, { fetch: signedIn, kinds: ['person', 'block'] });
+    expect(f.calls.some((c) => /getMutes|getPreferences/.test(c.url))).toBe(false);
   });
 });

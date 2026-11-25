@@ -191,6 +191,17 @@ export async function signOut(role?: 'old' | 'new'): Promise<boolean> {
   return results.every(Boolean);
 }
 
+// The signed-in fetch of the old account, after "Allow": its session is only in memory. null: there is none.
+export async function oldAccountFetch(did: string): Promise<Fetcher | null> {
+  if (!(await blueskyStores.hasSession(did))) return null;
+  try {
+    const session = await getClient().restore(did);
+    return (path, init) => session.fetchHandler(path, init);
+  } catch {
+    return null;
+  }
+}
+
 // The signed-in fetch of the new account, which sends each request to its server with the token and a fresh proof.
 // null: there is no saved session, or it cannot be used any more (the token ran out or was revoked).
 export async function newAccountFetch(): Promise<{ did: string; fetch: Fetcher } | null> {

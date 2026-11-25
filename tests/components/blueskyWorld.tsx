@@ -42,19 +42,28 @@ export function unregisterBluesky() {
 // A person that accounts follow, block, or put in lists. Person n always has the same ID, handle, and name.
 export const person = (n: number) => ({ did: did(100 + n), handle: `p${n}.bsky.social`, displayName: `Person ${n}` });
 export type FakeList = { name: string; purpose?: 'curatelist' | 'modlist'; members: number[] };
-type Side = { follows: number[]; blocks: number[]; lists: FakeList[] };
-const emptySide = (): Side => ({ follows: [], blocks: [], lists: [] });
+// A saved feed: feed n is at feedUri(n), and is named "Feed n".
+export type FakeFeed = { n: number; pinned: boolean };
+export const feedUri = (n: number) => `at://${did(50 + n)}/app.bsky.feed.generator/f${n}`;
+type Side = { follows: number[]; blocks: number[]; lists: FakeList[]; mutes: number[]; feeds: FakeFeed[]; otherPrefs: Record<string, unknown>[] };
+const emptySide = (): Side => ({ follows: [], blocks: [], lists: [], mutes: [], feeds: [], otherPrefs: [] });
+const SAVED = 'app.bsky.actor.defs#savedFeedsPrefV2';
 
 // The fake world: the three accounts can be looked up, and the old and the new account hold follows, blocks, and
 // lists that the app reads (public, no sign-in) and writes (with the new account's session). Follows are listed
 // newest first, and blocks and lists oldest first, as Bluesky gives them. People numbers: see person(n).
 export function blueskyWorld(extra: Parameters<typeof mockBluesky>[0] = {}) {
   const data = { old: emptySide(), new: emptySide() };
+  // The signed-in calls say who signed in: the fake session sends `DPoP <account ID>`.
+  const signedSide = (r: Req) => sideOf(r.headers.authorization?.replace('DPoP ', '') ?? null);
   const sideOf = (d: string | null) => (d === NEW.did ? data.new : d === OLD.did ? data.old : emptySide());
   const known = new Map<string, ReturnType<typeof person>>();
   const remember = (n: number) => known.set(person(n).did, person(n));
   // Everything the new account was asked to write, in order.
   const writes: { repo: string; collection: string; record: Record<string, unknown> }[] = [];
+  // Every settings write, and every account that was muted.
+  const prefWrites: Record<string, unknown>[][] = [];
+  const muted: string[] = [];
   // Numbers of people whose account is gone: Bluesky no longer knows them.
   const gone = new Set<number>();
   // The next answer to a write, if a test wants one other than success.
@@ -100,6 +109,34 @@ export function blueskyWorld(extra: Parameters<typeof mockBluesky>[0] = {}) {
       list?.members.forEach(remember);
       return { json: { items: (list?.members ?? []).filter((n) => !gone.has(n)).map((n) => ({ subject: person(n) })) } };
     },
+    [`GET ${SERVER}/xrpc/app.bsky.graph.getMutes*`]: (r) => {
+      const all = signedSide(r).mutes.filter((n) => !gone.has(n));
+      all.forEach(remember);
+      return { json: { mutes: all.map(person) } };
+    },
+    [`GET ${SERVER}/xrpc/app.bsky.actor.getPreferences`]: (r) => {
+      const side = signedSide(r);
+      const saved = { $type: SAVED, items: [{ type: 'timeline', value: 'following', pinned: true, id: 't' }, ...side.feeds.map((x) => ({ type: 'feed', value: feedUri(x.n), pinned: x.pinned, id: `id${x.n}` }))] };
+      return { json: { preferences: [...side.otherPrefs, saved] } };
+    },
+    [`POST ${SERVER}/xrpc/app.bsky.actor.putPreferences`]: (r) => {
+      const side = signedSide(r);
+      const sent = (r.body as { preferences: { $type: string; items?: { type: string; value: string; pinned: boolean }[] }[] }).preferences;
+      prefWrites.push(sent);
+      side.otherPrefs = sent.filter((p) => p.$type !== SAVED);
+      const items = sent.find((p) => p.$type === SAVED)?.items ?? [];
+      side.feeds = items.filter((i) => i.type === 'feed').map((i) => ({ n: Number(i.value.split('/f').pop()), pinned: i.pinned }));
+      return { status: 200 };
+    },
+    [`POST ${SERVER}/xrpc/app.bsky.graph.muteActor`]: (r) => {
+      const subject = [...known.values()].find((p) => p.did === (r.body as { actor: string }).actor);
+      if (subject) signedSide(r).mutes.unshift(Number(subject.handle.slice(1).split('.')[0]));
+      muted.push((r.body as { actor: string }).actor);
+      return { status: 200 };
+    },
+    [`GET ${PUBLIC}/app.bsky.feed.getFeedGenerators*`]: (r) => ({
+      json: { feeds: new URL(r.url).searchParams.getAll('feeds').map((uri) => ({ uri, displayName: `Feed ${uri.split('/f').pop()}` })) },
+    }),
     [`POST ${SERVER}/xrpc/com.atproto.repo.createRecord`]: (r) => {
       const body = r.body as { repo: string; collection: string; record: Record<string, unknown> };
       const next = answers[body.collection]?.shift();
@@ -129,6 +166,8 @@ export function blueskyWorld(extra: Parameters<typeof mockBluesky>[0] = {}) {
     f,
     data,
     writes,
+    prefWrites,
+    muted,
     gone,
     // The answers to the next writes of a kind of record (for example a rate limit), before they succeed again.
     // 'ok' lets one write go through as usual.
