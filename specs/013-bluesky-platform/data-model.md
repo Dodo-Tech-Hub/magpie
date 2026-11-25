@@ -48,7 +48,7 @@ Not in SQLite. Research R3.
 
 | Key | Where | Value | Written | Deleted |
 | --- | --- | --- | --- | --- |
-| `bluesky.session.<did>` (and `bluesky.session.<did>.2` when split) | `expo-secure-store` | The client's session JSON: DPoP private key, token set, granted scopes. | New account sign-in, each token refresh. | Summary, Sign out, Delete all, "Don't save". Revoked first (FR-BS-013). |
+| `bluesky.session.<did>` (and `.2`, `.3` when split; the DID has every character other than letters, digits, dots, dashes, and underscores changed to `_`) | `expo-secure-store` | The client's session JSON: DPoP private key, token set, granted scopes. | New account sign-in, each token refresh. | Summary, Sign out, Delete all, "Don't save". Revoked first (FR-BS-013). |
 | old session | Memory | Same shape. | "Allow" sign-in (FR-BS-020). | Right after mutes and feeds are read. Revoked first. |
 | sign-in state | Memory, 10 minutes | PKCE verifier, DPoP key, `state`. | Sign-in starts. | Sign-in ends or is cancelled. |
 

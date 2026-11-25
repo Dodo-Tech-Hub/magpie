@@ -12,6 +12,8 @@ const config: ExpoConfig = {
   slug: 'magpie',
   version: '0.1.0',
   orientation: 'default',
+  // The Bluesky sign-in comes back to the app through this scheme: the address of the client metadata file read backwards.
+  scheme: 'io.github.dodo-tech-hub',
   icon: './assets/icon.png',
   userInterfaceStyle: 'automatic',
   ios: {
