@@ -60,6 +60,8 @@ export const blueskyDriver: Driver = {
         return n + 1 + (Array.isArray(members) ? members.length : 0);
       }, 0),
   },
+  // Page that explains this platform's limits (spec 009, FR-BS-019). Lives in docs/limits/bluesky.md.
+  limitsUrl: 'https://dodo-tech-hub.github.io/magpie/limits/bluesky',
   handleInput: true,
   // There is no sign-in to switch to: Sign out on To, and Change on From (words.changeOld).
   switchSignsOut: true,
@@ -76,6 +78,11 @@ export const blueskyDriver: Driver = {
   async signOut(role) {
     if (role !== 'new') oldTarget = null;
     return (await signOut(role)) ? undefined : false;
+  },
+
+  // A move finished with nothing left: cancel the new account's access and delete its session (FR-BS-013).
+  async endMove() {
+    return (await signOut('new')) ? undefined : false;
   },
 
   async granted() {

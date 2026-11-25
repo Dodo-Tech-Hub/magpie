@@ -1,5 +1,5 @@
 import * as WebBrowser from 'expo-web-browser';
-import { ALL_SCOPES, REDIRECT_URI, kindsOf, scopesFor, signIn } from '@/auth/bluesky';
+import { ALL_SCOPES, REDIRECT_URI, kindsOf, scopesFor, signIn, signOut } from '@/auth/bluesky';
 import { blueskyStores } from '@/auth/blueskySession';
 import { __dump, __reset } from '../mocks/expoSecureStore';
 import { __calls, __reset as resetBrowser, __set } from '../mocks/expoWebBrowser';
@@ -242,4 +242,75 @@ describe('sign-in of the old account', () => {
 
 it('lists the scopes of every kind in the metadata', () => {
   expect(ALL_SCOPES).toContain('atproto');
+});
+
+describe('sign-out', () => {
+  const signedInNew = async () => {
+    const session = await userSignsInAs(ALICE, scopesFor('new', ['person']));
+    await signIn('new', ['person'], 'alice.bsky.social');
+    return session;
+  };
+
+  it('cancels the new account access on Bluesky, then deletes the session and the account ID from the phone', async () => {
+    const session = await signedInNew();
+    expect(Object.keys(__dump())).toHaveLength(2);
+    expect(await signOut('new')).toBe(true);
+    expect(session.signOut).toHaveBeenCalledTimes(1);
+    expect(__dump()).toEqual({});
+    expect(await blueskyStores.hasSession(ALICE)).toBe(false);
+    expect(await blueskyStores.getNewDid()).toBeNull();
+  });
+
+  it('still deletes everything on the phone when Bluesky cannot be told, and says so with false', async () => {
+    const session = await signedInNew();
+    mockClient.offline = true;
+    expect(await signOut('new')).toBe(false);
+    expect(session.signOut).toHaveBeenCalled();
+    expect(__dump()).toEqual({});
+  });
+
+  it('deletes the saved session and says false when it cannot be opened any more', async () => {
+    await signedInNew();
+    mockClient.restore.mockRejectedValue(new Error('token revoked'));
+    expect(await signOut('new')).toBe(false);
+    expect(__dump()).toEqual({});
+  });
+
+  it('makes no call when there is nothing to sign out of', async () => {
+    expect(await signOut('new')).toBe(true);
+    expect(await signOut()).toBe(true);
+    expect(mockClient.restore).not.toHaveBeenCalled();
+  });
+
+  it('cancels and drops the old account session, which is only in memory, and leaves the new account alone', async () => {
+    await signedInNew();
+    const oldSession = await userSignsInAs(OLDER, scopesFor('old', ['mute']));
+    await signIn('old', ['mute'], 'older.bsky.social');
+    expect(await signOut('old')).toBe(true);
+    expect(oldSession.signOut).toHaveBeenCalled();
+    expect(await blueskyStores.hasSession(OLDER)).toBe(false);
+    expect(await blueskyStores.hasSession(ALICE)).toBe(true);
+    expect(await blueskyStores.getNewDid()).toBe(ALICE);
+  });
+
+  it('signs out of both when no account is named', async () => {
+    const a = await signedInNew();
+    const b = await userSignsInAs(OLDER, scopesFor('old', ['mute']));
+    await signIn('old', ['mute'], 'older.bsky.social');
+    expect(await signOut()).toBe(true);
+    expect(a.signOut).toHaveBeenCalled();
+    expect(b.signOut).toHaveBeenCalled();
+    expect(__dump()).toEqual({});
+  });
+
+  it('logs nothing: no token, key, account ID, or handle reaches the console', async () => {
+    const spies = (['log', 'info', 'warn', 'error', 'debug'] as const).map((m) => jest.spyOn(console, m).mockImplementation(() => undefined));
+    await signedInNew();
+    await signOut();
+    mockClient.offline = true;
+    await signedInNew();
+    await signOut();
+    expect(spies.every((spy) => spy.mock.calls.length === 0)).toBe(true);
+    spies.forEach((spy) => spy.mockRestore());
+  });
 });

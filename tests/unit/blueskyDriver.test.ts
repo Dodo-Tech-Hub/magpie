@@ -259,6 +259,19 @@ describe('the Bluesky driver, adding', () => {
   });
 });
 
+describe('the Bluesky driver, the limits page', () => {
+  it('has a page that tells the numbers the pace really uses', () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const text: string = require('fs').readFileSync(require('path').join(__dirname, '../../docs/limits/bluesky.md'), 'utf8');
+    expect(driver.limitsUrl).toBe('https://dodo-tech-hub.github.io/magpie/limits/bluesky');
+    const { gapMs, perHour, perDay } = driver.pace!;
+    expect(text).toContain(`${60_000 / gapMs} items a minute`);
+    expect(text).toContain(`${perHour.toLocaleString('en-US')} an hour`);
+    expect(text).toContain(`${perDay!.toLocaleString('en-US')} a day`);
+    expect(text).toMatch(/Bluesky and the butterfly logo belong to Bluesky Social PBC/);
+  });
+});
+
 describe('the Bluesky driver, the order and the pace', () => {
   it('moves people, then blocks, then lists, then the private kinds', () => {
     expect(driver.moveOrder).toEqual(['person', 'block', 'list', 'mute', 'feed']);

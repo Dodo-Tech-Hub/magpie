@@ -1,9 +1,10 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { Alert, type AlertButton } from 'react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import App from '../../App';
 import { blueskyStores } from '@/auth/blueskySession';
 import { blueskyDriver } from '@/platforms/blueskyDriver';
 import { PLATFORMS, type Platform } from '@/platforms/platforms';
-import { closeStore, type NewItem } from '@/store/progressStore';
+import { closeStore, listUnfinished, type NewItem } from '@/store/progressStore';
 import { __reset } from '../mocks/expoSecureStore';
 import { __reset as resetBrowser } from '../mocks/expoWebBrowser';
 import { PUBLIC, SERVER, account, did, mockBluesky, type Answer, type Req } from '../mocks/blueskyFetch';
@@ -24,7 +25,10 @@ const entry: Platform = {
   ready: true,
   driver: blueskyDriver,
   open: (dispatch) => dispatch({ type: 'openPlatform', platform: 'bluesky' }),
-  unfinished: async () => ({ left: 0, ids: [] }),
+  unfinished: async () => {
+    const list = await listUnfinished('bluesky');
+    return { left: list.reduce((n, p) => n + p.left, 0), ids: list.map((p) => p.id) };
+  },
 };
 
 export function registerBluesky() {
@@ -54,7 +58,7 @@ export function blueskyWorld(extra: Parameters<typeof mockBluesky>[0] = {}) {
   // Numbers of people whose account is gone: Bluesky no longer knows them.
   const gone = new Set<number>();
   // The next answer to a write, if a test wants one other than success.
-  const answers: Record<string, Answer[]> = {};
+  const answers: Record<string, (Answer | 'ok')[]> = {};
   const q = (r: Req, name: string) => new URL(r.url).searchParams.get(name);
   const listUri = (owner: string, i: number) => `at://${owner}/app.bsky.graph.list/${i + 1}`;
 
@@ -99,7 +103,7 @@ export function blueskyWorld(extra: Parameters<typeof mockBluesky>[0] = {}) {
     [`POST ${SERVER}/xrpc/com.atproto.repo.createRecord`]: (r) => {
       const body = r.body as { repo: string; collection: string; record: Record<string, unknown> };
       const next = answers[body.collection]?.shift();
-      if (next) return next;
+      if (next && next !== 'ok') return next;
       writes.push(body);
       const side = sideOf(body.repo);
       // The new account now has what was written, so a later read sees it.
@@ -127,7 +131,8 @@ export function blueskyWorld(extra: Parameters<typeof mockBluesky>[0] = {}) {
     writes,
     gone,
     // The answers to the next writes of a kind of record (for example a rate limit), before they succeed again.
-    answerNext: (collection: string, ...a: Answer[]) => {
+    // 'ok' lets one write go through as usual.
+    answerNext: (collection: string, ...a: (Answer | 'ok')[]) => {
       answers[collection] = [...(answers[collection] ?? []), ...a];
     },
   };
@@ -177,4 +182,23 @@ export async function signInNewAccount(newScope = scopesFor('new', ['person', 'b
 export async function signInBoth(newScope?: string) {
   await signInWithHandle('Old account', OLD.handle);
   await signInNewAccount(newScope);
+}
+
+// Let fake time pass so a wait can end, inside act.
+export const seconds = (n: number) =>
+  act(async () => {
+    await jest.advanceTimersByTimeAsync(n * 1000);
+  });
+
+// A move runs on fake time. Wait for text while the clock moves on.
+export const eventually = (text: string | RegExp) =>
+  screen.findByText(text, {}, { timeout: 600_000, interval: 1000 });
+
+// Answer the question about reminders right away.
+export function answerReminder(text: string) {
+  return jest
+    .spyOn(Alert, 'alert')
+    .mockImplementation((_t: unknown, _m: unknown, buttons?: unknown) =>
+      (buttons as AlertButton[] | undefined)?.find((b) => b.text === text)?.onPress?.(),
+    );
 }
