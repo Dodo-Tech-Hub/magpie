@@ -81,7 +81,7 @@ function reply(a: Answer) {
 export const PUBLIC = 'https://public.api.bsky.app/xrpc';
 // A valid account ID (did:plc plus 24 characters of a-z and 2-7) that is different for each number.
 const ALPHABET = 'abcdefghijklmnopqrstuvwxyz234567';
-export const did = (n: number) =>
+export const did = (n: number): `did:plc:${string}` =>
   `did:plc:${[...String(n)].map((d) => ALPHABET[Number(d)]).join('').padEnd(24, 'z')}`;
 
 export const resolve = (handle: string, d: string): Record<string, Route> => ({

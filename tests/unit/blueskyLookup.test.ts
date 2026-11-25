@@ -23,6 +23,13 @@ describe('lookup', () => {
     });
   });
 
+  it('finds an account by its ID too, which is how a sign-in answers, without resolving a handle', async () => {
+    const f = mockBluesky({ ...didDoc(ALICE), ...profile(ALICE, 'alice.bsky.social', { displayName: 'Alice' }) });
+    expect(await lookup(ALICE)).toMatchObject({ ok: true, account: { id: ALICE, name: 'Alice' } });
+    expect(f.calls.some((c) => c.url.includes('resolveHandle'))).toBe(false);
+    expect(await lookup('did:web:alice.example.com')).toEqual({ ok: false, reason: 'not_supported' });
+  });
+
   it('uses the handle as the name when there is no display name, and drops a picture that is not on the picture host', async () => {
     mockBluesky(account('alice.bsky.social', ALICE, { displayName: '', avatar: 'https://evil.example/a.jpg' }));
     const res = await lookup('alice');

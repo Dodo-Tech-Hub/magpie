@@ -1,4 +1,15 @@
-import { ALL_SCOPES, kindsOf, scopesFor } from '@/auth/bluesky';
+import * as WebBrowser from 'expo-web-browser';
+import { ALL_SCOPES, REDIRECT_URI, kindsOf, scopesFor, signIn } from '@/auth/bluesky';
+import { blueskyStores } from '@/auth/blueskySession';
+import { __dump, __reset } from '../mocks/expoSecureStore';
+import { __calls, __reset as resetBrowser, __set } from '../mocks/expoWebBrowser';
+import { account, did, mockBluesky } from '../mocks/blueskyFetch';
+import { mockClient, resetClient, userSignsInAs } from '../mocks/oauthClient';
+
+jest.mock('@atproto/oauth-client', () => ({
+  ...jest.requireActual('@atproto/oauth-client'),
+  OAuthClient: require('../mocks/oauthClient').OAuthClient,
+}));
 
 const AUD = 'did:web:api.bsky.app%23bsky_appview';
 const split = (s: string) => s.split(' ');
@@ -78,4 +89,157 @@ describe('the scopes the metadata file must list', () => {
     expect(new Set(ALL_SCOPES)).toEqual(asked);
     expect(new Set(ALL_SCOPES).size).toBe(ALL_SCOPES.length);
   });
+});
+
+// ---- Sign-in ------------------------------------------------------------------------------------------
+
+const ALICE = did(1); // the new account
+const BOB = did(2); // another account
+const OLDER = did(3); // the old account
+beforeEach(() => {
+  __reset();
+  resetBrowser();
+  resetClient();
+  blueskyStores.clearOld(OLDER);
+  mockBluesky({
+    ...account('alice.bsky.social', ALICE, { displayName: 'Alice' }),
+    ...account('bob.bsky.social', BOB, { displayName: 'Bob' }),
+    ...account('older.bsky.social', OLDER, { displayName: 'Older' }),
+  });
+});
+
+describe('sign-in of the new account', () => {
+  it('looks the handle up first, and opens no browser for an account that is not found or not supported', async () => {
+    mockBluesky({
+      ...account('alice.bsky.social', ALICE),
+      'GET https://public.api.bsky.app/xrpc/com.atproto.identity.resolveHandle?handle=nobody.bsky.social': {
+        status: 400,
+        json: { error: 'InvalidRequest' },
+      },
+      'GET https://public.api.bsky.app/xrpc/com.atproto.identity.resolveHandle?handle=web.example.com': { json: { did: 'did:web:web.example.com' } },
+    });
+    expect(await signIn('new', ['person'], 'nobody.bsky.social')).toEqual({ ok: false, reason: 'not_found' });
+    expect(await signIn('new', ['person'], 'web.example.com')).toEqual({ ok: false, reason: 'not_supported' });
+    expect(__calls()).toHaveLength(0);
+    expect(mockClient.authorize).not.toHaveBeenCalled();
+  });
+
+  it('asks Bluesky for the scope of the picked kinds, with the typed handle, and the redirect of the app', async () => {
+    await userSignsInAs(ALICE, scopesFor('new', ['person', 'block']));
+    await signIn('new', ['person', 'block'], '@Alice');
+    expect(mockClient.authorize).toHaveBeenCalledWith('alice.bsky.social', expect.objectContaining({ scope: scopesFor('new', ['person', 'block']), redirect_uri: REDIRECT_URI }));
+  });
+
+  it('opens the sign-in page in the system browser, with no saved login, and gives the account that signed in', async () => {
+    await userSignsInAs(ALICE);
+    const res = await signIn('new', [], 'alice.bsky.social');
+    expect(__calls()).toEqual([{ url: 'https://bsky.social/oauth/authorize?request_uri=r', redirect: REDIRECT_URI }]);
+    expect(WebBrowser.openAuthSessionAsync).toHaveBeenCalledWith(expect.any(String), REDIRECT_URI, expect.objectContaining({ preferEphemeralSession: true }));
+    expect(res).toEqual({ ok: true, account: { id: ALICE, handle: 'alice.bsky.social', name: 'Alice', photoUrl: null } });
+    // The return link is handed to Bluesky's client to check state and issuer.
+    expect(mockClient.callback).toHaveBeenCalledWith(expect.any(URLSearchParams), { redirect_uri: REDIRECT_URI });
+  });
+
+  it('shows the account that actually signed in, not the one that was typed', async () => {
+    await userSignsInAs(BOB);
+    const res = await signIn('new', [], 'alice.bsky.social');
+    expect(res).toMatchObject({ ok: true, account: { id: BOB, handle: 'bob.bsky.social' } });
+  });
+
+  it('keeps the session in the secure storage, remembers the new account, and says which kinds were granted', async () => {
+    await userSignsInAs(ALICE, scopesFor('new', ['person', 'list']));
+    await signIn('new', ['person', 'list'], 'alice.bsky.social');
+    expect(await blueskyStores.getNewDid()).toBe(ALICE);
+    expect(Object.keys(__dump()).sort()).toEqual(['bluesky.new', `bluesky.session.${ALICE.replace(/:/g, '_')}`]);
+    expect(kindsOf((await blueskyStores.sessionStore.get(ALICE))!.tokenSet.scope)).toEqual(['person', 'list']);
+  });
+
+  it('gives back no token and no key', async () => {
+    await userSignsInAs(ALICE);
+    const res = JSON.stringify(await signIn('new', [], 'alice.bsky.social'));
+    expect(res).not.toMatch(/secret|access|refresh|dpop|"d"/i);
+  });
+
+  it('leaves the step signed out with no error when the user cancels or closes the page', async () => {
+    for (const type of ['cancel', 'dismiss'] as const) {
+      __set({ type });
+      expect(await signIn('new', [], 'alice.bsky.social')).toEqual({ ok: false, reason: 'cancelled' });
+    }
+    expect(mockClient.callback).not.toHaveBeenCalled();
+    expect(__dump()).toEqual({});
+  });
+
+  it('says failed when Bluesky refuses the return (a wrong state or issuer), and saves nothing', async () => {
+    mockClient.callback.mockRejectedValue(new Error('bad state'));
+    __set({ type: 'success', url: `${REDIRECT_URI}?code=c&state=wrong` });
+    expect(await signIn('new', [], 'alice.bsky.social')).toEqual({ ok: false, reason: 'failed' });
+    expect(__dump()).toEqual({});
+  });
+
+  it('says failed when the sign-in client cannot start', async () => {
+    mockClient.authorize.mockRejectedValue(new Error('no server'));
+    expect(await signIn('new', [], 'alice.bsky.social')).toEqual({ ok: false, reason: 'failed' });
+    expect(__calls()).toHaveLength(0);
+  });
+
+  it('revokes and refuses a session from a sign-in server that is not Bluesky', async () => {
+    const session = await userSignsInAs(ALICE, 'atproto', 'https://evil.example');
+    expect(await signIn('new', [], 'alice.bsky.social')).toEqual({ ok: false, reason: 'failed' });
+    expect(session.signOut).toHaveBeenCalled();
+    expect(__dump()).toEqual({});
+  });
+
+  it('revokes and refuses a session of an account that is not a did:plc', async () => {
+    const session = await userSignsInAs('did:web:evil.example' as never);
+    expect(await signIn('new', [], 'alice.bsky.social')).toEqual({ ok: false, reason: 'failed' });
+    expect(session.signOut).toHaveBeenCalled();
+  });
+
+  it('keeps the saved new account when another account signs in on an Allow sign-in, and revokes the stranger', async () => {
+    await userSignsInAs(ALICE, scopesFor('new', ['person']));
+    await signIn('new', ['person'], 'alice.bsky.social');
+    const stranger = await userSignsInAs(BOB, scopesFor('new', ['person', 'block']));
+    const res = await signIn('new', ['person', 'block'], 'alice.bsky.social');
+    expect(res).toMatchObject({ ok: true, account: { id: BOB } });
+    expect(stranger.signOut).toHaveBeenCalled();
+    expect(await blueskyStores.getNewDid()).toBe(ALICE);
+    expect(await blueskyStores.hasSession(BOB)).toBe(false);
+    expect(await blueskyStores.hasSession(ALICE)).toBe(true);
+  });
+});
+
+describe('sign-in of the old account', () => {
+  it('only looks the account up when no kind needs a sign-in: no browser, no session', async () => {
+    const res = await signIn('old', [], 'older.bsky.social');
+    expect(res).toMatchObject({ ok: true, account: { id: OLDER } });
+    expect(__calls()).toHaveLength(0);
+    expect(__dump()).toEqual({});
+  });
+
+  it('asks only to read, and keeps the session in memory, never in the secure storage', async () => {
+    await userSignsInAs(OLDER, scopesFor('old', ['mute']));
+    const res = await signIn('old', ['mute'], 'older.bsky.social');
+    expect(res).toMatchObject({ ok: true, account: { id: OLDER } });
+    expect(mockClient.authorize).toHaveBeenCalledWith('older.bsky.social', expect.objectContaining({ scope: scopesFor('old', ['mute']) }));
+    expect(__dump()).toEqual({});
+    expect((await blueskyStores.sessionStore.get(OLDER))?.tokenSet.access_token).toBe('secret-access');
+  });
+
+  it('revokes and drops a session of another account, so it is never saved', async () => {
+    const stranger = await userSignsInAs(BOB, scopesFor('old', ['mute']));
+    const res = await signIn('old', ['mute'], 'older.bsky.social');
+    expect(res).toMatchObject({ ok: true, account: { id: BOB } });
+    expect(stranger.signOut).toHaveBeenCalled();
+    expect(__dump()).toEqual({});
+  });
+
+  it('is cancelled with no session left in memory', async () => {
+    __set({ type: 'cancel' });
+    expect(await signIn('old', ['mute'], 'older.bsky.social')).toEqual({ ok: false, reason: 'cancelled' });
+    expect(await blueskyStores.hasSession(OLDER)).toBe(false);
+  });
+});
+
+it('lists the scopes of every kind in the metadata', () => {
+  expect(ALL_SCOPES).toContain('atproto');
 });

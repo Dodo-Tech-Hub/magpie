@@ -7,7 +7,7 @@ import type { Action } from '@/state/AppState';
 import { listUnfinished } from '@/store/progressStore';
 import { strings } from '@/strings';
 
-export type PlatformId = 'youtube' | 'github';
+export type PlatformId = 'youtube' | 'github' | 'bluesky';
 export type Section = 'automatic' | 'guided';
 
 export type Platform = {

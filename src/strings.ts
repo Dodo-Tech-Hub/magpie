@@ -126,6 +126,25 @@ export const githubWords: Words = {
   accessButton: 'Open GitHub settings',
 };
 
+export const blueskyWords: Words = {
+  signIn: 'Sign in with Bluesky',
+  signInIcon: 'log-in-outline',
+  oldHint: 'Where your follows are now',
+  newHint: 'Where your follows should go',
+  searchPlaceholder: 'Search',
+  noItems: "This account doesn't follow anything yet",
+  needPick: 'Pick at least 1 item',
+  later: 'Later',
+  limitReached: 'Bluesky lets Magpie move only some items each hour and each day. Magpie must wait a little.',
+  reminderBody: 'You can move the rest now.',
+  moveButton: (n) => `Move ${n} item${n === 1 ? '' : 's'}`,
+  notAffiliated: 'Magpie is not made by or linked with Bluesky. Bluesky and the butterfly logo belong to Bluesky Social PBC.',
+  accessNote: "Magpie's access ends on its own soon.",
+  handleLabel: 'Bluesky handle',
+  handlePlaceholder: 'name.bsky.social',
+  changeOld: 'Change',
+};
+
 // The sign-in code panel. The hint is for the second sign-in, when the browser may remember the first account.
 export const signInCodeHint = (role: 'old' | 'new') =>
   role === 'new'

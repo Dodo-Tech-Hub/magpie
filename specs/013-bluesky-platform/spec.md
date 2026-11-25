@@ -166,7 +166,7 @@ The user types the new account's handle and taps Sign in. The app opens Bluesky'
 1. **Given** the user types a handle on To and taps Sign in, **When** the browser opens, **Then** Bluesky's page asks for that account and lists only the access of the kinds picked at that moment.
 2. **Given** the user taps Accept, **When** the browser returns, **Then** To shows the account's picture, display name, and handle, with no extra tap.
 3. **Given** the user signs in as a different account than the handle they typed, **When** sign-in ends, **Then** the app uses the account that actually signed in and shows it.
-4. **Given** the new account is the same as the old account, **When** sign-in ends, **Then** the app refuses it with "Use a different account here." and signs it out.
+4. **Given** the new account is the same as the old account, **When** sign-in ends, **Then** the app refuses it with "This is your old account. Pick a different one." (the text every platform uses) and signs it out.
 5. **Given** the user taps Cancel on Bluesky's page or closes the browser, **When** they return, **Then** To stays signed out with no error line.
 
 ---

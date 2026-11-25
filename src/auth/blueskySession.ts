@@ -7,6 +7,8 @@ import { NobleKey } from '@/auth/blueskyKey';
 // New account: the phone's secure storage. Old account (the short read after "Allow"): memory only.
 // Sign-in state: memory only, 10 minutes. The sign-in client's own caches are memory only by default.
 const PREFIX = 'bluesky.session.';
+// The new account's ID, so Sign out, Delete all, and a restart can find its session. One new account at a time.
+const NEW_KEY = 'bluesky.new';
 const PART = 2000; // iOS secure storage may refuse a value over about 2 KB, so a longer session is split in parts.
 const STATE_MINUTES = 10;
 
@@ -38,6 +40,8 @@ const freeze = (session: Session) => JSON.stringify({ ...session, dpopKey: sessi
 export function createBlueskyStores(deps: { now?: () => number } = {}) {
   const now = deps.now ?? Date.now;
   const oldDids = new Set<string>();
+  // While the old account signs in, any session that comes back stays in memory, even one of another account.
+  let capturing = false;
   const oldSessions = new Map<string, Session>();
   const states = new Map<string, { value: State; at: number }>();
 
@@ -64,7 +68,8 @@ export function createBlueskyStores(deps: { now?: () => number } = {}) {
       return oldDids.has(did) ? oldSessions.get(did) : revive(await readSecure(did));
     },
     async set(did, session) {
-      if (oldDids.has(did)) {
+      if (capturing || oldDids.has(did)) {
+        oldDids.add(did);
         oldSessions.set(did, session);
         return;
       }
@@ -103,12 +108,20 @@ export function createBlueskyStores(deps: { now?: () => number } = {}) {
     stateStore,
     // The old account's session never reaches secure storage. Mark its DID before it signs in.
     markOld: (did: string) => void oldDids.add(did),
+    capture: (on: boolean) => {
+      capturing = on;
+    },
     clearOld(did: string) {
       oldDids.delete(did);
       oldSessions.delete(did);
     },
     // Is a session saved? Reads the value only to see that it is there.
     hasSession: async (did: string) => (oldDids.has(did) ? oldSessions.has(did) : (await SecureStore.getItemAsync(keyOf(did))) !== null),
+    // Every account that signed in as the old account and still holds a session in memory.
+    oldDids: () => [...oldSessions.keys()],
+    getNewDid: () => SecureStore.getItemAsync(NEW_KEY),
+    setNewDid: (did: string) => SecureStore.setItemAsync(NEW_KEY, did),
+    clearNewDid: () => SecureStore.deleteItemAsync(NEW_KEY),
     // Delete the phone's copy even when nothing else works (sign-out, summary, Delete all).
     async deleteSession(did: string) {
       oldSessions.delete(did);

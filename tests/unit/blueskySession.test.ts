@@ -110,12 +110,35 @@ describe('the old account session', () => {
     expect((await s.sessionStore.get(NEW))?.tokenSet.access_token).toBe('access-new');
   });
 
+  it('keeps a session of any account in memory while the old account signs in, even one that was not expected', async () => {
+    const s = stores();
+    s.capture(true);
+    await s.sessionStore.set(NEW, await session(NEW, 'stranger'));
+    s.capture(false);
+    expect(__dump()).toEqual({});
+    await s.sessionStore.del(NEW);
+    s.clearOld(NEW);
+    expect(await s.hasSession(NEW)).toBe(false);
+  });
+
   it('is routed to the secure storage again once the mark is cleared', async () => {
     const s = stores();
     s.markOld(OLD);
     s.clearOld(OLD);
     await s.sessionStore.set(OLD, await session(OLD));
     expect(Object.keys(__dump())).toHaveLength(1);
+  });
+});
+
+describe('the new account ID', () => {
+  it('is remembered in the secure storage so a restart can find the session, and forgotten on request', async () => {
+    const s = stores();
+    expect(await s.getNewDid()).toBeNull();
+    await s.setNewDid(NEW);
+    expect(await s.getNewDid()).toBe(NEW);
+    expect(__dump()).toEqual({ 'bluesky.new': NEW });
+    await s.clearNewDid();
+    expect(await s.getNewDid()).toBeNull();
   });
 });
 

@@ -96,7 +96,11 @@ function kindsToAsk(state: State, driver: Driver): string[] {
   const optional = new Set(driver.kinds.filter((k) => k.optional).map((k) => k.id));
   const picked = new Set(state.items.filter((c) => c.picked).map((c) => c.kind));
   const all = driver.kinds.map((k) => k.id);
-  return (state.items.length ? all.filter((k) => picked.has(k)) : all).filter((k) => !optional.has(k));
+  // Kinds that need the old account (mutes, feeds) are asked only once they were read and picked (FR-BS-008).
+  const needsOld = new Set(driver.kinds.filter((k) => k.needsOld).map((k) => k.id));
+  return (state.items.length ? all.filter((k) => picked.has(k)) : all).filter(
+    (k) => !optional.has(k) && (state.items.length > 0 || !needsOld.has(k)),
+  );
 }
 
 // Old account: read-only. Its list is loaded once and kept (research R2).

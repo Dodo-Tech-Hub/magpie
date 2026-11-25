@@ -51,13 +51,18 @@ function serverOf(doc: unknown): string | null {
   }
 }
 
+// typed: a handle as the user typed it, or an account ID (a sign-in answers with the ID, and the account card needs the rest).
 export async function lookup(typed: string): Promise<Lookup> {
-  const handle = cleanHandle(typed);
-  const resolved = await get(`${PUBLIC}/com.atproto.identity.resolveHandle?handle=${encodeURIComponent(handle)}`);
-  if (!resolved) return fail('unavailable');
-  if (resolved.status === 400) return fail('not_found');
-  const id = isRecord(resolved.json) ? resolved.json.did : null;
-  if (resolved.status !== 200 || typeof id !== 'string') return fail('unavailable');
+  const handle = typed.trim().startsWith('did:') ? typed.trim() : cleanHandle(typed);
+  let id = handle;
+  if (!handle.startsWith('did:')) {
+    const resolved = await get(`${PUBLIC}/com.atproto.identity.resolveHandle?handle=${encodeURIComponent(handle)}`);
+    if (!resolved) return fail('unavailable');
+    if (resolved.status === 400) return fail('not_found');
+    const found = isRecord(resolved.json) ? resolved.json.did : null;
+    if (resolved.status !== 200 || typeof found !== 'string') return fail('unavailable');
+    id = found;
+  }
   if (!DID.test(id)) return fail('not_supported');
 
   const doc = await get(`${DIRECTORY}/${id}`);
