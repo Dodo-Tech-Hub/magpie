@@ -3,16 +3,18 @@ import type { AccountInfo } from '@/store/progressStore';
 // Find a Bluesky account from the handle the user typed, with no sign-in (research R5, contracts/bluesky-api.md "Lookup").
 // Only accounts that Bluesky hosts are supported (FR-BS-022), so the app talks only to hosts it knows: the public
 // read server, the account directory, and the account's own server, which is checked before any call to it.
-const PUBLIC = 'https://public.api.bsky.app/xrpc';
+export const PUBLIC = 'https://public.api.bsky.app/xrpc';
 const DIRECTORY = 'https://plc.directory';
 const PICTURES = 'https://cdn.bsky.app/';
-const DID = /^did:plc:[a-z2-7]{24}$/;
+export const DID = /^did:plc:[a-z2-7]{24}$/;
 const SERVER_HOST = /^[a-z0-9-]+(\.[a-z0-9-]+)*\.host\.bsky\.network$/;
 
 export type LookupFailure = 'not_found' | 'not_supported' | 'unavailable';
 export type Lookup = { ok: true; account: AccountInfo; server: string } | { ok: false; reason: LookupFailure };
 
-const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
+export const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
+// A picture address, if it is on the picture host.
+export const picture = (v: unknown) => (typeof v === 'string' && v.startsWith(PICTURES) ? v : null);
 const fail = (reason: LookupFailure): Lookup => ({ ok: false, reason });
 
 // Trim, drop leading @ signs, lower-case, and treat a name with no dot as a name on bsky.social.
@@ -37,18 +39,23 @@ async function get(url: string): Promise<{ status: number; json: unknown } | nul
   }
 }
 
-// The address of the account's own server, if it is a Bluesky server. Anything else is refused.
-function serverOf(doc: unknown): string | null {
-  if (!isRecord(doc) || !Array.isArray(doc.service)) return null;
-  const pds = doc.service.find((s) => isRecord(s) && s.id === '#atproto_pds' && s.type === 'AtprotoPersonalDataServer');
-  if (!isRecord(pds) || typeof pds.serviceEndpoint !== 'string') return null;
+// The address of a Bluesky server (https, no port, a host under host.bsky.network), or null. Any other address is
+// refused, so the app never sends a request to a host outside the range (constitution III.5, FR-BS-022).
+export function blueskyServer(address: string): string | null {
   try {
-    const url = new URL(pds.serviceEndpoint);
+    const url = new URL(address);
     if (url.protocol !== 'https:' || url.port !== '' || !SERVER_HOST.test(url.hostname)) return null;
     return url.origin;
   } catch {
     return null;
   }
+}
+
+// The address of the account's own server, if it is a Bluesky server.
+function serverOf(doc: unknown): string | null {
+  if (!isRecord(doc) || !Array.isArray(doc.service)) return null;
+  const pds = doc.service.find((s) => isRecord(s) && s.id === '#atproto_pds' && s.type === 'AtprotoPersonalDataServer');
+  return isRecord(pds) && typeof pds.serviceEndpoint === 'string' ? blueskyServer(pds.serviceEndpoint) : null;
 }
 
 // typed: a handle as the user typed it, or an account ID (a sign-in answers with the ID, and the account card needs the rest).

@@ -144,6 +144,8 @@ export function PickStep() {
           </Text>
         </View>
       </View>
+      {/* Only greyed sections are left to show: say that the public list is empty. */}
+      {items.length === 0 && rows.length > 0 && <Text style={styles.empty}>{words.noItems}</Text>}
       <FlatList
         data={rows}
         keyExtractor={(r) => ('item' in r ? r.item.itemId : r.key)}

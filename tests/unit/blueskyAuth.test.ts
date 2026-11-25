@@ -135,7 +135,7 @@ describe('sign-in of the new account', () => {
     const res = await signIn('new', [], 'alice.bsky.social');
     expect(__calls()).toEqual([{ url: 'https://bsky.social/oauth/authorize?request_uri=r', redirect: REDIRECT_URI }]);
     expect(WebBrowser.openAuthSessionAsync).toHaveBeenCalledWith(expect.any(String), REDIRECT_URI, expect.objectContaining({ preferEphemeralSession: true }));
-    expect(res).toEqual({ ok: true, account: { id: ALICE, handle: 'alice.bsky.social', name: 'Alice', photoUrl: null } });
+    expect(res).toEqual({ ok: true, account: { id: ALICE, handle: 'alice.bsky.social', name: 'Alice', photoUrl: null }, server: 'https://morel.us-east.host.bsky.network' });
     // The return link is handed to Bluesky's client to check state and issuer.
     expect(mockClient.callback).toHaveBeenCalledWith(expect.any(URLSearchParams), { redirect_uri: REDIRECT_URI });
   });

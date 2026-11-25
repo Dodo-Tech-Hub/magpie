@@ -1,10 +1,37 @@
-import { grantedScope, kindsOf, signIn, signOut } from '@/auth/bluesky';
+import { addList, blockPerson, followPerson, haveOnNew, readBlocks, readFollows, readLists } from '@/api/bluesky';
+import { grantedScope, kindsOf, newAccountFetch, signIn, signOut } from '@/auth/bluesky';
+import { lookup } from '@/auth/blueskyLookup';
 import { blueskyStores } from '@/auth/blueskySession';
-import type { Driver } from '@/platforms/driver';
+import { DriverError, type Driver, type Outcome } from '@/platforms/driver';
+import type { NewItem, StoredItem } from '@/store/progressStore';
 import { blueskyWords } from '@/strings';
 
 // The Bluesky platform driver (specs/013-bluesky-platform/contracts/platform-driver.md).
 // The old account is typed in as a handle and needs no sign-in. The new account signs in in the system browser.
+const GENERIC = "Bluesky didn't allow this one.";
+const DID = /^did:plc:[a-z2-7]{24}$/;
+
+// The old account that was typed in: where to read its public lists. Memory only.
+let oldTarget: { did: string; server: string } | null = null;
+
+// Principle III.8: the saved `data` is JSON that this app wrote, but it is checked on read.
+function parse(data: string | null): Record<string, unknown> | null {
+  try {
+    const v: unknown = JSON.parse(data ?? '');
+    return typeof v === 'object' && v !== null ? (v as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+}
+const seq = (item: StoredItem) => {
+  const n = parse(item.data)?.seq;
+  return typeof n === 'number' ? n : 0;
+};
+const didOf = (item: StoredItem) => {
+  const d = parse(item.data)?.did;
+  return typeof d === 'string' && DID.test(d) ? d : null;
+};
+
 export const blueskyDriver: Driver = {
   id: 'bluesky',
   words: blueskyWords,
@@ -16,6 +43,23 @@ export const blueskyDriver: Driver = {
     { id: 'mute', heading: 'Mutes', needsOld: true },
     { id: 'feed', heading: 'Feeds', needsOld: true },
   ],
+  // A list moves after the people it holds. The private kinds come last.
+  moveOrder: ['person', 'block', 'list', 'mute', 'feed'],
+  // Oldest first within a kind, so the new account shows them in the same order (FR-BS-010).
+  itemOrder: (a, b) => seq(a) - seq(b),
+  pace: {
+    // ponytail: fixed numbers, tune them from real runs if Bluesky's limits change. Bluesky allows about 1,666 adds an
+    // hour and 11,666 a day and has no per-minute limit, so this stays under both and leaves room for the user's posts.
+    gapMs: 120, // 500 per minute
+    perHour: 1500,
+    perDay: 10_000,
+    // One add per item, plus one per member of each list.
+    adds: (items) =>
+      items.reduce((n, i) => {
+        const members = i.kind === 'list' ? parse(i.data)?.members : null;
+        return n + 1 + (Array.isArray(members) ? members.length : 0);
+      }, 0),
+  },
   handleInput: true,
   // There is no sign-in to switch to: Sign out on To, and Change on From (words.changeOld).
   switchSignsOut: true,
@@ -23,10 +67,14 @@ export const blueskyDriver: Driver = {
   resumesNew: true,
 
   async signIn(role, kinds, _onCode, _signal, handle) {
-    return handle?.trim() ? signIn(role, kinds, handle) : { ok: false, reason: 'not_found' };
+    if (!handle?.trim()) return { ok: false, reason: 'not_found' };
+    const res = await signIn(role, kinds, handle);
+    if (res.ok && role === 'old' && res.server) oldTarget = { did: res.account.id, server: res.server };
+    return res.ok ? { ok: true, account: res.account } : res;
   },
 
   async signOut(role) {
+    if (role !== 'new') oldTarget = null;
     return (await signOut(role)) ? undefined : false;
   },
 
@@ -39,14 +87,49 @@ export const blueskyDriver: Driver = {
     return (await blueskyStores.getNewDid()) === accountId && (await blueskyStores.hasSession(accountId));
   },
 
-  // ponytail: reading, checking, and adding come with the API module in the next tasks (T038 to T041).
   async listOld() {
-    return { items: [], missing: [] };
+    if (!oldTarget) throw new DriverError('auth');
+    const { did, server } = oldTarget;
+    const reads: [string, Promise<NewItem[]>][] = [
+      ['person', readFollows(did)],
+      ['block', readBlocks(did, server)],
+      ['list', readLists(did)],
+    ];
+    const done = await Promise.allSettled(reads.map(([, p]) => p));
+    const items: NewItem[] = [];
+    const missing: string[] = [];
+    done.forEach((r, i) => (r.status === 'fulfilled' ? items.push(...r.value) : missing.push(reads[i][0])));
+    // Every read failed: show the reason instead of an empty list.
+    const first = done.find((r) => r.status === 'rejected');
+    if (missing.length === reads.length && first?.status === 'rejected') throw first.reason;
+    return { items, missing };
   },
-  async checkNew() {
-    return [];
+
+  async checkNew(items) {
+    const did = await blueskyStores.getNewDid();
+    if (!did || !(await blueskyStores.hasSession(did))) throw new DriverError('auth');
+    const where = await lookup(did);
+    if (!where.ok) throw new DriverError('retry');
+    const have = await haveOnNew(did, where.server);
+    const mine = new Set(items.map((i) => i.itemId));
+    return [...have].filter((id) => mine.has(id));
   },
-  async add() {
-    return { kind: 'couldnt_move', reason: "Bluesky didn't allow this one." };
+
+  async add(item, _items, pacer): Promise<Outcome> {
+    const signedIn = await newAccountFetch();
+    if (!signedIn) return { kind: 'auth' };
+    const { did, fetch } = signedIn;
+    const subject = didOf(item);
+    switch (item.kind) {
+      case 'person':
+        return subject ? followPerson(fetch, did, subject) : { kind: 'couldnt_move', reason: GENERIC };
+      case 'block':
+        return subject ? blockPerson(fetch, did, subject) : { kind: 'couldnt_move', reason: GENERIC };
+      case 'list':
+        return addList(fetch, did, item, pacer);
+      default:
+        // ponytail: mutes and saved feeds come with the private kinds (T054).
+        return { kind: 'couldnt_move', reason: GENERIC };
+    }
   },
 };

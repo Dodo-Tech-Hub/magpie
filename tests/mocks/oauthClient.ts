@@ -2,14 +2,18 @@
 // says. A test mocks the package with: jest.mock('@atproto/oauth-client', () => ({ ...jest.requireActual('@atproto/oauth-client'),
 // OAuthClient: require('../mocks/oauthClient').OAuthClient }))  (the path is from the test file).
 import { NobleKey } from '@/auth/blueskyKey';
-import { REDIRECT_URI } from '@/auth/bluesky';
 import { __set } from './expoWebBrowser';
+
+// Written out here, not imported from the app: the app imports the package this file stands in for, so importing it
+// would be a loop. A test of the metadata file checks that the app's value matches.
+const REDIRECT_URI = 'io.github.dodo-tech-hub:/oauth/bluesky';
 
 type Store = { set(k: string, v: unknown): Promise<void>; del(k: string): Promise<void>; get(k: string): Promise<unknown> };
 export type FakeSession = {
   did: `did:plc:${string}`;
   serverMetadata: { issuer: string };
   signOut: jest.Mock;
+  fetchHandler: (path: string, init?: RequestInit) => Promise<Response>;
   saved: unknown;
 };
 
@@ -51,6 +55,8 @@ async function sessionOf(sub: `did:plc:${string}`, scope: string, issuer: string
   const session: FakeSession = {
     did: sub,
     serverMetadata: { issuer },
+    // Like the real one: the request goes to the account's server, signed in.
+    fetchHandler: (path, init) => fetch(`https://morel.us-east.host.bsky.network${path}`, { ...init, headers: { ...(init?.headers as Record<string, string>), authorization: `DPoP ${sub}` } }),
     // Like the real one: tell Bluesky, then drop the saved copy.
     signOut: jest.fn(async () => {
       if (mockClient.offline) throw new Error('offline');

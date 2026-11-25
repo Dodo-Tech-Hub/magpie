@@ -3,6 +3,7 @@ import { OAuthClient } from '@atproto/oauth-client';
 import { lookup } from '@/auth/blueskyLookup';
 import { runtimeImplementation } from '@/auth/blueskyKey';
 import { blueskyStores } from '@/auth/blueskySession';
+import type { Fetcher } from '@/api/bluesky';
 import type { SignInResult } from '@/platforms/driver';
 
 // The app's identity on Bluesky: its client ID is the address of the public file that describes it
@@ -108,10 +109,12 @@ const failed = { ok: false, reason: 'failed' } as const;
 // Sign in to an account in the system browser (Authorization Code with PKCE, plus a key made on the phone).
 // role old with no kinds: only looks the account up. No browser, no session (FR-BS-005).
 // The result is the account that actually signed in, which may not be the one typed. Never returns a token.
-export async function signIn(role: 'old' | 'new', kinds: string[], typed: string): Promise<SignInResult> {
+// server: where the signed-in account lives, so the caller can read its public records.
+export type BlueskySignIn = SignInResult & { server?: string };
+export async function signIn(role: 'old' | 'new', kinds: string[], typed: string): Promise<BlueskySignIn> {
   const found = await lookup(typed);
   if (!found.ok) return found;
-  if (role === 'old' && kinds.length === 0) return { ok: true, account: found.account };
+  if (role === 'old' && kinds.length === 0) return { ok: true, account: found.account, server: found.server };
   const expected = found.account.id;
   if (role === 'old') blueskyStores.capture(true);
   try {
@@ -135,16 +138,16 @@ export async function signIn(role: 'old' | 'new', kinds: string[], typed: string
         await revokeSession(session);
         blueskyStores.clearOld(session.did);
       }
-      return { ok: true, account: who.account };
+      return { ok: true, account: who.account, server: who.server };
     }
     const saved = await blueskyStores.getNewDid();
     if (saved && saved !== session.did) {
       // An Allow sign-in with another account must not replace the saved one. The flow refuses the account.
       await revokeSession(session);
-      return { ok: true, account: who.account };
+      return { ok: true, account: who.account, server: who.server };
     }
     await blueskyStores.setNewDid(session.did);
-    return { ok: true, account: who.account };
+    return { ok: true, account: who.account, server: who.server };
   } catch {
     if (role === 'old') blueskyStores.clearOld(expected);
     return failed;
@@ -186,4 +189,17 @@ export async function signOut(role?: 'old' | 'new'): Promise<boolean> {
     }
   }
   return results.every(Boolean);
+}
+
+// The signed-in fetch of the new account, which sends each request to its server with the token and a fresh proof.
+// null: there is no saved session, or it cannot be used any more (the token ran out or was revoked).
+export async function newAccountFetch(): Promise<{ did: string; fetch: Fetcher } | null> {
+  const did = await blueskyStores.getNewDid();
+  if (!did) return null;
+  try {
+    const session = await getClient().restore(did);
+    return { did, fetch: (path, init) => session.fetchHandler(path, init) };
+  } catch {
+    return null;
+  }
 }

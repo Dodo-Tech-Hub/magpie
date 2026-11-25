@@ -1,7 +1,11 @@
 import * as auth from '@/auth/bluesky';
 import { NobleKey } from '@/auth/blueskyKey';
 import { blueskyStores } from '@/auth/blueskySession';
+import * as api from '@/api/bluesky';
+import * as lookups from '@/auth/blueskyLookup';
+import { DriverError } from '@/platforms/driver';
 import { blueskyDriver as driver } from '@/platforms/blueskyDriver';
+import type { StoredItem } from '@/store/progressStore';
 import { __reset } from '../mocks/expoSecureStore';
 import { did } from '../mocks/blueskyFetch';
 
@@ -9,9 +13,24 @@ jest.mock('@/auth/bluesky', () => ({
   ...jest.requireActual('@/auth/bluesky'),
   signIn: jest.fn(),
   signOut: jest.fn(),
+  newAccountFetch: jest.fn(),
+}));
+jest.mock('@/auth/blueskyLookup', () => ({ ...jest.requireActual('@/auth/blueskyLookup'), lookup: jest.fn() }));
+jest.mock('@/api/bluesky', () => ({
+  ...jest.requireActual('@/api/bluesky'),
+  readFollows: jest.fn(),
+  readBlocks: jest.fn(),
+  readLists: jest.fn(),
+  haveOnNew: jest.fn(),
+  followPerson: jest.fn(),
+  blockPerson: jest.fn(),
+  addList: jest.fn(),
 }));
 const signIn = auth.signIn as jest.Mock;
 const signOut = auth.signOut as jest.Mock;
+const newFetch = auth.newAccountFetch as jest.Mock;
+const lookup = lookups.lookup as jest.Mock;
+const mocked = (f: unknown) => f as jest.Mock;
 
 const ALICE = did(1);
 const BOB = did(2);
@@ -25,10 +44,19 @@ async function saveNew(sub: `did:plc:${string}`, scope: string) {
   await blueskyStores.setNewDid(sub);
 }
 
-beforeEach(() => {
+const SERVER = 'https://morel.us-east.host.bsky.network';
+const fetcher = jest.fn();
+
+beforeEach(async () => {
   __reset();
+  jest.clearAllMocks();
   signIn.mockReset();
   signOut.mockReset();
+  newFetch.mockReset();
+  lookup.mockReset();
+  for (const f of ['readFollows', 'readBlocks', 'readLists', 'haveOnNew', 'followPerson', 'blockPerson', 'addList'] as const) mocked(api[f]).mockReset();
+  newFetch.mockResolvedValue({ did: ALICE, fetch: fetcher });
+  await driver.signOut('old'); // forgets the old account
 });
 
 describe('the Bluesky driver, sign-in part', () => {
@@ -103,5 +131,151 @@ describe('the Bluesky driver, sign-in part', () => {
     signOut.mockResolvedValue(false);
     expect(await driver.signOut('new')).toBe(false);
     expect(signOut).toHaveBeenLastCalledWith('new');
+  });
+});
+
+
+// ---- Read, check, add ---------------------------------------------------------------------------------------
+
+const OLDER = did(3);
+const row = (kind: string, id: string, data: unknown = { did: did(100), handle: 'x.bsky.social', seq: 0 }): StoredItem => ({
+  itemId: `${kind}:${id}`,
+  kind,
+  title: id,
+  thumbnailUrl: null,
+  data: data === null ? null : JSON.stringify(data),
+  picked: true,
+  status: 'waiting',
+  reason: null,
+});
+const asOld = async () => {
+  signIn.mockResolvedValue({ ok: true, account: { id: OLDER, handle: 'older.bsky.social', name: 'o', photoUrl: null }, server: SERVER });
+  await driver.signIn('old', [], () => undefined, undefined, 'older.bsky.social');
+};
+
+describe('the Bluesky driver, reading the old account', () => {
+  it('reads follows, blocks, and lists of the account that was typed in, with no sign-in', async () => {
+    await asOld();
+    mocked(api.readFollows).mockResolvedValue([row('person', 'a')]);
+    mocked(api.readBlocks).mockResolvedValue([row('block', 'b')]);
+    mocked(api.readLists).mockResolvedValue([row('list', 'c', { purpose: 'curatelist', description: '', members: [], seq: 0 })]);
+    const res = await driver.listOld();
+    expect(res.items.map((i) => i.itemId)).toEqual(['person:a', 'block:b', 'list:c']);
+    expect(res.missing).toEqual([]);
+    expect(api.readFollows).toHaveBeenCalledWith(OLDER);
+    expect(api.readBlocks).toHaveBeenCalledWith(OLDER, SERVER);
+    expect(api.readLists).toHaveBeenCalledWith(OLDER);
+  });
+
+  it('reports the kinds that could not be read and still loads the others', async () => {
+    await asOld();
+    mocked(api.readFollows).mockResolvedValue([row('person', 'a')]);
+    mocked(api.readBlocks).mockRejectedValue(new Error('bad page'));
+    mocked(api.readLists).mockResolvedValue([]);
+    const res = await driver.listOld();
+    expect(res.missing).toEqual(['block']);
+    expect(res.items).toHaveLength(1);
+  });
+
+  it('throws the reason when every kind failed, so the screen says why instead of showing an empty list', async () => {
+    await asOld();
+    for (const f of ['readFollows', 'readBlocks', 'readLists'] as const) mocked(api[f]).mockRejectedValue(new DriverError('retry'));
+    await expect(driver.listOld()).rejects.toEqual(new DriverError('retry'));
+  });
+
+  it('needs the account to be typed in first, and forgets it when the old account is changed', async () => {
+    await expect(driver.listOld()).rejects.toEqual(new DriverError('auth'));
+    await asOld();
+    mocked(api.readFollows).mockResolvedValue([]);
+    mocked(api.readBlocks).mockResolvedValue([]);
+    mocked(api.readLists).mockResolvedValue([]);
+    await expect(driver.listOld()).resolves.toEqual({ items: [], missing: [] });
+    await driver.signOut('old');
+    await expect(driver.listOld()).rejects.toEqual(new DriverError('auth'));
+  });
+});
+
+describe('the Bluesky driver, checking the new account', () => {
+  it('gives back only the items of the move that the new account already has', async () => {
+    await saveNew(ALICE, 'atproto');
+    lookup.mockResolvedValue({ ok: true, account: { id: ALICE }, server: SERVER });
+    mocked(api.haveOnNew).mockResolvedValue(new Set(['person:a', 'person:zzz', `block:${ALICE}`]));
+    const items = [row('person', 'a'), row('person', 'b'), row('block', ALICE)];
+    expect(await driver.checkNew(items, ['person'])).toEqual(['person:a', `block:${ALICE}`]);
+    expect(api.haveOnNew).toHaveBeenCalledWith(ALICE, SERVER);
+  });
+
+  it('says the sign-in ran out when there is no new account session', async () => {
+    await expect(driver.checkNew([row('person', 'a')], [])).rejects.toEqual(new DriverError('auth'));
+  });
+
+  it('passes on a failed read: no network is retry, a limit is later', async () => {
+    await saveNew(ALICE, 'atproto');
+    lookup.mockResolvedValue({ ok: false, reason: 'unavailable' });
+    await expect(driver.checkNew([row('person', 'a')], [])).rejects.toEqual(new DriverError('retry'));
+  });
+});
+
+describe('the Bluesky driver, adding', () => {
+  const fol = row('person', 'p', { did: did(101), handle: 'p.bsky.social', seq: 0 });
+
+  it('follows, blocks, and makes lists in the new account with its own session', async () => {
+    mocked(api.followPerson).mockResolvedValue({ kind: 'moved' });
+    mocked(api.blockPerson).mockResolvedValue({ kind: 'moved' });
+    mocked(api.addList).mockResolvedValue({ kind: 'moved', reason: '1 left out' });
+    expect(await driver.add(fol, [fol])).toEqual({ kind: 'moved' });
+    expect(api.followPerson).toHaveBeenCalledWith(fetcher, ALICE, did(101));
+    const blk = row('block', 'q', { did: did(102), handle: 'q.bsky.social', seq: 0 });
+    await driver.add(blk, [blk]);
+    expect(api.blockPerson).toHaveBeenCalledWith(fetcher, ALICE, did(102));
+    const lst = row('list', 'l', { purpose: 'curatelist', description: '', members: [], seq: 0 });
+    const pacer = { beforeAdd: jest.fn() };
+    expect(await driver.add(lst, [lst], pacer)).toEqual({ kind: 'moved', reason: '1 left out' });
+    expect(api.addList).toHaveBeenCalledWith(fetcher, ALICE, lst, pacer);
+  });
+
+  it('says the sign-in ran out when there is no usable new account session, and writes nothing', async () => {
+    newFetch.mockResolvedValue(null);
+    expect(await driver.add(fol, [fol])).toEqual({ kind: 'auth' });
+    expect(api.followPerson).not.toHaveBeenCalled();
+  });
+
+  it('says it could not move an item whose saved data is wrong, and makes no call', async () => {
+    for (const data of [null, { did: 'did:web:x' }, { did: 5 }]) {
+      const bad = row('person', 'p', data);
+      expect(await driver.add(bad, [bad])).toEqual({ kind: 'couldnt_move', reason: "Bluesky didn't allow this one." });
+    }
+    expect(api.followPerson).not.toHaveBeenCalled();
+    const odd = row('gist', 'g');
+    expect(await driver.add(odd, [odd])).toMatchObject({ kind: 'couldnt_move' });
+  });
+
+  it('never writes with the old account session', async () => {
+    await asOld();
+    mocked(api.followPerson).mockResolvedValue({ kind: 'moved' });
+    await driver.add(fol, [fol]);
+    expect(newFetch).toHaveBeenCalledTimes(1);
+    expect(mocked(api.followPerson).mock.calls[0][0]).toBe(fetcher);
+  });
+});
+
+describe('the Bluesky driver, the order and the pace', () => {
+  it('moves people, then blocks, then lists, then the private kinds', () => {
+    expect(driver.moveOrder).toEqual(['person', 'block', 'list', 'mute', 'feed']);
+  });
+
+  it('puts the oldest first within a kind', () => {
+    const a = row('person', 'a', { did: did(101), handle: 'a', seq: 5 });
+    const b = row('person', 'b', { did: did(102), handle: 'b', seq: 0 });
+    const none = row('person', 'c', null);
+    expect([a, b].sort(driver.itemOrder!).map((i) => i.itemId)).toEqual(['person:b', 'person:a']);
+    expect([a, none].sort(driver.itemOrder!).map((i) => i.itemId)).toEqual(['person:c', 'person:a']);
+  });
+
+  it('is fast but under what Bluesky allows, and counts one add per item and per list member', () => {
+    expect(driver.pace).toMatchObject({ gapMs: 120, perHour: 1500, perDay: 10_000 });
+    const lst = row('list', 'l', { purpose: 'curatelist', description: '', members: [did(101), did(102), did(103)], seq: 0 });
+    expect(driver.pace!.adds([row('person', 'a'), row('block', 'b'), lst])).toBe(1 + 1 + (1 + 3));
+    expect(driver.pace!.adds([])).toBe(0);
   });
 });

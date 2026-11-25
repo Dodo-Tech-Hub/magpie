@@ -79,6 +79,7 @@ function reply(a: Answer) {
 
 // Ready-made answers and routes.
 export const PUBLIC = 'https://public.api.bsky.app/xrpc';
+export const SERVER = 'https://morel.us-east.host.bsky.network';
 // A valid account ID (did:plc plus 24 characters of a-z and 2-7) that is different for each number.
 const ALPHABET = 'abcdefghijklmnopqrstuvwxyz234567';
 export const did = (n: number): `did:plc:${string}` =>
