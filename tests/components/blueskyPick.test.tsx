@@ -1,7 +1,7 @@
 import React from 'react';
-import { fireEvent, screen, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import App from '../../App';
-import { NEW, OLD, blueskyWorld, person, renderBluesky, resetBluesky, signInNewAccount, signInWithHandle, unregisterBluesky } from './blueskyWorld';
+import { NEW, OLD, blueskyWorld, person, renderBluesky, resetBluesky, signInNewAccount, signInWithHandle } from './blueskyWorld';
 import { setWindow } from './window';
 import { __calls } from '../mocks/expoWebBrowser';
 
@@ -24,7 +24,6 @@ beforeEach(async () => {
   w.data.old.blocks = [4, 5];
   w.data.old.lists = [{ name: 'Cats', members: [1, 2] }];
 });
-afterEach(() => unregisterBluesky());
 
 const heading = (name: string) => screen.getByRole('button', { name });
 
@@ -82,6 +81,16 @@ describe.each([
     await waitFor(() => expect(screen.getAllByText('Already there')).toHaveLength(2));
     expect(screen.getByText('4 of 4 picked')).toBeTruthy();
     expect(screen.getByLabelText('Move 4 items')).toBeTruthy();
+  });
+});
+
+describe('the Bluesky card on Home', () => {
+  it('is in the Automatic section after YouTube and GitHub, with its logo', async () => {
+    await render(<App />);
+    await screen.findByLabelText('Bluesky');
+    const logos = screen.getAllByTestId(/^logo-/, { includeHiddenElements: true }).map((l) => l.props.testID);
+    expect(logos).toEqual(['logo-youtube', 'logo-github', 'logo-bluesky']);
+    expect(screen.getByLabelText('Bluesky')).toBeTruthy();
   });
 });
 

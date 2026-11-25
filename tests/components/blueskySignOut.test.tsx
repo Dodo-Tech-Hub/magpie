@@ -2,7 +2,7 @@ import { Alert } from 'react-native';
 import { fireEvent, screen, waitFor } from '@testing-library/react-native';
 import { blueskyStores } from '@/auth/blueskySession';
 import { listUnfinished } from '@/store/progressStore';
-import { NEW, OLD, answerReminder, blueskyWorld, eventually, renderBluesky, resetBluesky, seconds, signInNewAccount, signInWithHandle, unregisterBluesky } from './blueskyWorld';
+import { NEW, OLD, answerReminder, blueskyWorld, eventually, renderBluesky, resetBluesky, seconds, signInNewAccount, signInWithHandle } from './blueskyWorld';
 import { rateLimited } from '../mocks/blueskyFetch';
 import { __dump } from '../mocks/expoSecureStore';
 import { mockClient } from '../mocks/oauthClient';
@@ -24,7 +24,6 @@ beforeEach(async () => {
 });
 afterEach(() => {
   jest.useRealTimers();
-  unregisterBluesky();
 });
 
 const move = async (label: string) => fireEvent.press(await screen.findByLabelText(label));

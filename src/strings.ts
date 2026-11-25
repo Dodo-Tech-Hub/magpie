@@ -53,6 +53,7 @@ export const strings = {
   sectionGuided: 'Guided',
   platformYoutube: 'YouTube',
   platformGithub: 'GitHub',
+  platformBluesky: 'Bluesky',
   look: 'Look',
   light: 'Light',
   dark: 'Dark',

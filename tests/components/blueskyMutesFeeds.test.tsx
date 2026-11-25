@@ -1,7 +1,7 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react-native';
 import { scopesFor } from '@/auth/bluesky';
 import { blueskyStores } from '@/auth/blueskySession';
-import { NEW, OLD, OTHER, blueskyWorld, feedUri, person, renderBluesky, resetBluesky, signInNewAccount, signInWithHandle, unregisterBluesky } from './blueskyWorld';
+import { NEW, OLD, OTHER, blueskyWorld, feedUri, person, renderBluesky, resetBluesky, signInNewAccount, signInWithHandle } from './blueskyWorld';
 import { __dump } from '../mocks/expoSecureStore';
 import { mockClient, userSignsInAs } from '../mocks/oauthClient';
 
@@ -26,7 +26,6 @@ beforeEach(async () => {
   w.data.new.otherPrefs = [{ $type: 'app.bsky.actor.defs#adultContentPref', enabled: false }];
   w.data.new.feeds = [{ n: 9, pinned: true }];
 });
-afterEach(() => unregisterBluesky());
 
 async function openPick() {
   await renderBluesky();

@@ -3,7 +3,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { scopesFor } from '@/auth/bluesky';
 import { blueskyStores } from '@/auth/blueskySession';
 import { blueskyDriver } from '@/platforms/blueskyDriver';
-import { NEW, OLD, OTHER, blueskyWorld, item, renderBluesky, resetBluesky, signInWithHandle, unregisterBluesky } from './blueskyWorld';
+import { NEW, OLD, OTHER, blueskyWorld, item, renderBluesky, resetBluesky, signInWithHandle } from './blueskyWorld';
 import { __calls, __set } from '../mocks/expoWebBrowser';
 import { __dump } from '../mocks/expoSecureStore';
 import { mockClient, userSignsInAs } from '../mocks/oauthClient';
@@ -19,7 +19,6 @@ beforeEach(async () => {
 });
 afterEach(() => {
   jest.restoreAllMocks();
-  unregisterBluesky();
 });
 
 const readsOld = (rows: ReturnType<typeof item>[]) =>

@@ -1,7 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 import * as Notifications from 'expo-notifications';
 import { recordAdd } from '@/store/progressStore';
-import { NEW, OLD, answerReminder, blueskyWorld, eventually, renderBluesky, resetBluesky, seconds, signInNewAccount, signInWithHandle, unregisterBluesky } from './blueskyWorld';
+import { NEW, OLD, answerReminder, blueskyWorld, eventually, renderBluesky, resetBluesky, seconds, signInNewAccount, signInWithHandle } from './blueskyWorld';
 import { rateLimited } from '../mocks/blueskyFetch';
 
 jest.mock('@atproto/oauth-client', () => ({
@@ -32,7 +32,6 @@ beforeEach(async () => {
 });
 afterEach(() => {
   jest.useRealTimers();
-  unregisterBluesky();
 });
 
 // Follow numbers newest first: 1..n.

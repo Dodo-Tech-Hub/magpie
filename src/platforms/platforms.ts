@@ -1,6 +1,7 @@
 import type { Dispatch } from 'react';
 import type { ImageSourcePropType } from 'react-native';
 import type { Driver } from '@/platforms/driver';
+import { blueskyDriver } from '@/platforms/blueskyDriver';
 import { githubDriver } from '@/platforms/githubDriver';
 import { youtubeDriver } from '@/platforms/youtubeDriver';
 import type { Action } from '@/state/AppState';
@@ -49,6 +50,20 @@ export const PLATFORMS: Platform[] = [
     open: (dispatch) => dispatch({ type: 'openPlatform', platform: 'github' }),
     unfinished: async () => {
       const list = await listUnfinished('github');
+      return { left: list.reduce((n, p) => n + p.left, 0), ids: list.map((p) => p.id) };
+    },
+  },
+  {
+    id: 'bluesky',
+    name: strings.platformBluesky,
+    // The butterfly is blue and reads on both looks, so there is no logoDark.
+    logo: require('../../assets/platforms/bluesky.png'),
+    section: 'automatic',
+    ready: true,
+    driver: blueskyDriver,
+    open: (dispatch) => dispatch({ type: 'openPlatform', platform: 'bluesky' }),
+    unfinished: async () => {
+      const list = await listUnfinished('bluesky');
       return { left: list.reduce((n, p) => n + p.left, 0), ids: list.map((p) => p.id) };
     },
   },

@@ -1,5 +1,5 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react-native';
-import { NEW, OLD, blueskyWorld, person, renderBluesky, resetBluesky, signInNewAccount, signInWithHandle, unregisterBluesky } from './blueskyWorld';
+import { NEW, OLD, blueskyWorld, person, renderBluesky, resetBluesky, signInNewAccount, signInWithHandle } from './blueskyWorld';
 
 jest.mock('@atproto/oauth-client', () => ({
   ...jest.requireActual('@atproto/oauth-client'),
@@ -12,7 +12,6 @@ beforeEach(async () => {
   await resetBluesky();
   w = blueskyWorld();
 });
-afterEach(() => unregisterBluesky());
 
 const move = async (label: string) => fireEvent.press(await screen.findByLabelText(label));
 const finished = (text: string | RegExp) => screen.findByText(text, {}, { timeout: 8000 });
