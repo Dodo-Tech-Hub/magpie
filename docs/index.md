@@ -1,7 +1,11 @@
 # Magpie
 
 Magpie transfers what you follow from one account to another account on the same platform.
-It works with YouTube subscriptions; with GitHub stars, star lists, starred gists, and the people you follow; and with Bluesky follows, blocks, mutes, lists, and saved feeds.
+It works with:
+
+- YouTube: subscriptions.
+- GitHub: stars, star lists, starred gists, and the people you follow.
+- Bluesky: follows, blocks, mutes, lists, and saved feeds.
 
 ## Get the app
 
@@ -12,8 +16,8 @@ To ask for a place on the list, [open an issue](https://github.com/Dodo-Tech-Hub
 
 ### Sideloading
 
-1. Open the [Magpie 0.2.0 release page](https://github.com/Dodo-Tech-Hub/magpie/releases/tag/v0.2.0) on your phone.
-2. Download `magpie-0.2.0.apk`.
+1. Open the [latest Magpie release](https://github.com/Dodo-Tech-Hub/magpie/releases/latest) on your phone.
+2. Download the `magpie-<version>.apk` file.
 3. Open the file. If Android asks, allow your browser to install apps.
 
 Every Magpie release is signed with the same certificate. Its SHA-256 fingerprint is:
