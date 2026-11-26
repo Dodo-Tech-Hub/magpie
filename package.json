@@ -63,5 +63,8 @@
       "/node_modules/react-native-reanimated/plugin/",
       "/node_modules/@react-native/babel-preset/"
     ]
+  },
+  "overrides": {
+    "zod": "^4.6.6"
   }
 }
