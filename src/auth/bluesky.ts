@@ -110,8 +110,9 @@ const failed = { ok: false, reason: 'failed' } as const;
 // role old with no kinds: only looks the account up. No browser, no session (FR-BS-005).
 // The result is the account that actually signed in, which may not be the one typed. Never returns a token.
 // server: where the signed-in account lives, so the caller can read its public records.
+// only: for "Allow" on the new account, the account ID that is signed in. Any other account must not replace it.
 export type BlueskySignIn = SignInResult & { server?: string };
-export async function signIn(role: 'old' | 'new', kinds: string[], typed: string): Promise<BlueskySignIn> {
+export async function signIn(role: 'old' | 'new', kinds: string[], typed: string, only?: string): Promise<BlueskySignIn> {
   const found = await lookup(typed);
   if (!found.ok) return found;
   if (role === 'old' && kinds.length === 0) return { ok: true, account: found.account, server: found.server };
@@ -140,12 +141,14 @@ export async function signIn(role: 'old' | 'new', kinds: string[], typed: string
       }
       return { ok: true, account: who.account, server: who.server };
     }
-    const saved = await blueskyStores.getNewDid();
-    if (saved && saved !== session.did) {
+    if (only && session.did !== only) {
       // An Allow sign-in with another account must not replace the saved one. The flow refuses the account.
       await revokeSession(session);
       return { ok: true, account: who.account, server: who.server };
     }
+    // A fresh sign-in replaces the account saved before (kept after a move, and not shown after a restart).
+    const saved = await blueskyStores.getNewDid();
+    if (saved && saved !== session.did) await revokeDid(saved);
     await blueskyStores.setNewDid(session.did);
     return { ok: true, account: who.account, server: who.server };
   } catch {

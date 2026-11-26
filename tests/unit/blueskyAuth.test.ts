@@ -199,12 +199,26 @@ describe('sign-in of the new account', () => {
     await userSignsInAs(ALICE, scopesFor('new', ['person']));
     await signIn('new', ['person'], 'alice.bsky.social');
     const stranger = await userSignsInAs(BOB, scopesFor('new', ['person', 'block']));
-    const res = await signIn('new', ['person', 'block'], 'alice.bsky.social');
+    const res = await signIn('new', ['person', 'block'], 'alice.bsky.social', ALICE);
     expect(res).toMatchObject({ ok: true, account: { id: BOB } });
     expect(stranger.signOut).toHaveBeenCalled();
     expect(await blueskyStores.getNewDid()).toBe(ALICE);
     expect(await blueskyStores.hasSession(BOB)).toBe(false);
     expect(await blueskyStores.hasSession(ALICE)).toBe(true);
+  });
+});
+
+describe('a fresh sign-in over a saved new account', () => {
+  it('cancels the saved one and saves the account that signed in', async () => {
+    const first = await userSignsInAs(ALICE, scopesFor('new', ['person']));
+    await signIn('new', ['person'], 'alice.bsky.social');
+    const second = await userSignsInAs(BOB, scopesFor('new', ['person']));
+    await signIn('new', ['person'], 'bob.bsky.social');
+    expect(first.signOut).toHaveBeenCalled();
+    expect(second.signOut).not.toHaveBeenCalled();
+    expect(await blueskyStores.getNewDid()).toBe(BOB);
+    expect(await blueskyStores.hasSession(BOB)).toBe(true);
+    expect(await blueskyStores.hasSession(ALICE)).toBe(false);
   });
 });
 

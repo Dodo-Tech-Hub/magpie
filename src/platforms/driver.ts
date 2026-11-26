@@ -86,12 +86,14 @@ export type Driver = {
 
   // kinds: what the new account needs access for. Abort = the user tapped Cancel.
   // handle: with handleInput, the account the user typed. The old role with no kinds only looks the account up.
+  // only: for "Allow" on the new account, its ID. A sign-in to another account must not replace the saved sign-in.
   signIn(
     role: Role,
     kinds: string[],
     onCode: (code: SignInCode | null) => void,
     signal?: AbortSignal,
     handle?: string,
+    only?: string,
   ): Promise<SignInResult>;
   // false: the platform could not cancel the access. The phone's copy is gone anyway.
   signOut(role?: Role): Promise<void | false>;

@@ -69,9 +69,9 @@ export const blueskyDriver: Driver = {
   // no endMove, and Continue or a second move needs no new sign-in.
   resumesNew: true,
 
-  async signIn(role, kinds, _onCode, _signal, handle) {
+  async signIn(role, kinds, _onCode, _signal, handle, only) {
     if (!handle?.trim()) return { ok: false, reason: 'not_found' };
-    const res = await signIn(role, kinds, handle);
+    const res = await signIn(role, kinds, handle, only);
     if (res.ok && role === 'old' && res.server) oldTarget = { did: res.account.id, server: res.server };
     return res.ok ? { ok: true, account: res.account } : res;
   },

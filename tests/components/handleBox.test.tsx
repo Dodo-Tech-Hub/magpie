@@ -75,14 +75,14 @@ describe('handle box', () => {
     await renderApp();
     await fireEvent.changeText(screen.getByLabelText('Bluesky handle'), 'alice.bsky.social');
     await fireEvent.press(screen.getByLabelText('Sign in with Bluesky: Old account'));
-    expect(signIn).toHaveBeenCalledWith('old', [], expect.any(Function), expect.anything(), 'alice.bsky.social');
+    expect(signIn).toHaveBeenCalledWith('old', [], expect.any(Function), expect.anything(), 'alice.bsky.social', undefined);
     // The step shows the account, and Pick opens.
     expect(await screen.findByLabelText('Alice')).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('tab', { name: 'To' }));
     await fireEvent.changeText(screen.getByLabelText('Bluesky handle'), 'bob.bsky.social');
     await fireEvent(screen.getByLabelText('Bluesky handle'), 'submitEditing');
-    expect(signIn).toHaveBeenLastCalledWith('new', expect.any(Array), expect.any(Function), expect.anything(), 'bob.bsky.social');
+    expect(signIn).toHaveBeenLastCalledWith('new', expect.any(Array), expect.any(Function), expect.anything(), 'bob.bsky.social', undefined);
   });
 
   it('does not sign in with an empty box', async () => {

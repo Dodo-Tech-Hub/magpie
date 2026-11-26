@@ -55,7 +55,7 @@ let waiting: AbortController | null = null;
 export const cancelSignIn = () => waiting?.abort();
 
 // One sign-in. A code (device sign-in) shows in place, is copied, and opens the browser.
-async function signInAs(state: State, dispatch: D, role: Role, kinds: string[], handle?: string): Promise<SignInResult> {
+async function signInAs(state: State, dispatch: D, role: Role, kinds: string[], handle?: string, only?: string): Promise<SignInResult> {
   const driver = driverOf(state);
   const ctl = new AbortController();
   waiting = ctl;
@@ -76,6 +76,7 @@ async function signInAs(state: State, dispatch: D, role: Role, kinds: string[], 
       },
       ctl.signal,
       handle,
+      only,
     );
   } finally {
     if (waiting === ctl) waiting = null;
@@ -283,7 +284,7 @@ async function runAllowKind(state: State, dispatch: D, kind: string): Promise<vo
   if (!newAccount || !progressId) return;
   dispatch({ type: 'setNotice', notice: null });
   // The handle is passed for a platform where the user types it, so Allow signs in to the same account.
-  const res = await signInAs(state, dispatch, 'new', [...state.granted, kind], newAccount.handle);
+  const res = await signInAs(state, dispatch, 'new', [...state.granted, kind], newAccount.handle, newAccount.id);
   if (!res.ok) {
     dispatch({ type: 'setNotice', notice: failNotice(res.reason) });
     return;

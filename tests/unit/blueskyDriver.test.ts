@@ -92,7 +92,7 @@ describe('the Bluesky driver, sign-in part', () => {
     const account = { id: ALICE, handle: 'alice.bsky.social', name: 'Alice', photoUrl: null };
     signIn.mockResolvedValue({ ok: true, account });
     expect(await driver.signIn('new', ['person'], () => undefined, undefined, 'alice.bsky.social')).toEqual({ ok: true, account });
-    expect(signIn).toHaveBeenCalledWith('new', ['person'], 'alice.bsky.social');
+    expect(signIn).toHaveBeenCalledWith('new', ['person'], 'alice.bsky.social', undefined);
   });
 
   it('says not_found for an empty handle, without looking anything up', async () => {

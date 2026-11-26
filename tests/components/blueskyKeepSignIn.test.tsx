@@ -1,6 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 import { scopesFor } from '@/auth/bluesky';
-import { NEW, OLD, answerReminder, blueskyWorld, eventually, renderBluesky, resetBluesky, signInNewAccount, signInWithHandle } from './blueskyWorld';
+import { blueskyStores } from '@/auth/blueskySession';
+import { NEW, OLD, OTHER, answerReminder, blueskyWorld, eventually, renderBluesky, resetBluesky, signInNewAccount, signInWithHandle } from './blueskyWorld';
 import { __dump } from '../mocks/expoSecureStore';
 import { mockClient, userSignsInAs } from '../mocks/oauthClient';
 
@@ -57,4 +58,24 @@ it('blocks Move while the new account is still signing in', async () => {
   expect(screen.queryByLabelText('Move 2 items')).toBeNull();
   finish();
   expect(await screen.findByLabelText('Move 2 items')).toBeTruthy();
+});
+
+it('moves with a different new account signed in after a restart, not with the one saved before', async () => {
+  const first = await renderBluesky().then(async (view) => {
+    await signInWithHandle('Old account', OLD.handle);
+    await screen.findByRole('checkbox', { name: 'All' });
+    await signInNewAccount();
+    return view;
+  });
+  // A restart: the screen forgets the new account, the phone's secure storage does not.
+  await first.unmount();
+  await renderBluesky();
+  await signInWithHandle('Old account', OLD.handle);
+  await screen.findByRole('checkbox', { name: 'All' });
+  await userSignsInAs(OTHER.did, scopesFor('new', ['person', 'block', 'list']));
+  await fireEvent.press(screen.getByRole('tab', { name: 'To' }));
+  await signInWithHandle('New account', OTHER.handle);
+  await fireEvent.press(await screen.findByLabelText('Move 2 items'));
+  expect(await eventually('2 moved')).toBeTruthy();
+  expect(await blueskyStores.getNewDid()).toBe(OTHER.did);
 });

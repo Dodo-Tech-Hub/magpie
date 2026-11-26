@@ -97,7 +97,7 @@ describe.each([
     await openPick();
     await fireEvent.press(screen.getByLabelText('Allow Mutes'));
     expect(await screen.findByLabelText('Mia')).toBeTruthy();
-    expect(signIn).toHaveBeenLastCalledWith('old', ['mute'], expect.any(Function), expect.anything(), 'old-handle');
+    expect(signIn).toHaveBeenLastCalledWith('old', ['mute'], expect.any(Function), expect.anything(), 'old-handle', undefined);
     expect(screen.getByText('4 of 4 picked')).toBeTruthy();
     expect(screen.getByLabelText('Move 4 items')).toBeTruthy();
     // The sign-in is not asked for again, and the old session was dropped by the read.
@@ -147,7 +147,7 @@ describe.each([
     await fireEvent.press(screen.getByLabelText('Allow Mutes'));
     await waitFor(() => expect(screen.getByLabelText('Move 4 items')).toBeTruthy());
     // The new account's handle goes along, so a platform where the user types it signs in to the same account.
-    expect(signIn).toHaveBeenLastCalledWith('new', ['person', 'mute'], expect.any(Function), expect.anything(), 'new-handle');
+    expect(signIn).toHaveBeenLastCalledWith('new', ['person', 'mute'], expect.any(Function), expect.anything(), 'new-handle', 'new');
   });
 });
 
