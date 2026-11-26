@@ -139,7 +139,8 @@ export async function signIn(role: 'old' | 'new', kinds: string[], typed: string
     const found = await lookup(typed);
     if (!found.ok) return found;
     if (role === 'old' && kinds.length === 0) return { ok: true, account: found.account, server: found.server };
-    account = found.account.handle;
+    // The ID, not the handle: the library puts the account's handle in as the hint on its own (research R5).
+    account = found.account.id;
     expected = found.account.id;
   }
   if (role === 'old') blueskyStores.capture(true);

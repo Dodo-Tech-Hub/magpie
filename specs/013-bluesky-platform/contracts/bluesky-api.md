@@ -68,7 +68,7 @@ A second 429 for the same item, after a `wait`, becomes `later` (FR-BS-012). The
 | Step | What the app checks |
 | --- | --- |
 | Before | Lookup above passed. The role's expected DID is known. |
-| `client.authorize(handle, { scope, redirect_uri })` | Scope is the subset for the role and the picked kinds (research R6). The client sets `login_hint` from the handle, so Bluesky's page asks for that account even when the browser remembers another. With no handle on To (empty box or an email), the input is `https://bsky.social`: the client sends no `login_hint`, and Bluesky's page asks who the user is. |
+| `client.authorize(did, { scope, redirect_uri })` | Scope is the subset for the role and the picked kinds (research R6). The client sets `login_hint` to the account's handle, so Bluesky's page asks for that account even when the browser remembers another. With no handle on To (empty box or an email), the input is `https://bsky.social`: the client sends no `login_hint`, and Bluesky's page asks who the user is. |
 | `openAuthSessionAsync(url, redirect, { preferEphemeralSession: true })` | `cancel` or `dismiss`: `{ ok: false, reason: 'cancelled' }`. |
 | `client.callback(params)` | The client checks `state` and `iss` and the DPoP binding. The app checks: `session.did` is a `did:plc:` on a Bluesky host; issuer is `https://bsky.social`; for "Allow" on old kinds, `session.did` is the old DID. Else revoke and refuse. |
 | Account | `getProfile` for `session.did`, as in Lookup. |

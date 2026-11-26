@@ -124,10 +124,10 @@ describe('sign-in of the new account', () => {
     expect(mockClient.authorize).not.toHaveBeenCalled();
   });
 
-  it('asks Bluesky for the scope of the picked kinds, with the typed handle, and the redirect of the app', async () => {
+  it('asks Bluesky for the scope of the picked kinds, with the account ID, and the redirect of the app', async () => {
     await userSignsInAs(ALICE, scopesFor('new', ['person', 'block']));
     await signIn('new', ['person', 'block'], '@Alice');
-    expect(mockClient.authorize).toHaveBeenCalledWith('alice.bsky.social', expect.objectContaining({ scope: scopesFor('new', ['person', 'block']), redirect_uri: REDIRECT_URI }));
+    expect(mockClient.authorize).toHaveBeenCalledWith(ALICE, expect.objectContaining({ scope: scopesFor('new', ['person', 'block']), redirect_uri: REDIRECT_URI }));
   });
 
   it('opens the sign-in page in the system browser, with no saved login, and gives the account that signed in', async () => {
@@ -254,7 +254,7 @@ describe('sign-in of the old account', () => {
     await userSignsInAs(OLDER, scopesFor('old', ['mute']));
     const res = await signIn('old', ['mute'], 'older.bsky.social');
     expect(res).toMatchObject({ ok: true, account: { id: OLDER } });
-    expect(mockClient.authorize).toHaveBeenCalledWith('older.bsky.social', expect.objectContaining({ scope: scopesFor('old', ['mute']) }));
+    expect(mockClient.authorize).toHaveBeenCalledWith(OLDER, expect.objectContaining({ scope: scopesFor('old', ['mute']) }));
     expect(__dump()).toEqual({});
     expect((await blueskyStores.sessionStore.get(OLDER))?.tokenSet.access_token).toBe('secret-access');
   });

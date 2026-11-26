@@ -33,7 +33,7 @@ describe('sign in to the new account', () => {
     await openTo();
     await signInWithHandle('New account', '@New.bsky.social ');
     expect(await screen.findByText(NEW.handle)).toBeTruthy();
-    expect(mockClient.authorize).toHaveBeenCalledWith(NEW.handle, expect.anything());
+    expect(mockClient.authorize).toHaveBeenCalledWith(NEW.did, expect.anything());
     expect(WebBrowser.openAuthSessionAsync).toHaveBeenCalledTimes(1);
     expect(screen.getByLabelText('Sign out New account')).toBeTruthy();
   });

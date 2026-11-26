@@ -47,10 +47,10 @@ describe('Mutes and Feeds on Pick', () => {
     expect(screen.getByText('1 of 1 picked')).toBeTruthy();
   });
 
-  it('open the old account sign-in for the old handle, with only the access to read', async () => {
+  it('open the old account sign-in for the old account, with only the access to read', async () => {
     await openPick();
     await allowOld();
-    expect(mockClient.authorize).toHaveBeenCalledWith(OLD.handle, expect.objectContaining({ scope: READ }));
+    expect(mockClient.authorize).toHaveBeenCalledWith(OLD.did, expect.objectContaining({ scope: READ }));
     expect(asked().split(' ').every((x) => x === 'atproto' || /get(Mutes|Preferences)/.test(x))).toBe(true);
     expect(asked()).not.toMatch(/put|create|muteActor/);
   });
