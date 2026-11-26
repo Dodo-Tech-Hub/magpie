@@ -236,7 +236,7 @@ Mutes and saved feeds are private, so the handle is not enough to read them. On 
 ### Edge Cases
 
 - The old account follows nothing: Pick says "This account doesn't follow anything yet" and Move is not offered.
-- The old account is private to logged-out viewers (it chose "Discourage apps from showing my account to logged-out users"): this setting asks apps not to show the account to people who are not signed in. The app still reads its public records, because the user is moving their own account. [The plan MUST confirm the records stay readable.]
+- The old account is private to logged-out viewers (it chose "Ask apps and sites not to show my account to logged-out users", named "Discourage apps from showing my account to logged-out users" before): this setting asks apps not to show the account to people who are not signed in. The app still reads its public records, because the user is moving their own account. The records stay readable (research R11, check 4).
 - The old account is deactivated, suspended, or deleted: From says "This account can't be read right now." and stays open.
 - A followed person deleted or deactivated their account, or blocked the new account: the add may fail or succeed with no effect. A failed row shows "Couldn't move" with the reason in simple words (FR-BS-017).
 - The old account follows the new account: after the To sign-in, that row shows "Already there" and cannot be picked, because an account cannot follow itself.

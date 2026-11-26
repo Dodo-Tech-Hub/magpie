@@ -160,7 +160,7 @@ Run on 2026-11-26 with two Bluesky-hosted test accounts.
 | 1 | PASS | Narrow scope: follow 200, block 403. |
 | 2 | FAIL | After `signOut()` the refresh token is refused ("Invalid refresh token"), but the access token still works (`getSession` answers 200). A second run the same day (`--expiry-only`, scope `atproto`) showed that `bsky.social` states an expiry of 60 minutes for a new access token. The run did not test that the token stops working at that time. The AT Protocol OAuth spec says access token lifetimes should be under 30 minutes, and at most 15 if the server cannot revoke them. |
 | 3 | PASS | `get` and `put` of preferences work with `aud=did:web:api.bsky.app#bsky_appview` and with `aud=*`. The scopes in R6 stay as they are; the `aud=*` fallback is not needed. |
-| 4 | Not run | No account with the logged-out setting on was given (`--hidden`). |
+| 4 | PASS | Run on 2026-11-26 with a test account that had the setting on (its profile had the label `!no-unauthenticated`). Signed out, `getProfile`, `getFollows` (73), `getLists`, the block records, and `getProfiles` answered 200. The account had no lists, so `getList` was not called. The script was not used: the same reads were made directly. |
 | 5 | NOTE | The stored session is 1,340 bytes, under the 2,000 split limit in R3. The script asked for the follow scope only, so a session with more scopes is larger. |
 
 ## R12. Client metadata and the redirect
