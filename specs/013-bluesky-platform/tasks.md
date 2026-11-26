@@ -197,3 +197,7 @@ flowchart TD
 2. **Part A as its own pull request**: T001 to T020, YouTube and GitHub unchanged.
 3. **MVP**: Phases 3, 4, and 5 give a working follows, blocks, and lists move. Ship the pull request here if the owner wants a smaller first release.
 4. **Then** Phases 6, 7, and 8 in the owner's order, and Phase 9 before release.
+
+## Phone test fixes (2026-11-26)
+
+- [X] T067 Keep the new account signed in after a move (remove `endMove` from `src/platforms/blueskyDriver.ts`), and disable Move with "Signing in…" while the new account signs in (`src/state/flows.ts`, `src/ui/PickStep.tsx`, `src/ui/ToStep.tsx`). Test: `tests/components/blueskyKeepSignIn.test.tsx`. Where older tasks say the summary cancels access, this task and FR-BS-013 replace them.

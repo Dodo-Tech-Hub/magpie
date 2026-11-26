@@ -62,6 +62,7 @@ export function PickStep() {
     waiting: items.filter(isMovable).length,
   };
   const showSummary = moveState === 'done' || resume;
+  const moveLabel = state.signingIn ? strings.signingIn : moving ? strings.moving : resume ? strings.continueMove : words.moveButton(movable);
   const pickable = items.filter((c) => c.status !== 'already_there');
   const shown = query
     ? items.filter((c) => c.title.toLowerCase().includes(query.toLowerCase()))
@@ -209,15 +210,16 @@ export function PickStep() {
         {state.notice && state.step === 'pick' && <Text style={styles.error}>{state.notice}</Text>}
         {!(moveState === 'done' && movable === 0) && items.length > 0 && (
           <Pressable
-            style={[styles.move, moving && styles.off]}
+            style={[styles.move, (moving || state.signingIn) && styles.off]}
             accessibilityRole="button"
-            accessibilityLabel={moving ? strings.moving : resume ? strings.continueMove : words.moveButton(movable)}
-            disabled={moving}
+            accessibilityLabel={moveLabel}
+            accessibilityState={{ disabled: moving || state.signingIn }}
+            disabled={moving || state.signingIn}
             onPress={() => void startMove(state, dispatch)}
           >
             <Ionicons name="arrow-forward" size={18} color={colors.onPrimary} />
             <Text style={styles.moveText}>
-              {moving ? strings.moving : resume ? strings.continueMove : words.moveButton(movable)}
+              {moveLabel}
             </Text>
           </Pressable>
         )}

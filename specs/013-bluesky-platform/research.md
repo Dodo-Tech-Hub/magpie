@@ -38,7 +38,7 @@ Sources checked on 2026-11-23: [OAuth for AT Protocol](https://atproto.com/guide
 
 | What | Where | When it is deleted |
 | --- | --- | --- |
-| New account session (access token, refresh token, DPoP private key) | `expo-secure-store`, one key per account: `bluesky.session.<did>` | At the summary, on Sign out, on Delete all, and when "Don't save" deletes the progress. Revoked on Bluesky first. |
+| New account session (access token, refresh token, DPoP private key) | `expo-secure-store`, one key per account: `bluesky.session.<did>` | On Sign out, on Delete all, and when "Don't save" deletes the progress. Kept after a move (FR-BS-013). Revoked on Bluesky first. |
 | Old account session (only after "Allow", FR-BS-020) | Memory only | Revoked and dropped as soon as mutes and saved feeds are read. |
 | Sign-in state (PKCE verifier, DPoP key during sign-in) | Memory only, 10 minutes | When sign-in ends or is cancelled. |
 | Caches (handle, DID, server metadata, DPoP nonce) | Memory only | When the app closes. |
@@ -53,7 +53,7 @@ The session store knows which DID is the old account (the flow resolved it from 
 
 **Decision**: Sign out calls the client's `session.signOut()`, which calls the sign-in server's revocation endpoint, then deletes the secure-store keys in a `finally`, so the phone is clean even when the call fails. There is no remove-access page link, because Bluesky's web app has no page for one app's access that the docs name.
 
-**Status**: failed for the access token (R11 results, 2026-11-26). The refresh token is refused after sign-out, but the access token still works. On 2026-11-26 the owner accepted this as an exception (spec FR-BS-013). The driver's `signOut` and `endMove` always return `false`, so the line `words.accessNote` shows after every sign-out and at the summary: "Magpie's access ends on its own within an hour."
+**Status**: failed for the access token (R11 results, 2026-11-26). The refresh token is refused after sign-out, but the access token still works. On 2026-11-26 the owner accepted this as an exception (spec FR-BS-013). The driver's `signOut` always returns `false`, so the line `words.accessNote` shows after every sign-out. The driver has no `endMove`: the owner chose on 2026-11-26 to keep the sign-in after a move. The line is: "Magpie's access ends on its own within an hour."
 
 ## R5. Finding accounts and keeping the host list (FR-BS-005, FR-BS-022)
 

@@ -23,6 +23,7 @@ Bluesky is a good fit for Automatic: its data is open, it has a modern sign-in f
 - Q: Which kinds should a Bluesky move cover? → A: Follows, blocks, lists, mutes, and saved feeds. Mutes and saved feeds are private, so they are opt-in: Pick shows them greyed with an "Allow" button that signs in to the old account with read-only access (FR-BS-020).
 - Q: Should the app support accounts on self-hosted servers? → A: Not in the first release. Only Bluesky-hosted accounts, so the app keeps a fixed host list (Principle III, rule 5) with no constitution exception. A self-hosted account gets a plain "not supported yet" message (FR-BS-022). Self-hosted support can come later with its own amendment. The owner asked for a recommendation; this was it.
 - Q: If Bluesky does not let a phone app cancel its access on sign-out, should Bluesky still ship? → A: Decide after the plan tests it. The plan MUST test token revocation with a real account first and, if it fails, stop and ask the owner before any sign-in work (FR-BS-013).
+- Change (2026-11-26, after a phone test): the owner asked to keep the new account signed in after a move, so a second move needs no new sign-in. The app no longer cancels access at the summary (FR-BS-013).
 - Update (2026-11-26): the test showed that the access token still works after sign-out. The owner accepted this as an exception to Principle III, rule 3, with the line in FR-BS-013.
 - Q: On Pick, should blocked people start picked, like every other item, or unpicked? → A: Picked, like every other kind (FR-BS-003).
 - Q: In what order should the move add follows to the new account? → A: Oldest first, so the new account's lists keep the old order (FR-BS-010).
@@ -195,15 +196,16 @@ The user signs out of the new account, a move ends, or the user uses Delete all.
 
 **Why this priority**: The constitution requires sign-out to remove access (Principle III, rule 3).
 
-**Independent Test**: Sign in on To, run a move, and confirm the refresh token no longer works on Bluesky once the summary shows, and the line from FR-BS-013 shows. Sign in again, sign out, and confirm the same. Use Delete all and confirm no Bluesky account, token, key, list, or progress is left on the phone.
+**Independent Test**: Sign in on To, run a move, pick more items, and move again with no new sign-in. Sign out and confirm the refresh token no longer works on Bluesky and the line from FR-BS-013 shows. Use Delete all and confirm no Bluesky account, token, key, list, or progress is left on the phone.
 
 **Acceptance Scenarios**:
 
 1. **Given** the new account is signed in, **When** the user taps Sign out on To, **Then** the app cancels the token on Bluesky, deletes it from the phone, and To shows signed out.
-2. **Given** a move ends, **When** the summary shows, **Then** the app has cancelled and deleted the new account's token. Continue after a pause uses the saved token only while the move is unfinished.
+2. **Given** a move ends, **When** the summary shows, **Then** the new account stays signed in, and the user can pick more items and move them with no new sign-in.
 3. **Given** the phone is offline at sign-out, **When** the cancel call fails, **Then** the app still deletes the token from the phone.
 4. **Given** the user uses Delete all, **When** it ends, **Then** every Bluesky account, token, key, list, and progress is gone from the phone.
-5. **Given** the user signs out on To or a move ends, **When** the screen updates, **Then** it says in one line that Magpie's access ends on its own within an hour, whether or not the cancel call worked.
+5. **Given** the user signs out on To, **When** the screen updates, **Then** it says in one line that Magpie's access ends on its own within an hour, whether or not the cancel call worked.
+6. **Given** the new account's sign-in is still running, **When** the user is on To or Pick, **Then** the screen says "Signing in…", and Move cannot be tapped.
 
 ---
 
@@ -281,7 +283,7 @@ Mutes and saved feeds are private, so the handle is not enough to read them. On 
 
 **Data, security, and both phone types**
 
-- **FR-BS-013**: Bluesky tokens and the sign-in key MUST be stored only in the phone's secure storage. On Sign out, at the summary, and on Delete all, the app MUST cancel the token on Bluesky and delete the token and key from the phone. The app MUST still delete them if the cancel call fails. **Exception to Principle III, rule 3, approved by the project owner on 2026-11-26**: cancelling stops the refresh token, but an access token that was already issued keeps working until it runs out (`bsky.social` states 60 minutes; the AT Protocol OAuth spec says under 30). The app cannot shorten this. So after Sign out on To and at the summary, the app MUST say in one line that Magpie's access ends on its own within an hour, whether or not the cancel call worked.
+- **FR-BS-013**: Bluesky tokens and the sign-in key MUST be stored only in the phone's secure storage. The app MUST keep the new account signed in after a move, until the user taps Sign out, uses Delete all, or chooses "Don't save". While the new account's sign-in is running, Move MUST be disabled and the screen MUST say so. On Sign out, on Delete all, and on "Don't save", the app MUST cancel the token on Bluesky and delete the token and key from the phone. The app MUST still delete them if the cancel call fails. **Exception to Principle III, rule 3, approved by the project owner on 2026-11-26**: cancelling stops the refresh token, but an access token that was already issued keeps working until it runs out (`bsky.social` states 60 minutes; the AT Protocol OAuth spec says under 30). The app cannot shorten this. So after Sign out on To, the app MUST say in one line that Magpie's access ends on its own within an hour, whether or not the cancel call worked.
 - **FR-BS-014**: The app MUST keep only what the move needs: account ID, handle, display name, picture, item IDs, item names and pictures, list names, descriptions, and members, progress, and the times of recent adds for the pace (deleted after 1 day). It MUST NOT log tokens, codes, handles, or item lists.
 - **FR-BS-015**: The app MUST talk to Bluesky only on the hosts in the Bluesky section, over HTTPS (FR-BS-022). The Bluesky logo MUST be the official butterfly, unmodified, used only to name the platform. Settings MUST say that Magpie is not made by or linked with Bluesky. The feature MUST work the same way on Android and iOS.
 - **FR-BS-016**: The app MUST treat every Bluesky answer as untrusted, check its shape before use, and check the sign-in return (state, issuer, and redirect) before using the code.
@@ -374,7 +376,7 @@ The client metadata file lives on the project's public site. The app never calls
 - **SC-003**: The YouTube and GitHub flows pass all their existing tests with no change to what they check.
 - **SC-004**: Adding Bluesky needs no change to Home beyond the new entry in the list of platforms (spec 004, SC-003).
 - **SC-005**: Bluesky's sign-in page lists only the access in FR-BS-008 for the picked kinds, in 10 out of 10 tries.
-- **SC-006**: After sign-out or the summary, the new account's token no longer works on Bluesky, in 10 out of 10 tries while online.
+- **SC-006**: After Sign out, the new account's refresh token no longer works on Bluesky, in 10 out of 10 tries while online.
 - **SC-007**: A move of 5,000 items finishes, across one or more pauses, with no item moved twice and none lost, and no test account is flagged by Bluesky.
 
 ## Assumptions

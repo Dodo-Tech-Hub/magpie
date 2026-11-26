@@ -31,6 +31,8 @@ export type State = {
   loading: boolean;
   // The new account's token was deleted from the phone (summary or Sign out), so the remove-access note shows.
   accessEnded: boolean;
+  // The new account's sign-in is running. The browser may be closed already while the app finishes it.
+  signingIn: boolean;
 };
 
 export type Action =
@@ -41,6 +43,7 @@ export type Action =
   // A running move reports through this. It is dropped when its progress is no longer the open one.
   | { type: 'forProgress'; progressId: string; action: Action }
   | { type: 'setStep'; step: Step }
+  | { type: 'setSigningIn'; signingIn: boolean }
   | { type: 'openSettings' }
   | { type: 'closeSettings' }
   | { type: 'setOld'; account: AccountInfo | null; items: StoredItem[] }
@@ -74,6 +77,7 @@ export const initialState: State = {
   oldRead: [],
   loading: false,
   accessEnded: false,
+  signingIn: false,
 };
 
 export function reducer(state: State, action: Action): State {
@@ -125,6 +129,8 @@ export function reducer(state: State, action: Action): State {
       return { ...state, signInCode: action.code };
     case 'setGranted':
       return { ...state, granted: action.kinds };
+    case 'setSigningIn':
+      return { ...state, signingIn: action.signingIn };
     case 'setAccessEnded':
       return { ...state, accessEnded: action.ended };
     case 'setOldRead':

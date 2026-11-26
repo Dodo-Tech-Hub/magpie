@@ -139,8 +139,21 @@ export async function signInOld(state: State, dispatch: D, handle?: string): Pro
   }
 }
 
+// While the new account signs in, Move and Sign in are held back: the account is not ready yet.
+async function whileSigningIn(dispatch: D, run: () => Promise<void>): Promise<void> {
+  dispatch({ type: 'setSigningIn', signingIn: true });
+  try {
+    await run();
+  } finally {
+    dispatch({ type: 'setSigningIn', signingIn: false });
+  }
+}
+
 // New account: needs add access. Creates or opens the progress for the pair.
-export async function signInNew(state: State, dispatch: D, handle?: string): Promise<void> {
+export const signInNew = (state: State, dispatch: D, handle?: string) =>
+  whileSigningIn(dispatch, () => runSignInNew(state, dispatch, handle));
+
+async function runSignInNew(state: State, dispatch: D, handle?: string): Promise<void> {
   const driver = driverOf(state);
   dispatch({ type: 'setNotice', notice: null });
   const res = await signInAs(state, dispatch, 'new', kindsToAsk(state, driver), handle);
@@ -261,7 +274,10 @@ export async function allowOld(state: State, dispatch: D): Promise<void> {
 }
 
 // "Allow" on a kind the new account has no access for: sign in again, asking for what it had plus this kind (FR-GH-020).
-export async function allowKind(state: State, dispatch: D, kind: string): Promise<void> {
+export const allowKind = (state: State, dispatch: D, kind: string) =>
+  whileSigningIn(dispatch, () => runAllowKind(state, dispatch, kind));
+
+async function runAllowKind(state: State, dispatch: D, kind: string): Promise<void> {
   const driver = driverOf(state);
   const { progressId, newAccount } = state;
   if (!newAccount || !progressId) return;

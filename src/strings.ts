@@ -26,6 +26,7 @@ export const strings = {
   pickLocked: 'Sign in to your old account first',
   all: 'All',
   needNewAccount: 'Sign in to your new account first',
+  signingIn: 'Signing in…',
   moving: 'Moving…',
   moved: 'Moved',
   couldntMove: "Couldn't move",

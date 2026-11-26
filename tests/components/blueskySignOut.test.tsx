@@ -71,23 +71,19 @@ describe('Sign out', () => {
   });
 });
 
-describe('the summary', () => {
-  it('cancels the access and deletes the session when the move ends', async () => {
+describe('after a move', () => {
+  it('keeps the access and the session when the move ends, and Sign out then cancels both', async () => {
     await openPick();
     const session = revoked()[0];
     await move('Move 2 items');
     expect(await eventually('2 moved')).toBeTruthy();
+    expect(session.signOut).not.toHaveBeenCalled();
+    expect(secureKeys().some((k) => k.startsWith('bluesky.session.'))).toBe(true);
+    expect(screen.queryByText(NOTE)).toBeNull();
+    await openTo();
+    await fireEvent.press(screen.getByLabelText('Sign out New account'));
+    expect(await screen.findByText(NOTE)).toBeTruthy();
     expect(session.signOut).toHaveBeenCalledTimes(1);
-    expect(__dump()).toEqual({});
-    expect(screen.getByText(NOTE)).toBeTruthy();
-  });
-
-  it('says the access ends on its own when it could not be cancelled', async () => {
-    await openPick();
-    mockClient.offline = true;
-    await move('Move 2 items');
-    expect(await eventually('2 moved')).toBeTruthy();
-    expect(screen.getByText(NOTE)).toBeTruthy();
     expect(__dump()).toEqual({});
   });
 
@@ -101,7 +97,7 @@ describe('the summary', () => {
     await seconds(3601);
     await move('Continue');
     expect(await eventually('2 moved')).toBeTruthy();
-    expect(__dump()).toEqual({});
+    expect(revoked()[0].signOut).not.toHaveBeenCalled();
   });
 });
 

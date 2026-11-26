@@ -41,7 +41,8 @@ The script opens the browser for each sign-in and prints one line per question w
 | 8 | Tap "Allow" on Mutes again (new account) | Browser asks for the new account with mute access added. Mutes become pickable. Repeat for Feeds. |
 | 9 | Tap Move | Rows change one at a time, quickly (up to 500 per minute). Summary at the end. |
 | 10 | Check the new account in the Bluesky app | Follows (oldest first in the new account's list), blocks, the list with 3 members, 3 mutes, 2 saved feeds with the same one pinned. Other settings unchanged. The old account unchanged. |
-| 11 | After the summary | To shows signed out. The session key is gone from secure storage. The line "Magpie's access ends on its own within an hour." shows. The old refresh token is refused; the access token works until it runs out (research R11). |
+| 11 | After the summary, pick one more item and tap Move | It moves with no new sign-in. To still shows the account. |
+| 11a | On To, tap Sign out | To shows signed out with "Magpie's access ends on its own within an hour." The session key is gone from secure storage. The old refresh token is refused; the access token works until it runs out (research R11). |
 | 12 | Start a move of 30, turn on flight mode after 5 | "No internet. Try again when you're online." Continue moves only the rest. |
 | 13 | Settings, Delete all | No Bluesky progress or session left. |
 | 14 | Rotate and use split screen on From and To | The handle box keeps its text. |

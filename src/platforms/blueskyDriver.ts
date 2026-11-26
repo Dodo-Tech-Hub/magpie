@@ -65,7 +65,8 @@ export const blueskyDriver: Driver = {
   handleInput: true,
   // There is no sign-in to switch to: Sign out on To, and Change on From (words.changeOld).
   switchSignsOut: true,
-  // The new account's session is kept for an unfinished move, so Continue needs no new sign-in.
+  // The new account's session is kept after a move too, until Sign out, Delete all, or "Don't save" (FR-BS-013). So there is
+  // no endMove, and Continue or a second move needs no new sign-in.
   resumesNew: true,
 
   async signIn(role, kinds, _onCode, _signal, handle) {
@@ -79,12 +80,6 @@ export const blueskyDriver: Driver = {
     if (role !== 'new') oldTarget = null;
     await signOut(role);
     // Always false: Bluesky's access token keeps working until it runs out, even after a successful cancel, so the screen says so (FR-BS-013).
-    return false;
-  },
-
-  // A move finished with nothing left: cancel the new account's access and delete its session (FR-BS-013).
-  async endMove() {
-    await signOut('new');
     return false;
   },
 
