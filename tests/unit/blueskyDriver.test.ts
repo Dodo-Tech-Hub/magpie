@@ -172,7 +172,7 @@ describe('the Bluesky driver, reading the old account', () => {
     expect(res.missing).toEqual([]);
     expect(api.readFollows).toHaveBeenCalledWith(OLDER);
     expect(api.readBlocks).toHaveBeenCalledWith(OLDER, SERVER);
-    expect(api.readLists).toHaveBeenCalledWith(OLDER);
+    expect(api.readLists).toHaveBeenCalledWith(OLDER, SERVER);
   });
 
   it('reports the kinds that could not be read and still loads the others', async () => {

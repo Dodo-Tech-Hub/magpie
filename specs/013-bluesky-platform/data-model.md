@@ -30,7 +30,7 @@ Migration 2 to 3, in one transaction: `ALTER TABLE add_log ADD COLUMN keep_until
 | --- | --- | --- | --- | --- |
 | person | `person:<did>` | Display name, or handle | Avatar on `cdn.bsky.app` | `{ "did": string, "handle": string, "seq": number }` |
 | block | `block:<did>` | Display name, or handle | Avatar | `{ "did": string, "handle": string, "seq": number }` |
-| list | `list:<at-uri>` | List name | List avatar | `{ "purpose": "curatelist" \| "modlist", "description": string, "members": string[] (DIDs), "seq": number }` |
+| list | `list:<at-uri>` | List name | List avatar | `{ "purpose": "curatelist" \| "modlist", "description": string, "members": string[] (DIDs), "gone"?: number (members already gone when read), "seq": number }` |
 | mute | `mute:<did>` | Display name, or handle | Avatar | `{ "did": string, "handle": string, "seq": number }` |
 | feed | `feed:<at-uri>` | Feed or list name | Feed avatar | `{ "type": "feed" \| "list", "value": string (at-uri), "pinned": boolean, "seq": number }` |
 

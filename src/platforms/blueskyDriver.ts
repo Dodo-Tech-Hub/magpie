@@ -99,7 +99,7 @@ export const blueskyDriver: Driver = {
     const reads: [string, Promise<NewItem[]>][] = [
       ['person', readFollows(did)],
       ['block', readBlocks(did, server)],
-      ['list', readLists(did)],
+      ['list', readLists(did, server)],
     ];
     // After "Allow" there is a session for the private kinds. It is used for this one read, then cancelled and dropped
     // (FR-BS-020). Without it, mutes and feeds are simply not read.

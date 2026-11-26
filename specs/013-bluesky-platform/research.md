@@ -95,7 +95,7 @@ The session answer lists the scopes the user actually granted. `granted()` maps 
 | --- | --- | --- | --- |
 | person | `app.bsky.graph.getFollows?actor=<did>&limit=100`, paged | `public.api.bsky.app` | Newest first; the driver numbers them so the oldest has the lowest number |
 | block | `com.atproto.repo.listRecords?repo=<did>&collection=app.bsky.graph.block&limit=100&reverse=true`, paged; names from `app.bsky.actor.getProfiles` (25 per call) | account's server, then `public.api.bsky.app` | Oldest first |
-| list | `app.bsky.graph.getLists?actor=<did>&purposes=curatelist&purposes=modlist`, then `app.bsky.graph.getList?list=<uri>` per list for members, paged | `public.api.bsky.app` | Oldest first by `indexedAt` |
+| list | `app.bsky.graph.getLists?actor=<did>&purposes=curatelist&purposes=modlist`, then `app.bsky.graph.getList?list=<uri>` per list for members, paged. `getList` leaves out members that are gone, so the account's `app.bsky.graph.listitem` records (`listRecords`) are read once to count them | `public.api.bsky.app`, and the account's server for the records | Oldest first by `indexedAt` |
 | mute | `app.bsky.graph.getMutes`, paged, through the old session | account's server (passed on to the app view) | Newest first, numbered as for follows |
 | feed | `app.bsky.actor.getPreferences`, the `savedFeedsPrefV2` item, through the old session; names from `app.bsky.feed.getFeedGenerators` and `app.bsky.graph.getList` | account's server, then `public.api.bsky.app` | The saved order |
 

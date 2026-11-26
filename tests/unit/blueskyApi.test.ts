@@ -115,15 +115,17 @@ describe('reading lists', () => {
     indexedAt: `2026-01-0${n}T00:00:00Z`,
     ...extra,
   });
+  const noRecords = { [`GET ${SERVER}/xrpc/com.atproto.repo.listRecords*`]: json({ records: [] }) };
   const member = (n: number) => ({ uri: `at://x/app.bsky.graph.listitem/${n}`, subject: person(n) });
 
   it('reads people lists and moderation lists with their members, paged, oldest first', async () => {
     const members = Array.from({ length: 5 }, (_, i) => member(i + 1));
     mockBluesky({
+      ...noRecords,
       [`GET ${PUBLIC}/app.bsky.graph.getLists*`]: json({ lists: [list(2, 'app.bsky.graph.defs#modlist'), list(1)] }),
       [`GET ${PUBLIC}/app.bsky.graph.getList*`]: paged('items', members, 2, (items, cursor) => ({ items, cursor })),
     });
-    const items = await readLists(ME);
+    const items = await readLists(ME, SERVER);
     expect(items.map((i) => i.title)).toEqual(['List 2', 'List 1']);
     const data = items.map((i) => JSON.parse(i.data!));
     expect(data[1]).toEqual({ purpose: 'curatelist', description: 'About 1', members: [did(101), did(102), did(103), did(104), did(105)], seq: 0 });
@@ -133,20 +135,36 @@ describe('reading lists', () => {
 
   it('skips lists of other purposes, and leaves out members that are not accounts of the right shape', async () => {
     mockBluesky({
+      ...noRecords,
       [`GET ${PUBLIC}/app.bsky.graph.getLists*`]: json({ lists: [list(1, 'app.bsky.graph.defs#referencelist'), list(2)] }),
       [`GET ${PUBLIC}/app.bsky.graph.getList*`]: json({ items: [member(1), { subject: { did: 'did:web:x', handle: 'x' } }, { subject: null }] }),
     });
-    const items = await readLists(ME);
+    const items = await readLists(ME, SERVER);
     expect(items).toHaveLength(1);
     expect(JSON.parse(items[0].data!).members).toEqual([did(101)]);
   });
 
   it('refuses a list whose address is not one of this account', async () => {
     mockBluesky({
+      ...noRecords,
       [`GET ${PUBLIC}/app.bsky.graph.getLists*`]: json({ lists: [list(1, undefined, { uri: 'https://evil.example/list' }), list(2, undefined, { uri: `at://${did(9)}/app.bsky.graph.list/1` })] }),
       [`GET ${PUBLIC}/app.bsky.graph.getList*`]: json({ items: [] }),
     });
-    expect(await readLists(ME)).toEqual([]);
+    expect(await readLists(ME, SERVER)).toEqual([]);
+  });
+
+  it('counts the members that are gone: the account still has a record of them, but the list view leaves them out', async () => {
+    const record = (n: number, of = 1) => ({ value: { list: `at://${ME}/app.bsky.graph.list/${of}`, subject: did(100 + n) } });
+    const f = mockBluesky({
+      [`GET ${PUBLIC}/app.bsky.graph.getLists*`]: json({ lists: [list(1), list(2)] }),
+      [`GET ${PUBLIC}/app.bsky.graph.getList*`]: (r) => json({ items: q(r, 'list')!.endsWith('/1') ? [member(1)] : [member(2)] }),
+      // Member 3 is on list 1 twice and counts once. Member 4 is gone from list 1 too. List 2 has nobody gone.
+      [`GET ${SERVER}/xrpc/com.atproto.repo.listRecords*`]: paged('records', [record(1), record(3), record(3), record(4), record(2, 2)], 2, (items, cursor) => ({ records: items, cursor })),
+    });
+    const data = (await readLists(ME, SERVER)).map((i) => JSON.parse(i.data!));
+    expect(data[0]).toMatchObject({ members: [did(101)], gone: 2 });
+    expect(data[1].gone).toBeUndefined();
+    expect(q(f.callsTo('GET', `${SERVER}/xrpc/com.atproto.repo.listRecords`)[0], 'collection')).toBe('app.bsky.graph.listitem');
   });
 });
 
@@ -325,6 +343,13 @@ describe('adding a list', () => {
       },
     });
     expect(await addList(signedIn, NEW_ME, stored(members))).toEqual({ kind: 'moved', reason: '1 left out' });
+  });
+
+  it('adds the members that were gone when the list was read to the count', async () => {
+    mockBluesky({ ...empty, [CREATE]: json({ uri: `at://${NEW_ME}/app.bsky.graph.list/1` }) });
+    const row = stored(members);
+    const withGone = { ...row, data: JSON.stringify({ ...JSON.parse(row.data!), gone: 2 }) };
+    expect(await addList(signedIn, NEW_ME, withGone)).toEqual({ kind: 'moved', reason: '2 left out' });
   });
 
   it('returns the outcome of a list that could not be made, and of a member that needs a stop or a sign-in', async () => {

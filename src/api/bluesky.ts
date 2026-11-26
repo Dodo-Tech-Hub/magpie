@@ -85,19 +85,21 @@ async function profilesOf(dids: string[]): Promise<Map<string, Profile>> {
   return out;
 }
 
-// The accounts a record list points at, oldest first. Records are public on the account's own server.
-async function subjectsOf(did: string, server: string, collection: string): Promise<string[]> {
+// The records of one kind that point at an account, oldest first. Records are public on the account's own server.
+async function recordsOf(did: string, server: string, collection: string): Promise<(Record<string, unknown> & { subject: string })[]> {
   const origin = blueskyServer(server);
   if (!origin) throw BAD();
-  const subjects: string[] = [];
+  const found: (Record<string, unknown> & { subject: string })[] = [];
   for await (const page of pages((c) => `${origin}/xrpc/com.atproto.repo.listRecords?repo=${did}&collection=${collection}&limit=${PAGE}&reverse=true${c ? `&cursor=${encodeURIComponent(c)}` : ''}`)) {
     for (const r of arrayOf(page.records)) {
-      const subject = isRecord(r) && isRecord(r.value) ? r.value.subject : null;
-      if (typeof subject === 'string' && DID.test(subject)) subjects.push(subject);
+      const value = isRecord(r) && isRecord(r.value) ? r.value : null;
+      if (value && typeof value.subject === 'string' && DID.test(value.subject)) found.push({ ...value, subject: value.subject });
     }
   }
-  return subjects;
+  return found;
 }
+
+const subjectsOf = async (did: string, server: string, collection: string) => (await recordsOf(did, server, collection)).map((r) => r.subject);
 
 // The people an account blocks.
 export async function readBlocks(did: string, server: string): Promise<NewItem[]> {
@@ -114,7 +116,7 @@ const PURPOSES: Record<string, 'curatelist' | 'modlist'> = {
 };
 
 // The lists an account made, with their members. People lists and moderation lists; other kinds are skipped.
-export async function readLists(did: string): Promise<NewItem[]> {
+export async function readLists(did: string, server: string): Promise<NewItem[]> {
   const lists: { uri: string; name: string; purpose: 'curatelist' | 'modlist'; description: string; avatar: unknown; indexedAt: string }[] = [];
   for await (const page of pages((c) => `${PUBLIC}/app.bsky.graph.getLists?actor=${did}&limit=${PAGE}${c ? `&cursor=${encodeURIComponent(c)}` : ''}`)) {
     for (const l of arrayOf(page.lists)) {
@@ -126,6 +128,8 @@ export async function readLists(did: string): Promise<NewItem[]> {
     }
   }
   const oldestFirst = [...lists].sort((a, b) => a.indexedAt.localeCompare(b.indexedAt));
+  // The list view leaves out members that are gone. The account's own member records still name them, so they can be counted.
+  const records = lists.length > 0 ? await recordsOf(did, server, 'app.bsky.graph.listitem') : [];
   const items: NewItem[] = [];
   for (const l of lists) {
     const members: string[] = [];
@@ -135,12 +139,14 @@ export async function readLists(did: string): Promise<NewItem[]> {
         if (p) members.push(p.did);
       }
     }
+    const here = new Set(members);
+    const gone = new Set(records.filter((r) => r.list === l.uri && !here.has(r.subject)).map((r) => r.subject)).size;
     items.push({
       itemId: `list:${l.uri}`,
       kind: 'list',
       title: l.name,
       thumbnailUrl: picture(l.avatar),
-      data: JSON.stringify({ purpose: l.purpose, description: l.description, members, seq: oldestFirst.indexOf(l) }),
+      data: JSON.stringify({ purpose: l.purpose, description: l.description, members, ...(gone > 0 ? { gone } : {}), seq: oldestFirst.indexOf(l) }),
     });
   }
   return items;
@@ -309,7 +315,7 @@ const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 const PURPOSE_NAME = { curatelist: 'app.bsky.graph.defs#curatelist', modlist: 'app.bsky.graph.defs#modlist' } as const;
 
 // The saved data of a list row, checked on read. null: it is not what this app wrote.
-function listData(raw: string | null): { purpose: keyof typeof PURPOSE_NAME; description: string; members: string[] } | null {
+function listData(raw: string | null): { purpose: keyof typeof PURPOSE_NAME; description: string; members: string[]; gone: number } | null {
   try {
     const v: unknown = JSON.parse(raw ?? '');
     if (!isRecord(v) || (v.purpose !== 'curatelist' && v.purpose !== 'modlist') || !Array.isArray(v.members)) return null;
@@ -317,6 +323,7 @@ function listData(raw: string | null): { purpose: keyof typeof PURPOSE_NAME; des
       purpose: v.purpose,
       description: typeof v.description === 'string' ? v.description : '',
       members: v.members.filter((m): m is string => typeof m === 'string' && DID.test(m)),
+      gone: typeof v.gone === 'number' && Number.isInteger(v.gone) && v.gone > 0 ? v.gone : 0,
     };
   } catch {
     return null;
@@ -360,7 +367,7 @@ export async function addList(f: Fetcher, repo: string, item: StoredItem, pacer?
     if (typeof given !== 'string' || !given.startsWith(`at://${repo}/`)) return { kind: 'couldnt_move', reason: GENERIC };
     uri = given;
   }
-  let leftOut = 0;
+  let leftOut = data.gone;
   for (const member of data.members) {
     if (existing?.members.has(member)) continue;
     if (pacer) {
