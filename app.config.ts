@@ -10,7 +10,7 @@ const iosUrlScheme = iosClientId
 const config: ExpoConfig = {
   name: 'Magpie',
   slug: 'magpie',
-  version: '0.1.0',
+  version: '0.2.0',
   orientation: 'default',
   // The Bluesky sign-in comes back to the app through this scheme: the address of the client metadata file read backwards.
   scheme: 'io.github.dodo-tech-hub',
@@ -22,6 +22,7 @@ const config: ExpoConfig = {
   },
   android: {
     package: 'io.github.dodotechhub.magpie',
+    versionCode: 2,
     allowBackup: false,
     adaptiveIcon: {
       backgroundColor: '#1F1F1F',
