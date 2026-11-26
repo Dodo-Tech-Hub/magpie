@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build, align, sign, and verify the Magpie release APK.
-# Run from the repository root in a terminal the owner can type into: apksigner asks for the keystore password.
-# Usage: .agents/skills/release/sign-apk.sh <version>   (example: 0.3.0)
+# Run from the repository root in a terminal the developer can type into: apksigner asks for the keystore password.
+# Usage: .agents/skills/release-github-android/sign-apk.sh <version>   (example: 0.3.0)
 set -euo pipefail
 
 VERSION="${1:?usage: sign-apk.sh <version>}"

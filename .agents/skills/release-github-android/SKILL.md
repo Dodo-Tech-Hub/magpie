@@ -1,24 +1,24 @@
 ---
-name: "release"
-description: "Make a new Magpie release: bump the version, update the docs site, build and sign the Android APK locally, tag main, and publish the GitHub release. Use when the owner asks to prepare, cut, build, sign, or publish a release."
+name: "release-github-android"
+description: "Make a new Magpie release: bump the version, update the docs site, build and sign the Android APK locally, tag main, and publish the GitHub release. Use when a developer asks to prepare, cut, build, sign, or publish a release."
 ---
 
 # Release Magpie
 
-Builds are local only, on the owner's Mac. Never use EAS. Signing needs the owner to type the keystore password, so run the signing script in a terminal tab the owner can type into, not in a background shell.
+Builds run locally on the developer's build machine (macOS or Linux with the Android SDK). Never use EAS. Signing needs the developer to type the keystore password, so run the signing script in a terminal tab the developer can type into, not in a background shell.
 
 ## Steps
 
 1. **Start from main.** `git switch main && git pull --ff-only`, then create `chore/release-<version>`. Pick the version: new platform or feature means a minor bump, fixes only means a patch bump.
-2. **Check `.env`.** `EXPO_PUBLIC_SIMULATE_QUOTA_AFTER` must be empty. Report the result to the owner.
+2. **Check `.env`.** `EXPO_PUBLIC_SIMULATE_QUOTA_AFTER` must be empty. Report the result to the developer.
 3. **Bump the version** in all four places:
    - `app.config.ts`: `version` and `android.versionCode` (increase by 1).
    - `package.json` and the two top `version` fields in `package-lock.json`.
    - `android/app/build.gradle`: `versionCode` and `versionName` (`android/` is not committed, so edit it locally).
 4. **Update `docs/index.md`** (the public site at https://dodo-tech-hub.github.io/magpie/): the platform list, the limits links (one per page in `docs/limits/`), and the trademark line. The sideloading link points to `/releases/latest`, so it needs no change. Check that every link on the page returns 200.
 5. **Check the code.** `npm run typecheck` and `npm test` must pass.
-6. **Open the PR.** Commit (`chore(release): bump version to <version>`, `docs(index): ...`), push, and give the owner the `https://github.com/Dodo-Tech-Hub/magpie/pull/new/<branch>` link. `gh` on this machine cannot open PRs. Wait until the owner merges it.
-7. **Build and sign.** From the repository root, in a terminal tab: `.agents/skills/release/sign-apk.sh <version>`. The script builds, checks the APK version, signs with the `io.github.dodotechhub.magpie` key, checks the certificate fingerprint, and prints the SHA-256 of `magpie-<version>.apk`. The keystore holds more than one key, so the alias matters. If the owner types a wrong password, run the script again.
+6. **Open the PR.** Commit (`chore(release): bump version to <version>`, `docs(index): ...`), push, and open the PR with `gh pr create`; if `gh` has no pull request access, give the developer the `https://github.com/Dodo-Tech-Hub/magpie/pull/new/<branch>` link. Wait until the PR is merged.
+7. **Build and sign.** From the repository root, in a terminal tab: `.agents/skills/release-github-android/sign-apk.sh <version>`. The script builds, checks the APK version, signs with the `io.github.dodotechhub.magpie` key, checks the certificate fingerprint, and prints the SHA-256 of `magpie-<version>.apk`. The keystore holds more than one key, so the alias matters. If the password is wrong, run the script again.
 8. **Tag and publish.** Pull main and confirm the merged commit holds the bump. Then:
    ```
    git tag -a v<version> -m "Magpie <version>" <merged commit> && git push origin v<version>

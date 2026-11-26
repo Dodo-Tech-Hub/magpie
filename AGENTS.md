@@ -28,7 +28,7 @@ These are the YouTube constraints (the first platform). They come from the YouTu
 
 ## Releases
 
-To make a release, follow `.agents/skills/release/SKILL.md` (also linked as a skill in `.claude/skills/` and `.cursor/skills/`). Edit only that file; the other paths are symlinks.
+To make a release, follow `.agents/skills/release-github-android/SKILL.md` (also linked as a skill in `.claude/skills/` and `.cursor/skills/`). Edit only that file; the other paths are symlinks.
 
 ## Local tools
 
