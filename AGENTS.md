@@ -14,7 +14,7 @@ Magpie: a mobile app that migrates a user's subscriptions from one account to an
 ## Tech stack
 
 - Expo (React Native) with TypeScript.
-- Builds are local only, on the project owner's machine (for example `npx expo run:android`, or Gradle in `android/`). Do not use or assume EAS cloud builds, EAS environment variables, EAS Update, or an Expo account login. Build-time values such as `EXPO_PUBLIC_*` come from the local `.env`, which is not committed. Never tell the owner to set a value on EAS.
+- Builds are local only, on a developer's build machine (for example `npx expo run:android`, or Gradle in `android/`). Do not use or assume EAS cloud builds, EAS environment variables, EAS Update, or an Expo account login. Build-time values such as `EXPO_PUBLIC_*` come from the local `.env`, which is not committed. Never tell anyone to set a value on EAS.
 - Platform APIs with the platform's OAuth for reading and writing subscriptions. For YouTube: YouTube Data API v3 with Google OAuth.
 
 ## Domain constraints
@@ -25,6 +25,10 @@ These are the YouTube constraints (the first platform). They come from the YouTu
 - OAuth scope `https://www.googleapis.com/auth/youtube` is sensitive. Until the app passes Google verification, only up to 100 test users can sign in.
 - The flow involves two accounts: sign in to the source account, export its subscription list, sign out, sign in to the target account, then subscribe in batches. Native Google sign-in SDKs hold one signed-in account at a time.
 - Never commit OAuth client secrets, tokens, or API keys.
+
+## Releases
+
+To make a release, follow `.agents/skills/release-github-android/SKILL.md` (also linked as a skill in `.claude/skills/` and `.cursor/skills/`). Edit only that file; the other paths are symlinks.
 
 ## Local tools
 
