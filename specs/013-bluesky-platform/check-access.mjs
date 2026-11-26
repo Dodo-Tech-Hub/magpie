@@ -8,6 +8,7 @@
 //
 // --old     the account to sign in with (any test account; it follows --target once, and that follow stays)
 // --target  a second test account, followed in question 1
+// --expiry-only  optional: one sign-in that prints the access token's stated expiry, then signs out
 // --hidden  optional: a test account with "Discourage apps from showing my account to logged-out users" on
 //
 // Nothing is saved to disk, and tokens are never printed.
@@ -18,7 +19,7 @@ import { NodeOAuthClient } from '@atproto/oauth-client-node';
 import { buildAtprotoLoopbackClientMetadata } from '@atproto/oauth-types';
 
 const { values: args } = parseArgs({
-  options: { old: { type: 'string' }, target: { type: 'string' }, hidden: { type: 'string' } },
+  options: { old: { type: 'string' }, target: { type: 'string' }, hidden: { type: 'string' }, 'expiry-only': { type: 'boolean' } },
 });
 if (!args.old || !args.target) {
   console.error('Usage: node check-access.mjs --old <handle> --target <handle> [--hidden <handle>]');
@@ -70,6 +71,15 @@ async function resolveDid(handle) {
 }
 
 const target = await resolveDid(args.target);
+
+// The lifetime the server states for a new access token. It does not follow or write anything.
+if (args['expiry-only']) {
+  const { session, sessions } = await signIn(args.old, 'atproto');
+  const { expires_at } = sessions.get(session.did).tokenSet;
+  console.log(`Access token expires at ${expires_at}, ${Math.round((Date.parse(expires_at) - Date.now()) / 60000)} minutes from now.`);
+  await session.signOut();
+  process.exit(0);
+}
 
 // ---- 1 and 2: narrow scope, then revoke --------------------------------------------------------------
 
