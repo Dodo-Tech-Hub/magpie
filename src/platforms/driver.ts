@@ -34,8 +34,8 @@ export type SignInCode = { code: string; url: string };
 
 export type SignInResult =
   | { ok: true; account: AccountInfo }
-  // not_found: no such account. not_supported: the platform cannot serve this account (yet). unavailable: it cannot be read now.
-  | { ok: false; reason: 'cancelled' | 'failed' | 'not_found' | 'not_supported' | 'unavailable' };
+  // email: an email was typed where only a handle works. not_found: no such account. not_supported: the platform cannot serve this account (yet). unavailable: it cannot be read now.
+  | { ok: false; reason: 'cancelled' | 'failed' | 'email' | 'not_found' | 'not_supported' | 'unavailable' };
 
 export type Words = {
   signIn: string; // sign-in button label
@@ -56,6 +56,9 @@ export type Words = {
   // For a platform with handleInput: the label and the placeholder of the handle box.
   handleLabel?: string;
   handlePlaceholder?: string;
+  // The same for the box on To, which may be left empty: the platform's own page then asks who it is.
+  newHandleLabel?: string;
+  newHandlePlaceholder?: string;
   // The old account's button when the app holds no sign-in for it (nothing to sign out of). Default: Sign out or Switch.
   changeOld?: string;
 };

@@ -16,12 +16,17 @@ export function ToStep() {
     <View>
       <AccountCard
         title={strings.newTitle}
-        words={driver.words}
+        words={{
+          ...driver.words,
+          handleLabel: driver.words.newHandleLabel ?? driver.words.handleLabel,
+          handlePlaceholder: driver.words.newHandlePlaceholder ?? driver.words.handlePlaceholder,
+        }}
         hint={driver.words.newHint}
         account={state.newAccount}
         disabled={state.moveState === 'moving' || state.signingIn}
         onSignIn={(handle) => void signInNew(state, dispatch, handle)}
         handleInput={driver.handleInput}
+        handleOptional
         code={state.signInCode?.role === 'new' ? state.signInCode : null}
         onCancel={cancelSignIn}
         signsOut={driver.switchSignsOut}

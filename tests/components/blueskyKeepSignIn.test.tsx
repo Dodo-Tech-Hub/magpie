@@ -79,3 +79,19 @@ it('moves with a different new account signed in after a restart, not with the o
   expect(await eventually('2 moved')).toBeTruthy();
   expect(await blueskyStores.getNewDid()).toBe(OTHER.did);
 });
+
+it('signs in to the new account with the handle box left empty', async () => {
+  await openPick();
+  await userSignsInAs(NEW.did, scopesFor('new', ['person', 'block', 'list']));
+  await fireEvent.press(screen.getByRole('tab', { name: 'To' }));
+  expect(screen.getByPlaceholderText('Username or email (optional)')).toBeTruthy();
+  await fireEvent.press(screen.getByLabelText('Sign in with Bluesky: New account'));
+  expect(await screen.findByLabelText('Move 2 items')).toBeTruthy();
+  expect(mockClient.authorize).toHaveBeenCalledWith('https://bsky.social', expect.anything());
+});
+
+it('asks for a handle, not an email, for the old account', async () => {
+  await renderBluesky();
+  await signInWithHandle('Old account', 'me@example.com');
+  expect(await screen.findByText('Type your handle, not your email.')).toBeTruthy();
+});

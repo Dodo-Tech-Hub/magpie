@@ -1,6 +1,6 @@
 import * as WebBrowser from 'expo-web-browser';
 import { OAuthClient } from '@atproto/oauth-client';
-import { lookup } from '@/auth/blueskyLookup';
+import { isEmail, lookup } from '@/auth/blueskyLookup';
 import { runtimeImplementation } from '@/auth/blueskyKey';
 import { blueskyStores } from '@/auth/blueskySession';
 import type { Fetcher } from '@/api/bluesky';
@@ -108,18 +108,25 @@ const failed = { ok: false, reason: 'failed' } as const;
 
 // Sign in to an account in the system browser (Authorization Code with PKCE, plus a key made on the phone).
 // role old with no kinds: only looks the account up. No browser, no session (FR-BS-005).
+// role new with nothing typed, or an email: Bluesky's own page asks who it is. Nothing typed is sent anywhere (FR-BS-006).
 // The result is the account that actually signed in, which may not be the one typed. Never returns a token.
 // server: where the signed-in account lives, so the caller can read its public records.
 // only: for "Allow" on the new account, the account ID that is signed in. Any other account must not replace it.
 export type BlueskySignIn = SignInResult & { server?: string };
 export async function signIn(role: 'old' | 'new', kinds: string[], typed: string, only?: string): Promise<BlueskySignIn> {
-  const found = await lookup(typed);
-  if (!found.ok) return found;
-  if (role === 'old' && kinds.length === 0) return { ok: true, account: found.account, server: found.server };
-  const expected = found.account.id;
+  // The address of Bluesky's sign-in server, given in place of a handle, opens its page with no account filled in.
+  let account = ISSUER;
+  let expected = '';
+  if (role === 'old' || (typed.trim() && !isEmail(typed))) {
+    const found = await lookup(typed);
+    if (!found.ok) return found;
+    if (role === 'old' && kinds.length === 0) return { ok: true, account: found.account, server: found.server };
+    account = found.account.handle;
+    expected = found.account.id;
+  }
   if (role === 'old') blueskyStores.capture(true);
   try {
-    const url = await getClient().authorize(found.account.handle, { scope: scopesFor(role, kinds), redirect_uri: REDIRECT_URI });
+    const url = await getClient().authorize(account, { scope: scopesFor(role, kinds), redirect_uri: REDIRECT_URI });
     const page = await WebBrowser.openAuthSessionAsync(url.toString(), REDIRECT_URI, { preferEphemeralSession: true });
     if (page.type !== 'success') return { ok: false, reason: 'cancelled' };
     // The client checks the state, the issuer in the answer, and the key before it gives a session (FR-BS-016).

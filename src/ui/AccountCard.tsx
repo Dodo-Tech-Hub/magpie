@@ -19,6 +19,8 @@ type Props = {
   onSignIn: (handle?: string) => void;
   // The platform asks for the account's handle in a box above the sign-in button.
   handleInput?: boolean;
+  // The box may be left empty.
+  handleOptional?: boolean;
   // The signed-in button says this instead of Switch or Sign out (the old account holds no sign-in).
   changeLabel?: string;
   // The code a sign-in is waiting on. Shown in place of the Sign in button.
@@ -30,12 +32,12 @@ type Props = {
   disabled?: boolean;
 };
 
-export function AccountCard({ title, words, hint, account, onSignIn, handleInput, changeLabel, code, onCancel, signsOut, onSwitch, disabled }: Props) {
+export function AccountCard({ title, words, hint, account, onSignIn, handleInput, handleOptional, changeLabel, code, onCancel, signsOut, onSwitch, disabled }: Props) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   // Kept here, so the text survives a notice, a fold, or a rotation.
   const [handle, setHandle] = useState('');
-  const empty = handleInput && handle.trim() === '';
+  const empty = handleInput && !handleOptional && handle.trim() === '';
   const signIn = () => !empty && onSignIn(handleInput ? handle : undefined);
   if (account) {
     return (

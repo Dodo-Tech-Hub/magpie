@@ -19,6 +19,7 @@ export const strings = {
   needsOldLine: 'Sign in to your old account to move these.',
   allowOldOther: 'Use your old account here.',
   notFound: "We can't find that account. Check the name.",
+  notEmail: 'Type your handle, not your email.',
   notSupported: 'Magpie works only with accounts hosted by Bluesky for now.',
   unavailable: "This account can't be read right now.",
   sameAsOld: 'This is your old account. Pick a different one.',
@@ -144,6 +145,8 @@ export const blueskyWords: Words = {
   accessNote: "Magpie's access ends on its own within an hour.",
   handleLabel: 'Bluesky handle',
   handlePlaceholder: 'name.bsky.social',
+  newHandleLabel: 'Username or email',
+  newHandlePlaceholder: 'Username or email (optional)',
   changeOld: 'Change',
 };
 

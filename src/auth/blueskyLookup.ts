@@ -9,7 +9,7 @@ const PICTURES = 'https://cdn.bsky.app/';
 export const DID = /^did:plc:[a-z2-7]{24}$/;
 const SERVER_HOST = /^[a-z0-9-]+(\.[a-z0-9-]+)*\.host\.bsky\.network$/;
 
-export type LookupFailure = 'not_found' | 'not_supported' | 'unavailable';
+export type LookupFailure = 'email' | 'not_found' | 'not_supported' | 'unavailable';
 export type Lookup = { ok: true; account: AccountInfo; server: string } | { ok: false; reason: LookupFailure };
 
 export const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
@@ -22,6 +22,10 @@ export function cleanHandle(input: string): string {
   const handle = input.trim().replace(/^@+/, '').toLowerCase();
   return handle.includes('.') ? handle : `${handle}.bsky.social`;
 }
+
+// An email has an @ after the leading ones that people type before a handle. There is no public way to find an
+// account by email, and an email must not be sent to the public lookup.
+export const isEmail = (typed: string) => typed.trim().replace(/^@+/, '').includes('@');
 
 // null: the request got no answer.
 async function get(url: string): Promise<{ status: number; json: unknown } | null> {
@@ -60,6 +64,7 @@ function serverOf(doc: unknown): string | null {
 
 // typed: a handle as the user typed it, or an account ID (a sign-in answers with the ID, and the account card needs the rest).
 export async function lookup(typed: string): Promise<Lookup> {
+  if (isEmail(typed)) return fail('email');
   const handle = typed.trim().startsWith('did:') ? typed.trim() : cleanHandle(typed);
   let id = handle;
   if (!handle.startsWith('did:')) {

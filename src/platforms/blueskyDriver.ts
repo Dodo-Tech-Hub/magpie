@@ -7,7 +7,8 @@ import type { NewItem, StoredItem } from '@/store/progressStore';
 import { blueskyWords } from '@/strings';
 
 // The Bluesky platform driver (specs/013-bluesky-platform/contracts/platform-driver.md).
-// The old account is typed in as a handle and needs no sign-in. The new account signs in in the system browser.
+// The old account is typed in as a handle and needs no sign-in. The new account signs in in the system browser, where its
+// handle is already filled in if it was typed.
 const GENERIC = "Bluesky didn't allow this one.";
 const DID = /^did:plc:[a-z2-7]{24}$/;
 
@@ -70,8 +71,8 @@ export const blueskyDriver: Driver = {
   resumesNew: true,
 
   async signIn(role, kinds, _onCode, _signal, handle, only) {
-    if (!handle?.trim()) return { ok: false, reason: 'not_found' };
-    const res = await signIn(role, kinds, handle, only);
+    if (role === 'old' && !handle?.trim()) return { ok: false, reason: 'not_found' };
+    const res = await signIn(role, kinds, handle ?? '', only);
     if (res.ok && role === 'old' && res.server) oldTarget = { did: res.account.id, server: res.server };
     return res.ok ? { ok: true, account: res.account } : res;
   },

@@ -222,6 +222,26 @@ describe('a fresh sign-in over a saved new account', () => {
   });
 });
 
+describe('sign-in of the new account with no handle', () => {
+  it.each(['', '  ', 'me@example.com'])('opens Bluesky page to ask who it is, and sends nothing typed (%j)', async (typed) => {
+    const f = mockBluesky({ ...account('alice.bsky.social', ALICE) });
+    await userSignsInAs(ALICE, scopesFor('new', ['person']));
+    expect(await signIn('new', ['person'], typed)).toMatchObject({ ok: true, account: { id: ALICE } });
+    expect(mockClient.authorize).toHaveBeenCalledWith('https://bsky.social', expect.objectContaining({ scope: scopesFor('new', ['person']) }));
+    expect(f.calls.some((c) => c.url.includes('resolveHandle') || c.url.includes('example.com'))).toBe(false);
+    expect(await blueskyStores.getNewDid()).toBe(ALICE);
+  });
+});
+
+describe('an email typed for the old account', () => {
+  it.each(['me@example.com', ' @me@example.com '])('is refused on the phone, with no request and no browser (%j)', async (typed) => {
+    const f = mockBluesky({});
+    expect(await signIn('old', [], typed)).toEqual({ ok: false, reason: 'email' });
+    expect(f.calls).toHaveLength(0);
+    expect(__calls()).toHaveLength(0);
+  });
+});
+
 describe('sign-in of the old account', () => {
   it('only looks the account up when no kind needs a sign-in: no browser, no session', async () => {
     const res = await signIn('old', [], 'older.bsky.social');

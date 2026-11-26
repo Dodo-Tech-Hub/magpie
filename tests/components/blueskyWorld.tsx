@@ -178,7 +178,7 @@ export const item = (kind: string, id: string, title = id, data: unknown = null)
 
 // Type a handle in the box of the open step and tap its sign-in button.
 export async function signInWithHandle(step: 'Old account' | 'New account', handle: string) {
-  await fireEvent.changeText(screen.getByLabelText('Bluesky handle'), handle);
+  await fireEvent.changeText(screen.getByLabelText(step === 'Old account' ? 'Bluesky handle' : 'Username or email'), handle);
   await fireEvent.press(screen.getByLabelText(`Sign in with Bluesky: ${step}`));
 }
 

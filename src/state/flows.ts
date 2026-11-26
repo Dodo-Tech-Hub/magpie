@@ -84,8 +84,9 @@ async function signInAs(state: State, dispatch: D, role: Role, kinds: string[], 
 }
 
 // The line to show when a sign-in did not end with an account. A cancel shows nothing.
-function failNotice(reason: 'cancelled' | 'failed' | 'not_found' | 'not_supported' | 'unavailable'): string | null {
+function failNotice(reason: Extract<SignInResult, { ok: false }>['reason']): string | null {
   if (reason === 'cancelled') return null;
+  if (reason === 'email') return strings.notEmail;
   if (reason === 'not_found') return strings.notFound;
   if (reason === 'not_supported') return strings.notSupported;
   if (reason === 'unavailable') return strings.unavailable;
