@@ -1,7 +1,11 @@
 # Magpie
 
-Magpie transfer what you follow from one account to another account on the same platform.
-It works with YouTube subscriptions, and with GitHub stars, star lists, starred gists, and the people you follow.
+Magpie transfers what you follow from one account to another account on the same platform.
+It works with:
+
+- YouTube: subscriptions.
+- GitHub: stars, star lists, starred gists, and the people you follow.
+- Bluesky: follows, blocks, mutes, lists, and saved feeds.
 
 ## Get the app
 
@@ -12,8 +16,8 @@ To ask for a place on the list, [open an issue](https://github.com/Dodo-Tech-Hub
 
 ### Sideloading
 
-1. Open the [Magpie 0.1.0 release page](https://github.com/Dodo-Tech-Hub/magpie/releases/tag/v0.1.0) on your phone.
-2. Download `magpie-0.1.0.apk`.
+1. Open the [latest Magpie release](https://github.com/Dodo-Tech-Hub/magpie/releases/latest) on your phone.
+2. Download the `magpie-<version>.apk` file.
 3. Open the file. If Android asks, allow your browser to install apps.
 
 Every Magpie release is signed with the same certificate. Its SHA-256 fingerprint is:
@@ -40,6 +44,7 @@ Items that already moved stay moved, and no item moves twice.
 
 - [YouTube limits](https://dodo-tech-hub.github.io/magpie/limits/youtube)
 - [GitHub limits](https://dodo-tech-hub.github.io/magpie/limits/github)
+- [Bluesky limits](https://dodo-tech-hub.github.io/magpie/limits/bluesky)
 
 ## Privacy
 
@@ -50,4 +55,4 @@ Read the [privacy policy](https://dodo-tech-hub.github.io/magpie/privacy-policy)
 
 Found a problem or have a question? [Open an issue](https://github.com/Dodo-Tech-Hub/magpie/issues).
 
-Magpie is not made by or linked with YouTube, Google, or GitHub. YouTube is a trademark of Google LLC. GitHub is a trademark of GitHub, Inc.
+Magpie is not made by or linked with YouTube, Google, GitHub, or Bluesky. YouTube is a trademark of Google LLC. GitHub is a trademark of GitHub, Inc. Bluesky and the butterfly logo belong to Bluesky Social PBC.

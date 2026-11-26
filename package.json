@@ -1,6 +1,6 @@
 {
   "name": "magpie",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "main": "index.ts",
   "dependencies": {
     "@atproto/oauth-client": "^0.9.7",
