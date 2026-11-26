@@ -5,11 +5,15 @@
 set -euo pipefail
 
 VERSION="${1:?usage: sign-apk.sh <version>}"
-KEYSTORE="${MAGPIE_KEYSTORE:-$HOME/Documents/auth/dodotechhub-v1.jks}"
+KEYSTORE="${MAGPIE_KEYSTORE:-}"
+[[ -n "$KEYSTORE" ]] || read -rp "Path to the release keystore (.jks): " KEYSTORE
+KEYSTORE="${KEYSTORE/#\~/$HOME}"
+[[ -f "$KEYSTORE" ]] || { echo "Keystore not found: $KEYSTORE" >&2; exit 1; }
 ALIAS="io.github.dodotechhub.magpie"
 EXPECTED_CERT="165bcfbcb1a4f14c0aa3e2a6c078cab419b5d22db5e4606eeaf506d09a71ceff"
 
-export ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
+[[ -n "${ANDROID_HOME:-}" ]] || read -rp "Path to the Android SDK (ANDROID_HOME): " ANDROID_HOME
+export ANDROID_HOME="${ANDROID_HOME/#\~/$HOME}"
 BT="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
 OUT="android/app/build/outputs/apk/release"
 
