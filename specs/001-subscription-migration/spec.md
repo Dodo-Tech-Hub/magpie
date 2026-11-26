@@ -136,7 +136,7 @@ A user can have more than one unfinished progress, for example from account A to
 ### Edge Cases
 
 - The old account follows no channels: the Pick screen says "This account doesn't follow any channels yet" and Move is not offered.
-- The user taps Move with something missing: the app does not start and says what is missing in simple words, for example "Sign in to your new account first" or "Pick at least 1 channel".
+- The user taps Move with something missing: the app does not start and says what is missing in simple words, for example "Sign in to your new account first" or "Pick at least 1 channel". If the missing thing is the new account and one step is on screen, the app opens the To step and shows the message there. With two panes it stays (spec 010).
 - The user cancels or fails sign-in: the step stays signed out and shows "Sign-in didn't finish. Try again."
 - The internet drops during a move: the move pauses, unfinished rows go back to waiting, and the user sees "No internet. Try again when you're online." Already moved channels stay moved.
 - The user closes the app during a move: on return, moved channels stay marked as moved and the rest are waiting.

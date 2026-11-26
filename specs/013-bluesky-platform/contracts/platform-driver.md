@@ -19,7 +19,7 @@ type Driver = {
   // changed: handle is passed when handleInput is set.
   // Old role with no kinds: look the account up only, no sign-in, no browser.
   // Old role with needsOld kinds: sign in to the old account for those kinds.
-  signIn(role: Role, kinds: string[], onCode: (c: SignInCode | null) => void, signal?: AbortSignal, handle?: string): Promise<SignInResult>;
+  signIn(role: Role, kinds: string[], onCode: (c: SignInCode | null) => void, signal?: AbortSignal, handle?: string, only?: string): Promise<SignInResult>; // only: Allow on the new account, its ID
 
   // changed: false = the platform could not cancel the access; the phone copy is gone anyway.
   signOut(role?: Role): Promise<void | false>;

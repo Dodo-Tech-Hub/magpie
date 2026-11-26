@@ -28,6 +28,11 @@ Bluesky is a good fit for Automatic: its data is open, it has a modern sign-in f
 - Q: On Pick, should blocked people start picked, like every other item, or unpicked? → A: Picked, like every other kind (FR-BS-003).
 - Q: In what order should the move add follows to the new account? → A: Oldest first, so the new account's lists keep the old order (FR-BS-010).
 
+### Session 2026-11-26
+
+- Q: Can the user sign in with an email? → A: On To, on Bluesky's own page: the To box is optional and says "Username or email" (FR-BS-006). Bluesky's form says "Username or Email", checked 2026-11-26. On From, no: it only looks up a public handle (FR-BS-005).
+- Q: What does Move do with no new account signed in? → A: With one step on screen, it opens To and shows "Sign in to your new account first". With two panes, it stays, as before (spec 010).
+
 ### Session 2026-11-24
 
 - Q: Bluesky publishes no per-minute limit. How fast should the move be? → A: Fast: 500 per minute, capped at 1,500 per hour and 10,000 per day, under Bluesky's hourly and daily limits (FR-BS-010).
@@ -165,7 +170,7 @@ The user types the new account's handle and taps Sign in. The app opens Bluesky'
 
 **Acceptance Scenarios**:
 
-1. **Given** the user types a handle on To and taps Sign in, **When** the browser opens, **Then** Bluesky's page asks for that account and lists only the access of the kinds picked at that moment.
+1. **Given** the user types a handle on To and taps Sign in, **When** the browser opens, **Then** Bluesky's page asks for that account and lists only the access of the kinds picked at that moment. With the box empty, the page asks who the user is.
 2. **Given** the user taps Accept, **When** the browser returns, **Then** To shows the account's picture, display name, and handle, with no extra tap.
 3. **Given** the user signs in as a different account than the handle they typed, **When** sign-in ends, **Then** the app uses the account that actually signed in and shows it.
 4. **Given** the new account is the same as the old account, **When** sign-in ends, **Then** the app refuses it with "This is your old account. Pick a different one." (the text every platform uses) and signs it out.
@@ -265,8 +270,8 @@ Mutes and saved feeds are private, so the handle is not enough to read them. On 
 
 **Accounts and sign-in**
 
-- **FR-BS-005**: From MUST take the old account's handle, with no sign-in (the opt-in sign-in in FR-BS-020 is the only exception). It MUST accept a leading `@`, spaces, and capital letters, and MUST add `.bsky.social` to a bare name. It MUST show the found account's picture, display name, and handle, and a Change button.
-- **FR-BS-006**: To MUST take the new account's handle and sign in through Bluesky's sign-in page in the system browser, set to that handle. The app MUST check the account that actually signed in, and MUST refuse the same account on From and To with a simple message. Each signed-in step MUST show a Sign out button.
+- **FR-BS-005**: From MUST take the old account's handle, with no sign-in (the opt-in sign-in in FR-BS-020 is the only exception). It MUST accept a leading `@`, spaces, and capital letters, and MUST add `.bsky.social` to a bare name. It MUST refuse an email with "Type your handle, not your email." and MUST NOT send it anywhere: there is no public way to find an account by email. It MUST show the found account's picture, display name, and handle, and a Change button.
+- **FR-BS-006**: To MUST sign in through Bluesky's sign-in page in the system browser. Its box ("Username or email") is optional. With a handle, the page is set to that handle. With the box empty or holding an email, the page opens with no account filled in and the user signs in there; the app takes only the result, and MUST NOT send the typed email anywhere. The app MUST check the account that actually signed in, and MUST refuse the same account on From and To with a simple message. A new sign-in MUST replace a sign-in saved before (for example one kept after a move and not shown after a restart); only a sign-in from "Allow" MUST keep the saved one when another account signs in. Each signed-in step MUST show a Sign out button.
 - **FR-BS-007**: The app MUST compare accounts by their account ID (DID), never by handle.
 - **FR-BS-008**: The app MUST ask the new account only for the access of the kinds picked at that moment (follows, blocks, and lists when the old list is not read yet; mutes and feeds only once read and picked), using Bluesky's fine-grained access, never Bluesky's full-account access. The exact access per kind is in the Bluesky section. If a kind is picked after sign-in and its access is missing, that kind MUST show greyed out with an "Allow" button, as in FR-GH-020.
 - **FR-BS-009**: The move MUST only add items to the new account. It MUST NOT change or remove anything on the old account, and MUST NOT remove anything on the new account.

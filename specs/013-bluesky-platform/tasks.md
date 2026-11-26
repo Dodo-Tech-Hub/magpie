@@ -201,3 +201,6 @@ flowchart TD
 ## Phone test fixes (2026-11-26)
 
 - [X] T067 Keep the new account signed in after a move (remove `endMove` from `src/platforms/blueskyDriver.ts`), and disable Move with "Signing in…" while the new account signs in (`src/state/flows.ts`, `src/ui/PickStep.tsx`, `src/ui/ToStep.tsx`). Test: `tests/components/blueskyKeepSignIn.test.tsx`. Where older tasks say the summary cancels access, this task and FR-BS-013 replace them.
+- [X] T068 Let a new sign-in replace a saved one; only Allow keeps it (`src/auth/bluesky.ts`, `only` in `src/platforms/driver.ts` and `src/state/flows.ts`). Test: `tests/components/blueskyKeepSignIn.test.tsx`, `tests/unit/blueskyAuth.test.ts`.
+- [X] T069 Make the To box optional ("Username or email") and refuse an email before any lookup (`src/auth/bluesky.ts`, `src/auth/blueskyLookup.ts`, `src/ui/ToStep.tsx`).
+- [X] T070 With one step on screen, open To when Move has no new account (`src/state/flows.ts`, all platforms). Test: `tests/components/moveFlow.test.tsx`, `tests/components/githubSignOut.test.tsx`.

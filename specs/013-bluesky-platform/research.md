@@ -65,7 +65,7 @@ The session store knows which DID is the old account (the flow resolved it from 
 4. `plc.directory/<did>` gives the account's server. Its host must end in `.host.bsky.network`. Otherwise the same message.
 5. `app.bsky.actor.getProfile` gives the display name and picture.
 
-The OAuth client is built with `handleResolver: 'https://public.api.bsky.app'` and `plcDirectoryUrl: 'https://plc.directory'`, and `signIn` is called with the DID, not the handle (with the handle as `login_hint`), so the library never resolves a handle through DNS or a personal website. After sign-in, the session's issuer MUST be `https://bsky.social`; any other issuer is revoked and refused.
+The OAuth client is built with `handleResolver: 'https://public.api.bsky.app'` and `plcDirectoryUrl: 'https://plc.directory'`, and `signIn` is called with the DID, not the handle (with the handle as `login_hint`), so the library never resolves a handle through DNS or a personal website. An email is refused before step 1 and is never sent (2026-11-26). On To with nothing typed, or an email, there is no lookup: the input is `https://bsky.social`, and the account is checked after sign-in. Checked 2026-11-26 with the published client file: Bluesky accepts that request, and its form says "Username or Email". After sign-in, the session's issuer MUST be `https://bsky.social`; any other issuer is revoked and refused.
 
 **Rationale**: this keeps every call on the hosts in the spec. Personal domain handles still work, because step 2 resolves them through Bluesky's server, not through the domain.
 
