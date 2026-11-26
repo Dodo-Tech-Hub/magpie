@@ -39,7 +39,7 @@ The script opens the browser for each sign-in and prints one line per question w
 | 4b | On a connection that gets no answer, tap Sign in on From | "Signing in…" with the button held. After 20 seconds: "This account can't be read right now." and the button works again. |
 | 4c | On a connection that gets no answer, tap Sign in on To with the box empty | "Signing in…", then "Sign-in didn't finish. Try again." after one or more 20-second waits. No browser opens. |
 | 5 | On To, type the new handle, Sign in | Browser opens Bluesky's page for that handle, listing only follow, block, and list access. Accept: To shows the account. 2 People rows show "Already there". |
-| 6 | On To, sign in with the old account instead | "Use a different account here." |
+| 6 | On To, sign in with the old account instead | "This is your old account. Pick a different one." |
 | 6a | On To, leave the box empty, tap Sign in, then sign in with an email on Bluesky's page | The page asks who you are. To shows the account that signed in. |
 | 6b | Signed out of To, pick items and tap Move (one step on screen) | To opens with "Sign in to your new account first". After sign-in, Pick opens with the same picks. |
 | 6c | Sign in on To, force-close the app, reopen, sign in on To with a third account, Move | The move goes to the third account, with no "Sign in to your new account first". |
