@@ -93,5 +93,5 @@ it('signs in to the new account with the handle box left empty', async () => {
 it('asks for a handle, not an email, for the old account', async () => {
   await renderBluesky();
   await signInWithHandle('Old account', 'me@example.com');
-  expect(await screen.findByText('Type your handle, not your email.')).toBeTruthy();
+  expect(await screen.findByText('Type your username, not your email.')).toBeTruthy();
 });

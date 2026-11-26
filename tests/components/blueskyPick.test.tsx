@@ -130,7 +130,7 @@ describe('Pick, other cases', () => {
     expect(await screen.findByText("We can't find that account. Check the name.")).toBeTruthy();
     await signInWithHandle('Old account', 'me.example.com');
     expect(await screen.findByText('Magpie works only with accounts hosted by Bluesky for now.')).toBeTruthy();
-    expect(screen.getByLabelText('Bluesky handle')).toBeTruthy();
+    expect(screen.getByLabelText('Bluesky username')).toBeTruthy();
     expect(w.f.hosts().every((h) => h === 'public.api.bsky.app')).toBe(true);
   });
 

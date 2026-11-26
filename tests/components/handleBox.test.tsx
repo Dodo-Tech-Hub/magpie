@@ -35,7 +35,7 @@ function typeHandlePlatform() {
     words: {
       ...original.words,
       signIn: 'Sign in with Bluesky',
-      handleLabel: 'Bluesky handle',
+      handleLabel: 'Bluesky username',
       handlePlaceholder: 'name.bsky.social',
       changeOld: 'Change',
     },
@@ -63,25 +63,25 @@ describe('handle box', () => {
   it('shows a box for the handle on From and on To, next to the sign-in button', async () => {
     typeHandlePlatform();
     await renderApp();
-    expect(screen.getByLabelText('Bluesky handle')).toBeTruthy();
+    expect(screen.getByLabelText('Bluesky username')).toBeTruthy();
     expect(screen.getByLabelText('Sign in with Bluesky: Old account')).toBeTruthy();
     await fireEvent.press(screen.getByRole('tab', { name: 'To' }));
-    expect(screen.getByLabelText('Bluesky handle')).toBeTruthy();
+    expect(screen.getByLabelText('Bluesky username')).toBeTruthy();
     expect(screen.getByLabelText('Sign in with Bluesky: New account')).toBeTruthy();
   });
 
   it('signs in with the typed text, from the button and from the keyboard Go key', async () => {
     typeHandlePlatform();
     await renderApp();
-    await fireEvent.changeText(screen.getByLabelText('Bluesky handle'), 'alice.bsky.social');
+    await fireEvent.changeText(screen.getByLabelText('Bluesky username'), 'alice.bsky.social');
     await fireEvent.press(screen.getByLabelText('Sign in with Bluesky: Old account'));
     expect(signIn).toHaveBeenCalledWith('old', [], expect.any(Function), expect.anything(), 'alice.bsky.social', undefined);
     // The step shows the account, and Pick opens.
     expect(await screen.findByLabelText('Alice')).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('tab', { name: 'To' }));
-    await fireEvent.changeText(screen.getByLabelText('Bluesky handle'), 'bob.bsky.social');
-    await fireEvent(screen.getByLabelText('Bluesky handle'), 'submitEditing');
+    await fireEvent.changeText(screen.getByLabelText('Bluesky username'), 'bob.bsky.social');
+    await fireEvent(screen.getByLabelText('Bluesky username'), 'submitEditing');
     expect(signIn).toHaveBeenLastCalledWith('new', expect.any(Array), expect.any(Function), expect.anything(), 'bob.bsky.social', undefined);
   });
 
@@ -95,11 +95,11 @@ describe('handle box', () => {
   it('keeps the typed text when the window changes', async () => {
     typeHandlePlatform();
     await renderApp();
-    await fireEvent.changeText(screen.getByLabelText('Bluesky handle'), 'alice.bsky.social');
+    await fireEvent.changeText(screen.getByLabelText('Bluesky username'), 'alice.bsky.social');
     for (const width of [700, 320, 400]) {
       setWindow(width);
       await screen.rerender(<App />);
-      expect(screen.getByLabelText('Bluesky handle').props.value).toBe('alice.bsky.social');
+      expect(screen.getByLabelText('Bluesky username').props.value).toBe('alice.bsky.social');
     }
   });
 
@@ -111,29 +111,29 @@ describe('handle box', () => {
     typeHandlePlatform();
     signIn.mockResolvedValue({ ok: false, reason });
     await renderApp();
-    await fireEvent.changeText(screen.getByLabelText('Bluesky handle'), 'who.example.com');
+    await fireEvent.changeText(screen.getByLabelText('Bluesky username'), 'who.example.com');
     await fireEvent.press(screen.getByLabelText('Sign in with Bluesky: Old account'));
     expect(await screen.findByText(text)).toBeTruthy();
-    expect(screen.getByLabelText('Bluesky handle').props.value).toBe('who.example.com');
+    expect(screen.getByLabelText('Bluesky username').props.value).toBe('who.example.com');
   });
 
   it('names the old account button "Change" and brings the box back', async () => {
     typeHandlePlatform();
     await renderApp();
-    await fireEvent.changeText(screen.getByLabelText('Bluesky handle'), 'alice.bsky.social');
+    await fireEvent.changeText(screen.getByLabelText('Bluesky username'), 'alice.bsky.social');
     await fireEvent.press(screen.getByLabelText('Sign in with Bluesky: Old account'));
     await screen.findByLabelText('Alice');
     await fireEvent.press(screen.getByRole('tab', { name: 'From' }));
     expect(screen.getByText('alice.bsky.social')).toBeTruthy();
     expect(screen.queryByLabelText('Sign out Old account')).toBeNull();
     await fireEvent.press(screen.getByLabelText('Change Old account'));
-    await waitFor(() => expect(screen.getByLabelText('Bluesky handle')).toBeTruthy());
+    await waitFor(() => expect(screen.getByLabelText('Bluesky username')).toBeTruthy());
     expect(signOut).toHaveBeenCalledWith('old');
   });
 
   it('shows only the sign-in button for a platform without a handle box', async () => {
     await renderApp();
-    expect(screen.queryByLabelText('Bluesky handle')).toBeNull();
+    expect(screen.queryByLabelText('Bluesky username')).toBeNull();
     expect(screen.getByLabelText('Sign in with Google: Old account')).toBeTruthy();
   });
 });

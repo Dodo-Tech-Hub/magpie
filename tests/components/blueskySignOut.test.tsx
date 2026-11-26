@@ -66,7 +66,7 @@ describe('Sign out', () => {
     await openPick();
     await fireEvent.press(screen.getByRole('tab', { name: 'From' }));
     await fireEvent.press(screen.getByLabelText('Change Old account'));
-    expect(await screen.findByLabelText('Bluesky handle')).toBeTruthy();
+    expect(await screen.findByLabelText('Bluesky username')).toBeTruthy();
     expect((await listUnfinished('bluesky')).length).toBe(1);
   });
 });

@@ -50,7 +50,7 @@ Checked against `.specify/memory/constitution.md` v1.8.0.
 | Principle / rule | How the plan complies | Status |
 | --- | --- | --- |
 | I. New screen justified | No new screen. The handle box sits in the From and To cards; "Allow" for old kinds is the same button as GitHub's (FR-BS-002). | Pass |
-| I. Icons, labels, simple words | Sign-in button "Sign in with Bluesky" with `logo-bluesky` or `log-in-outline` (R14). The handle box has a label ("Bluesky handle") and an icon button. Texts are the spec's. | Pass |
+| I. Icons, labels, simple words | Sign-in button "Sign in with Bluesky" with `logo-bluesky` or `log-in-outline` (R14). The handle box has a label ("Bluesky username") and an icon button. Texts are the spec's. | Pass |
 | I. Accessibility | The handle box has an accessibility label and returns with the keyboard's Go key. Greyed sections say why. Every new button has a label. | Pass |
 | I. Confirmations | None added. | Pass |
 | II. Tests | Unit tests for lookup, scopes, session store, runtime key, reads, writes, answer mapping, pacer with a daily cap, migration 2 to 3, item order. Component tests for handle entry, Allow on old kinds, move, sign-out. No real Bluesky calls. | Pass |
