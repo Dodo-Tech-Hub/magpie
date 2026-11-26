@@ -211,11 +211,11 @@ export function PickStep() {
         {state.notice && state.step === 'pick' && <Text style={styles.error}>{state.notice}</Text>}
         {!(moveState === 'done' && movable === 0) && items.length > 0 && (
           <Pressable
-            style={[styles.move, (moving || state.signingIn) && styles.off]}
+            style={[styles.move, (moving || !!state.signingIn) && styles.off]}
             accessibilityRole="button"
             accessibilityLabel={moveLabel}
-            accessibilityState={{ disabled: moving || state.signingIn }}
-            disabled={moving || state.signingIn}
+            accessibilityState={{ disabled: moving || !!state.signingIn }}
+            disabled={moving || !!state.signingIn}
             onPress={() => void startMove(state, dispatch, twoPane)}
           >
             <Ionicons name="arrow-forward" size={18} color={colors.onPrimary} />

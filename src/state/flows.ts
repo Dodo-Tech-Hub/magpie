@@ -109,7 +109,7 @@ function kindsToAsk(state: State, driver: Driver): string[] {
 export async function signInOld(state: State, dispatch: D, handle?: string): Promise<void> {
   const driver = driverOf(state);
   dispatch({ type: 'setNotice', notice: null });
-  const res = await signInAs(state, dispatch, 'old', [], handle);
+  const res = await whileSigningIn(dispatch, 'old', () => signInAs(state, dispatch, 'old', [], handle));
   if (!res.ok) {
     dispatch({ type: 'setNotice', notice: failNotice(res.reason) });
     return;
@@ -141,19 +141,19 @@ export async function signInOld(state: State, dispatch: D, handle?: string): Pro
   }
 }
 
-// While the new account signs in, Move and Sign in are held back: the account is not ready yet.
-async function whileSigningIn(dispatch: D, run: () => Promise<void>): Promise<void> {
-  dispatch({ type: 'setSigningIn', signingIn: true });
+// While an account signs in, the screen says so, and Move and Sign in are held back: the account is not ready yet.
+async function whileSigningIn<T>(dispatch: D, role: Role, run: () => Promise<T>): Promise<T> {
+  dispatch({ type: 'setSigningIn', signingIn: role });
   try {
-    await run();
+    return await run();
   } finally {
-    dispatch({ type: 'setSigningIn', signingIn: false });
+    dispatch({ type: 'setSigningIn', signingIn: null });
   }
 }
 
 // New account: needs add access. Creates or opens the progress for the pair.
 export const signInNew = (state: State, dispatch: D, handle?: string) =>
-  whileSigningIn(dispatch, () => runSignInNew(state, dispatch, handle));
+  whileSigningIn(dispatch, 'new', () => runSignInNew(state, dispatch, handle));
 
 async function runSignInNew(state: State, dispatch: D, handle?: string): Promise<void> {
   const driver = driverOf(state);
@@ -277,7 +277,7 @@ export async function allowOld(state: State, dispatch: D): Promise<void> {
 
 // "Allow" on a kind the new account has no access for: sign in again, asking for what it had plus this kind (FR-GH-020).
 export const allowKind = (state: State, dispatch: D, kind: string) =>
-  whileSigningIn(dispatch, () => runAllowKind(state, dispatch, kind));
+  whileSigningIn(dispatch, 'new', () => runAllowKind(state, dispatch, kind));
 
 async function runAllowKind(state: State, dispatch: D, kind: string): Promise<void> {
   const driver = driverOf(state);

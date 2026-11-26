@@ -36,6 +36,7 @@ The script opens the browser for each sign-in and prints one line per question w
 | 3 | Type a self-hosted handle on From | "Magpie works only with accounts hosted by Bluesky for now." |
 | 4 | Type a handle that does not exist | "We can't find that account. Check the name." |
 | 4a | Type an email on From | "Type your username, not your email." |
+| 4b | On a connection that gets no answer, tap Sign in on From | "Signing in…" with the button held. After 20 seconds: "This account can't be read right now." and the button works again. |
 | 5 | On To, type the new handle, Sign in | Browser opens Bluesky's page for that handle, listing only follow, block, and list access. Accept: To shows the account. 2 People rows show "Already there". |
 | 6 | On To, sign in with the old account instead | "Use a different account here." |
 | 6a | On To, leave the box empty, tap Sign in, then sign in with an email on Bluesky's page | The page asks who you are. To shows the account that signed in. |

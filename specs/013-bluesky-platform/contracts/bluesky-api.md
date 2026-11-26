@@ -16,6 +16,8 @@ Any other host in an answer (a picture URL, a server endpoint, an issuer) is dro
 
 ## Lookup (no token)
 
+Every public read, here and in "Read the old account", gives up after 20 seconds, body included, and then counts as no network. The limit does not cover the sign-in library's own calls or signed-in calls.
+
 | Step | Call | Checks |
 | --- | --- | --- |
 | Handle to DID | `GET public.api.bsky.app/xrpc/com.atproto.identity.resolveHandle?handle=` | 400 = not found. `did` starts with `did:plc:`. |

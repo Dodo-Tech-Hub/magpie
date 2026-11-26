@@ -1,7 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 import { scopesFor } from '@/auth/bluesky';
 import { blueskyStores } from '@/auth/blueskySession';
-import { NEW, OLD, OTHER, answerReminder, blueskyWorld, eventually, renderBluesky, resetBluesky, signInNewAccount, signInWithHandle } from './blueskyWorld';
+import { NEW, OLD, OTHER, answerReminder, blueskyWorld, eventually, renderBluesky, resetBluesky, seconds, signInNewAccount, signInWithHandle } from './blueskyWorld';
 import { __dump } from '../mocks/expoSecureStore';
 import { mockClient, userSignsInAs } from '../mocks/oauthClient';
 
@@ -94,4 +94,20 @@ it('asks for a handle, not an email, for the old account', async () => {
   await renderBluesky();
   await signInWithHandle('Old account', 'me@example.com');
   expect(await screen.findByText('Type your username, not your email.')).toBeTruthy();
+});
+
+it('shows "Signing in…" on From, and gives up when Bluesky does not answer', async () => {
+  await renderBluesky();
+  // A dead connection: no answer, until the app itself stops waiting.
+  jest.mocked(global.fetch).mockImplementation(
+    (_url, init) => new Promise((_resolve, reject) => init?.signal?.addEventListener('abort', () => reject(new Error('aborted')))),
+  );
+  await signInWithHandle('Old account', OLD.handle);
+  const button = () => screen.getByLabelText('Sign in with Bluesky: Old account');
+  expect(screen.getByText('Signing in…')).toBeTruthy();
+  expect(button().props.accessibilityState).toMatchObject({ disabled: true });
+  await seconds(20);
+  expect(await screen.findByText("This account can't be read right now.")).toBeTruthy();
+  expect(screen.queryByText('Signing in…')).toBeNull();
+  expect(button().props.accessibilityState).toMatchObject({ disabled: false });
 });

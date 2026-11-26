@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useMemo, useReducer } from 'react';
+import type { Role } from '@/platforms/driver';
 import type { PlatformId } from '@/platforms/platforms';
 import type { AccountInfo, StoredItem } from '@/store/progressStore';
 
@@ -32,7 +33,7 @@ export type State = {
   // The new account's token was deleted from the phone (summary or Sign out), so the remove-access note shows.
   accessEnded: boolean;
   // The new account's sign-in is running. The browser may be closed already while the app finishes it.
-  signingIn: boolean;
+  signingIn: Role | null;
 };
 
 export type Action =
@@ -43,7 +44,7 @@ export type Action =
   // A running move reports through this. It is dropped when its progress is no longer the open one.
   | { type: 'forProgress'; progressId: string; action: Action }
   | { type: 'setStep'; step: Step }
-  | { type: 'setSigningIn'; signingIn: boolean }
+  | { type: 'setSigningIn'; signingIn: Role | null }
   | { type: 'openSettings' }
   | { type: 'closeSettings' }
   | { type: 'setOld'; account: AccountInfo | null; items: StoredItem[] }
@@ -77,7 +78,7 @@ export const initialState: State = {
   oldRead: [],
   loading: false,
   accessEnded: false,
-  signingIn: false,
+  signingIn: null,
 };
 
 export function reducer(state: State, action: Action): State {

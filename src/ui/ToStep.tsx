@@ -23,7 +23,7 @@ export function ToStep() {
         }}
         hint={driver.words.newHint}
         account={state.newAccount}
-        disabled={state.moveState === 'moving' || state.signingIn}
+        disabled={state.moveState === 'moving' || !!state.signingIn}
         onSignIn={(handle) => void signInNew(state, dispatch, handle)}
         handleInput={driver.handleInput}
         handleOptional
@@ -32,7 +32,7 @@ export function ToStep() {
         signsOut={driver.switchSignsOut}
         onSwitch={() => void switchAccount(state, dispatch, 'new')}
       />
-      {state.signingIn && !state.signInCode && <Text style={{ color: colors.muted, paddingHorizontal: 14 }}>{strings.signingIn}</Text>}
+      {state.signingIn === 'new' && !state.signInCode && <Text style={{ color: colors.muted, paddingHorizontal: 14 }}>{strings.signingIn}</Text>}
       {state.accessEnded && !state.newAccount && <AccessNote driver={driver} />}
       {state.notice && state.step === 'to' && <Text style={{ color: colors.danger, paddingHorizontal: 14 }}>{state.notice}</Text>}
     </View>

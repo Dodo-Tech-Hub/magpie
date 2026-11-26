@@ -42,7 +42,7 @@ export function FromStep() {
         words={driver.words}
         hint={driver.words.oldHint}
         account={state.oldAccount}
-        disabled={busy}
+        disabled={busy || !!state.signingIn}
         onSignIn={(handle) => void signInOld(state, dispatch, handle)}
         handleInput={driver.handleInput}
         changeLabel={driver.words.changeOld}
@@ -51,6 +51,7 @@ export function FromStep() {
         signsOut={driver.switchSignsOut}
         onSwitch={() => void switchAccount(state, dispatch, 'old')}
       />
+      {state.signingIn === 'old' && !state.signInCode && <Text style={styles.heading}>{strings.signingIn}</Text>}
       {state.loading && <Text style={styles.heading}>{strings.loading}</Text>}
       {state.notice && state.step === 'from' && <Text style={styles.error}>{state.notice}</Text>}
       {items.length > 0 && (

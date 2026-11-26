@@ -1,5 +1,5 @@
 import * as Crypto from 'expo-crypto';
-import { DID, PUBLIC, blueskyServer, isRecord, picture } from '@/auth/blueskyLookup';
+import { DID, PUBLIC, blueskyServer, fetchWithin, isRecord, picture } from '@/auth/blueskyLookup';
 import { DriverError, type Outcome, type Pacer } from '@/platforms/driver';
 import type { NewItem, StoredItem } from '@/store/progressStore';
 
@@ -16,16 +16,11 @@ const str = (v: unknown) => (typeof v === 'string' && v ? v : null);
 
 // Get a public answer. No network: retry. Rate limited: later. Any other failure: an error for that kind only.
 async function getJson(url: string): Promise<Record<string, unknown>> {
-  let res: Response;
-  try {
-    res = await fetch(url, { headers: { Accept: 'application/json' } });
-  } catch {
+  const { res, body } = await fetchWithin(url, async (r) => ({ res: r, body: (await r.json().catch(() => null)) as unknown })).catch(() => {
     throw new DriverError('retry');
-  }
+  });
   if (res.status === 429) throw new DriverError('later');
-  if (!res.ok) throw BAD();
-  const body: unknown = await res.json().catch(() => null);
-  if (!isRecord(body)) throw BAD();
+  if (!res.ok || !isRecord(body)) throw BAD();
   return body;
 }
 

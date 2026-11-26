@@ -27,17 +27,24 @@ export function cleanHandle(input: string): string {
 // account by email, and an email must not be sent to the public lookup.
 export const isEmail = (typed: string) => typed.trim().replace(/^@+/, '').includes('@');
 
+// React Native's fetch can wait without end on a dead connection, so a public read gives up after this long.
+const WAIT_MS = 20_000;
+
+// A public read with that limit. The limit covers the body too, so `read` takes the body from the answer.
+export async function fetchWithin<T>(url: string, read: (res: Response) => Promise<T>): Promise<T> {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), WAIT_MS);
+  try {
+    return await read(await fetch(url, { headers: { Accept: 'application/json' }, signal: ctl.signal }));
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // null: the request got no answer.
 async function get(url: string): Promise<{ status: number; json: unknown } | null> {
   try {
-    const res = await fetch(url, { headers: { Accept: 'application/json' } });
-    let json: unknown = null;
-    try {
-      json = await res.json();
-    } catch {
-      // no body
-    }
-    return { status: res.status, json };
+    return await fetchWithin(url, async (res) => ({ status: res.status, json: (await res.json().catch(() => null)) as unknown }));
   } catch {
     return null;
   }

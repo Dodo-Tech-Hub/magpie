@@ -204,3 +204,4 @@ flowchart TD
 - [X] T068 Let a new sign-in replace a saved one; only Allow keeps it (`src/auth/bluesky.ts`, `only` in `src/platforms/driver.ts` and `src/state/flows.ts`). Test: `tests/components/blueskyKeepSignIn.test.tsx`, `tests/unit/blueskyAuth.test.ts`.
 - [X] T069 Make the To box optional ("Username or email") and refuse an email before any lookup (`src/auth/bluesky.ts`, `src/auth/blueskyLookup.ts`, `src/ui/ToStep.tsx`).
 - [X] T070 With one step on screen, open To when Move has no new account (`src/state/flows.ts`, all platforms). Test: `tests/components/moveFlow.test.tsx`, `tests/components/githubSignOut.test.tsx`.
+- [X] T071 Show "Signing in…" on From, and give up on a public read after 20 seconds (`src/auth/blueskyLookup.ts`, `src/api/bluesky.ts`, `src/state/flows.ts`, `src/ui/FromStep.tsx`). Test: `tests/components/blueskyKeepSignIn.test.tsx`.
