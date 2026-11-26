@@ -16,7 +16,7 @@ Any other host in an answer (a picture URL, a server endpoint, an issuer) is dro
 
 ## Lookup (no token)
 
-Every public read, here and in "Read the old account", gives up after 20 seconds, body included, and then counts as no network. The limit does not cover the sign-in library's own calls or signed-in calls.
+Every public read, here and in "Read the old account", gives up after 20 seconds, body included, and then counts as no network. The sign-in library gets the same limit through its `fetch` option, one limit for each request, except `/xrpc/` calls to the account's server (`*.host.bsky.network`), which carry the signed-in reads and writes and keep no limit. A sign-in makes several requests, so it can take longer than 20 seconds to fail.
 
 | Step | Call | Checks |
 | --- | --- | --- |

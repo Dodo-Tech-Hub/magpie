@@ -28,7 +28,7 @@ export function cleanHandle(input: string): string {
 export const isEmail = (typed: string) => typed.trim().replace(/^@+/, '').includes('@');
 
 // React Native's fetch can wait without end on a dead connection, so a public read gives up after this long.
-const WAIT_MS = 20_000;
+export const WAIT_MS = 20_000;
 
 // A public read with that limit. The limit covers the body too, so `read` takes the body from the answer.
 export async function fetchWithin<T>(url: string, read: (res: Response) => Promise<T>): Promise<T> {

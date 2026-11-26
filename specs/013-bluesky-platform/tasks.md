@@ -205,3 +205,4 @@ flowchart TD
 - [X] T069 Make the To box optional ("Username or email") and refuse an email before any lookup (`src/auth/bluesky.ts`, `src/auth/blueskyLookup.ts`, `src/ui/ToStep.tsx`).
 - [X] T070 With one step on screen, open To when Move has no new account (`src/state/flows.ts`, all platforms). Test: `tests/components/moveFlow.test.tsx`, `tests/components/githubSignOut.test.tsx`.
 - [X] T071 Show "Signing in…" on From, and give up on a public read after 20 seconds (`src/auth/blueskyLookup.ts`, `src/api/bluesky.ts`, `src/state/flows.ts`, `src/ui/FromStep.tsx`). Test: `tests/components/blueskyKeepSignIn.test.tsx`.
+- [X] T072 Give the sign-in library's requests the same 20-second limit, but not the signed-in calls to the account's server (`src/auth/bluesky.ts`). Test: `tests/unit/blueskyAuth.test.ts`.

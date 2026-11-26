@@ -348,3 +348,50 @@ describe('sign-out', () => {
     spies.forEach((spy) => spy.mockRestore());
   });
 });
+
+describe('the sign-in requests on a dead connection', () => {
+  // A request that gets no answer until somebody stops waiting for it.
+  const dead = () => {
+    global.fetch = jest.fn(
+      (_input, init) => new Promise<Response>((_resolve, reject) => init?.signal?.addEventListener('abort', () => reject(new Error('aborted')))),
+    );
+  };
+  const libraryFetch = async (url: string, init?: RequestInit) => {
+    await userSignsInAs(ALICE, 'atproto');
+    mockBluesky(account('alice.bsky.social', ALICE));
+    await signIn('new', [], '');
+    const send = (mockClient.options as unknown as { fetch: typeof fetch }).fetch;
+    dead();
+    const result = jest.fn();
+    void send(url, init).then(() => result('answered'), () => result('gave up'));
+    return result;
+  };
+
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  it.each(['https://bsky.social/oauth/par', 'https://bsky.social/oauth/token', 'https://plc.directory/x', 'https://morel.us-east.host.bsky.network/.well-known/oauth-protected-resource'])(
+    'gives up on %s after 20 seconds',
+    async (url) => {
+      const result = await libraryFetch(url);
+      await jest.advanceTimersByTimeAsync(19_000);
+      expect(result).not.toHaveBeenCalled();
+      await jest.advanceTimersByTimeAsync(1_000);
+      expect(result).toHaveBeenCalledWith('gave up');
+    },
+  );
+
+  it('keeps no limit on a signed-in call to the account server, because a cut-off write may have worked', async () => {
+    const result = await libraryFetch('https://morel.us-east.host.bsky.network/xrpc/com.atproto.repo.createRecord', { method: 'POST' });
+    await jest.advanceTimersByTimeAsync(120_000);
+    expect(result).not.toHaveBeenCalled();
+  });
+
+  it('still stops when the library itself stops waiting', async () => {
+    const library = new AbortController();
+    const result = await libraryFetch('https://bsky.social/oauth/token', { signal: library.signal });
+    library.abort();
+    await jest.advanceTimersByTimeAsync(0);
+    expect(result).toHaveBeenCalledWith('gave up');
+  });
+});

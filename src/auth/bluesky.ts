@@ -1,6 +1,6 @@
 import * as WebBrowser from 'expo-web-browser';
 import { OAuthClient } from '@atproto/oauth-client';
-import { isEmail, lookup } from '@/auth/blueskyLookup';
+import { WAIT_MS, isEmail, lookup } from '@/auth/blueskyLookup';
 import { runtimeImplementation } from '@/auth/blueskyKey';
 import { blueskyStores } from '@/auth/blueskySession';
 import type { Fetcher } from '@/api/bluesky';
@@ -74,11 +74,29 @@ export const clientMetadata = {
 const DID = /^did:plc:[a-z2-7]{24}$/;
 const ISSUER = 'https://bsky.social';
 
+// The sign-in library sets no time limit on most of its requests, so a dead connection could hold sign-in without end.
+// The limit is on each request, so the time the user spends on Bluesky's page does not count. A signed-in call to the
+// account's server keeps no limit, because a write that was cut off may still have worked.
+const limitedFetch: typeof fetch = (input, init) => {
+  const request = typeof input === 'object' && 'url' in input ? input : null;
+  const { host, pathname } = new URL(request ? request.url : String(input));
+  if (host.endsWith('.host.bsky.network') && pathname.startsWith('/xrpc/')) return fetch(input, init);
+  const ctl = new AbortController();
+  // Not cleared when the answer starts: the limit covers the body too, and a late abort of a finished request does nothing.
+  setTimeout(() => ctl.abort(), WAIT_MS);
+  // The library's own reason to stop still counts.
+  const theirs = init?.signal ?? request?.signal;
+  if (theirs?.aborted) ctl.abort();
+  else theirs?.addEventListener('abort', () => ctl.abort());
+  return fetch(input, { ...init, signal: ctl.signal });
+};
+
 let client: OAuthClient | null = null;
 function getClient(): OAuthClient {
   client ??= new OAuthClient({
     clientMetadata: clientMetadata as never,
     responseMode: 'query',
+    fetch: limitedFetch,
     // Handles and account IDs are looked up on the two hosts the app already talks to.
     handleResolver: 'https://public.api.bsky.app',
     plcDirectoryUrl: 'https://plc.directory',
