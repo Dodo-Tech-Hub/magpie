@@ -71,4 +71,4 @@ A second 429 for the same item, after a `wait`, becomes `later` (FR-BS-012). The
 | `client.callback(params)` | The client checks `state` and `iss` and the DPoP binding. The app checks: `session.did` is a `did:plc:` on a Bluesky host; issuer is `https://bsky.social`; for "Allow" on old kinds, `session.did` is the old DID. Else revoke and refuse. |
 | Account | `getProfile` for `session.did`, as in Lookup. |
 
-`signOut` calls `session.signOut()` (revoke), then deletes the stored session in `finally`. It returns `false` when the revoke call failed.
+`signOut` calls `session.signOut()` (revoke), then deletes the stored session in `finally`. It returns `false` when the revoke call failed. The driver's `signOut` and `endMove` always return `false`, because the access token outlives the revoke (FR-BS-013).

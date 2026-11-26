@@ -135,7 +135,7 @@ describe('the Bluesky driver, sign-in part', () => {
 
   it('passes on whether Bluesky could cancel the access when it signs out', async () => {
     signOut.mockResolvedValue(true);
-    expect(await driver.signOut('new')).toBeUndefined();
+    expect(await driver.signOut('new')).toBe(false); // the access token outlives the cancel (FR-BS-013)
     signOut.mockResolvedValue(false);
     expect(await driver.signOut('new')).toBe(false);
     expect(signOut).toHaveBeenLastCalledWith('new');

@@ -140,7 +140,7 @@ export const blueskyWords: Words = {
   reminderBody: 'You can move the rest now.',
   moveButton: (n) => `Move ${n} item${n === 1 ? '' : 's'}`,
   notAffiliated: 'Magpie is not made by or linked with Bluesky. Bluesky and the butterfly logo belong to Bluesky Social PBC.',
-  accessNote: "Magpie's access ends on its own soon.",
+  accessNote: "Magpie's access ends on its own within an hour.",
   handleLabel: 'Bluesky handle',
   handlePlaceholder: 'name.bsky.social',
   changeOld: 'Change',

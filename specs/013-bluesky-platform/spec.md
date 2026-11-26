@@ -23,6 +23,7 @@ Bluesky is a good fit for Automatic: its data is open, it has a modern sign-in f
 - Q: Which kinds should a Bluesky move cover? → A: Follows, blocks, lists, mutes, and saved feeds. Mutes and saved feeds are private, so they are opt-in: Pick shows them greyed with an "Allow" button that signs in to the old account with read-only access (FR-BS-020).
 - Q: Should the app support accounts on self-hosted servers? → A: Not in the first release. Only Bluesky-hosted accounts, so the app keeps a fixed host list (Principle III, rule 5) with no constitution exception. A self-hosted account gets a plain "not supported yet" message (FR-BS-022). Self-hosted support can come later with its own amendment. The owner asked for a recommendation; this was it.
 - Q: If Bluesky does not let a phone app cancel its access on sign-out, should Bluesky still ship? → A: Decide after the plan tests it. The plan MUST test token revocation with a real account first and, if it fails, stop and ask the owner before any sign-in work (FR-BS-013).
+- Update (2026-11-26): the test showed that the access token still works after sign-out. The owner accepted this as an exception to Principle III, rule 3, with the line in FR-BS-013.
 - Q: On Pick, should blocked people start picked, like every other item, or unpicked? → A: Picked, like every other kind (FR-BS-003).
 - Q: In what order should the move add follows to the new account? → A: Oldest first, so the new account's lists keep the old order (FR-BS-010).
 
@@ -45,7 +46,7 @@ Checked on 2026-11-23 against the AT Protocol (atproto) docs and Bluesky's devel
 | Can the app add items to the new account? | Yes. Follows, blocks, lists, and list members are records the app creates in the new account. Mutes and saved feeds have their own write calls. | No |
 | Can the app ask only for the access it needs? | Yes. Bluesky's sign-in supports fine-grained access per kind of record and per action (for example "create follows" only). It is live on Bluesky's own servers. | No |
 | Can a phone app sign in without a secret? | Yes. Bluesky's sign-in treats phone apps as public apps, with PKCE and a key that stays on the phone (DPoP). | No |
-| Can the app cancel its access on sign-out? | Expected yes: the sign-in server offers token revocation for public apps. The plan MUST confirm it. | No, if confirmed. Otherwise the same exception and safeguards as GitHub (FR-GH-019) need owner approval. |
+| Can the app cancel its access on sign-out? | Partly. Checked with real accounts on 2026-11-26: after sign-out Bluesky refuses the refresh token, but the access token still works. `bsky.social` states a 60-minute expiry for it. | No. The project owner approved an exception on 2026-11-26 (FR-BS-013). |
 | Are there speed limits? | Yes. About 5,000 write points per hour and 35,000 per day per account. One add costs 3 points, so about 1,666 adds per hour and 11,666 per day. | No. A few thousand items fit in one or two sessions. |
 | Do Bluesky's rules allow automated following? | Bluesky's Community Guidelines forbid spam and mass, unwanted follows. Moving one's own follows once is not that, but a fast burst of follows could still get the new account flagged. | Risk, not a blocker. FR-BS-010 stays under Bluesky's hourly and daily limits; the owner chose speed over a slow pace (Clarifications, 2026-11-24). |
 | Is the old account's handle enough to find it? | Yes. A handle points to one account ID (DID), which points to the server that holds its data. | No |
@@ -194,14 +195,15 @@ The user signs out of the new account, a move ends, or the user uses Delete all.
 
 **Why this priority**: The constitution requires sign-out to remove access (Principle III, rule 3).
 
-**Independent Test**: Sign in on To, run a move, and confirm the token no longer works on Bluesky once the summary shows. Sign in again, sign out, and confirm the same. Use Delete all and confirm no Bluesky account, token, key, list, or progress is left on the phone.
+**Independent Test**: Sign in on To, run a move, and confirm the refresh token no longer works on Bluesky once the summary shows, and the line from FR-BS-013 shows. Sign in again, sign out, and confirm the same. Use Delete all and confirm no Bluesky account, token, key, list, or progress is left on the phone.
 
 **Acceptance Scenarios**:
 
 1. **Given** the new account is signed in, **When** the user taps Sign out on To, **Then** the app cancels the token on Bluesky, deletes it from the phone, and To shows signed out.
 2. **Given** a move ends, **When** the summary shows, **Then** the app has cancelled and deleted the new account's token. Continue after a pause uses the saved token only while the move is unfinished.
-3. **Given** the phone is offline at sign-out, **When** the cancel call fails, **Then** the app still deletes the token from the phone and tells the user in one line that access ends on its own when the token runs out.
+3. **Given** the phone is offline at sign-out, **When** the cancel call fails, **Then** the app still deletes the token from the phone.
 4. **Given** the user uses Delete all, **When** it ends, **Then** every Bluesky account, token, key, list, and progress is gone from the phone.
+5. **Given** the user signs out on To or a move ends, **When** the screen updates, **Then** it says in one line that Magpie's access ends on its own within an hour, whether or not the cancel call worked.
 
 ---
 
@@ -279,7 +281,7 @@ Mutes and saved feeds are private, so the handle is not enough to read them. On 
 
 **Data, security, and both phone types**
 
-- **FR-BS-013**: Bluesky tokens and the sign-in key MUST be stored only in the phone's secure storage. On Sign out, at the summary, and on Delete all, the app MUST cancel the token on Bluesky and delete the token and key from the phone. If the cancel call fails, the app MUST still delete them and say in one line that access ends on its own when the token runs out. The plan MUST test cancelling with a real account before any sign-in work. If Bluesky does not allow it, the plan MUST stop and ask the owner (Clarifications, 2026-11-23).
+- **FR-BS-013**: Bluesky tokens and the sign-in key MUST be stored only in the phone's secure storage. On Sign out, at the summary, and on Delete all, the app MUST cancel the token on Bluesky and delete the token and key from the phone. The app MUST still delete them if the cancel call fails. **Exception to Principle III, rule 3, approved by the project owner on 2026-11-26**: cancelling stops the refresh token, but an access token that was already issued keeps working until it runs out (`bsky.social` states 60 minutes; the AT Protocol OAuth spec says under 30). The app cannot shorten this. So after Sign out on To and at the summary, the app MUST say in one line that Magpie's access ends on its own within an hour, whether or not the cancel call worked.
 - **FR-BS-014**: The app MUST keep only what the move needs: account ID, handle, display name, picture, item IDs, item names and pictures, list names, descriptions, and members, progress, and the times of recent adds for the pace (deleted after 1 day). It MUST NOT log tokens, codes, handles, or item lists.
 - **FR-BS-015**: The app MUST talk to Bluesky only on the hosts in the Bluesky section, over HTTPS (FR-BS-022). The Bluesky logo MUST be the official butterfly, unmodified, used only to name the platform. Settings MUST say that Magpie is not made by or linked with Bluesky. The feature MUST work the same way on Android and iOS.
 - **FR-BS-016**: The app MUST treat every Bluesky answer as untrusted, check its shape before use, and check the sign-in return (state, issuer, and redirect) before using the code.
@@ -340,7 +342,7 @@ The plan MUST replace `aud=*` with Bluesky's app service ID where Bluesky accept
 
 **Checking the new account**: before Move, the app reads which items the new account already has, with the public read API, so it needs no extra scope.
 
-**Cancelling access (Principle III, rule 3)**: the sign-in server is expected to offer token revocation for public apps. The plan MUST confirm it with a real account. If it does not, the plan MUST stop and ask the owner for an exception like FR-GH-019.
+**Cancelling access (Principle III, rule 3)**: the sign-in server revokes the session, but an access token already issued keeps working until it runs out. See the exception in FR-BS-013 and the results in research R11.
 
 **Hosts (Principle III, rule 5)**: Bluesky-hosted accounts only (FR-BS-022). An account is Bluesky-hosted when its account ID is a `did:plc` and its server is under `host.bsky.network`. The app checks this before any sign-in or write.
 

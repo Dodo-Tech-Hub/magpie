@@ -13,7 +13,7 @@ jest.mock('@atproto/oauth-client', () => ({
 }));
 
 let w: ReturnType<typeof blueskyWorld>;
-const NOTE = "Magpie's access ends on its own soon.";
+const NOTE = "Magpie's access ends on its own within an hour.";
 
 beforeEach(async () => {
   jest.useFakeTimers();
@@ -48,8 +48,8 @@ describe('Sign out', () => {
     expect(await screen.findByLabelText('Sign in with Bluesky: New account')).toBeTruthy();
     expect(session.signOut).toHaveBeenCalledTimes(1);
     expect(__dump()).toEqual({});
-    // Bluesky cancelled the access, so there is nothing to say.
-    expect(screen.queryByText(NOTE)).toBeNull();
+    // The access token outlives the cancel, so the line shows even when the cancel call worked.
+    expect(await screen.findByText(NOTE)).toBeTruthy();
   });
 
   it('still deletes the session when Bluesky cannot be told, and says the access ends on its own, with no page to open', async () => {
@@ -79,7 +79,7 @@ describe('the summary', () => {
     expect(await eventually('2 moved')).toBeTruthy();
     expect(session.signOut).toHaveBeenCalledTimes(1);
     expect(__dump()).toEqual({});
-    expect(screen.queryByText(NOTE)).toBeNull();
+    expect(screen.getByText(NOTE)).toBeTruthy();
   });
 
   it('says the access ends on its own when it could not be cancelled', async () => {

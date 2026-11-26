@@ -51,9 +51,9 @@ The session store knows which DID is the old account (the flow resolved it from 
 
 ## R4. Revocation (FR-BS-013)
 
-**Decision**: Sign out calls the client's `session.signOut()`, which calls the sign-in server's revocation endpoint, then deletes the secure-store keys in a `finally`, so the phone is clean even when the call fails. When the call fails, the driver reports it and the step shows one line: "Magpie's access ends on its own soon." (`words.accessNote`). There is no remove-access page link, because Bluesky's web app has no page for one app's access that the docs name.
+**Decision**: Sign out calls the client's `session.signOut()`, which calls the sign-in server's revocation endpoint, then deletes the secure-store keys in a `finally`, so the phone is clean even when the call fails. There is no remove-access page link, because Bluesky's web app has no page for one app's access that the docs name.
 
-**Status**: failed for the access token (R11 results, 2026-11-26). The refresh token is refused after sign-out, but the access token still works. Work stops until the owner decides (Clarifications, 2026-11-23).
+**Status**: failed for the access token (R11 results, 2026-11-26). The refresh token is refused after sign-out, but the access token still works. On 2026-11-26 the owner accepted this as an exception (spec FR-BS-013). The driver's `signOut` and `endMove` always return `false`, so the line `words.accessNote` shows after every sign-out and at the summary: "Magpie's access ends on its own within an hour."
 
 ## R5. Finding accounts and keeping the host list (FR-BS-005, FR-BS-022)
 

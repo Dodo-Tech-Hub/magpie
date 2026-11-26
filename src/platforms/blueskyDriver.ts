@@ -77,12 +77,15 @@ export const blueskyDriver: Driver = {
 
   async signOut(role) {
     if (role !== 'new') oldTarget = null;
-    return (await signOut(role)) ? undefined : false;
+    await signOut(role);
+    // Always false: Bluesky's access token keeps working until it runs out, even after a successful cancel, so the screen says so (FR-BS-013).
+    return false;
   },
 
   // A move finished with nothing left: cancel the new account's access and delete its session (FR-BS-013).
   async endMove() {
-    return (await signOut('new')) ? undefined : false;
+    await signOut('new');
+    return false;
   },
 
   async granted() {
