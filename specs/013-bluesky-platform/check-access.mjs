@@ -84,30 +84,34 @@ say(follow.ok && !block.ok ? 'PASS' : 'FAIL', '1. Narrow scope: follow works, bl
 
 // 5. Size of what the app would store: the key, the token set, and the scope.
 const stored = one.sessions.get(did);
-const size = Buffer.byteLength(JSON.stringify({ ...stored, dpopKey: stored.dpopKey.jwk }));
+const size = Buffer.byteLength(JSON.stringify(stored)); // the library's store already holds the key as dpopJwk
 say('NOTE', '5. Stored session size', `${size} bytes${size > 2000 ? ' (over 2,000: the app must split it, research R3)' : ''}`);
 
 // 2. Keep a copy, revoke, put the copy back, and try each token.
-const copy = structuredClone({ ...stored, dpopKey: undefined });
-copy.dpopKey = stored.dpopKey;
+const copy = structuredClone(stored);
 await one.session.signOut();
 one.sessions.set(did, copy);
 let accessRefused = false;
+let accessWhy = '';
 try {
   const again = await one.client.restore(did, false);
   const check = await call(again, '/xrpc/com.atproto.server.getSession');
   accessRefused = check.status === 401 || check.status === 400;
-} catch {
+  accessWhy = `HTTP ${check.status}`;
+} catch (error) {
+  accessWhy = error.message;
   accessRefused = true;
 }
 one.sessions.set(did, copy);
 let refreshRefused = false;
+let refreshWhy = '';
 try {
   await one.client.restore(did, true);
-} catch {
+} catch (error) {
+  refreshWhy = error.message;
   refreshRefused = true;
 }
-say(accessRefused && refreshRefused ? 'PASS' : 'FAIL', '2. Revoke: access and refresh token refused after sign-out', `access ${accessRefused ? 'refused' : 'STILL WORKS'}, refresh ${refreshRefused ? 'refused' : 'STILL WORKS'}`);
+say(accessRefused && refreshRefused ? 'PASS' : 'FAIL', '2. Revoke: access and refresh token refused after sign-out', `access ${accessRefused ? 'refused' : 'STILL WORKS'} (${accessWhy}), refresh ${refreshRefused ? 'refused' : 'STILL WORKS'} (${refreshWhy})`);
 
 // ---- 3: which aud the account's server accepts for preferences ---------------------------------------
 

@@ -53,7 +53,7 @@ The session store knows which DID is the old account (the flow resolved it from 
 
 **Decision**: Sign out calls the client's `session.signOut()`, which calls the sign-in server's revocation endpoint, then deletes the secure-store keys in a `finally`, so the phone is clean even when the call fails. When the call fails, the driver reports it and the step shows one line: "Magpie's access ends on its own soon." (`words.accessNote`). There is no remove-access page link, because Bluesky's web app has no page for one app's access that the docs name.
 
-**Status**: expected, not confirmed. The atproto OAuth spec lists a revocation endpoint in the sign-in server metadata, and the client calls it. The Check (R11) MUST confirm that a revoked access token and refresh token stop working. If it fails, work stops and the owner decides (Clarifications, 2026-11-23).
+**Status**: failed for the access token (R11 results, 2026-11-26). The refresh token is refused after sign-out, but the access token still works. Work stops until the owner decides (Clarifications, 2026-11-23).
 
 ## R5. Finding accounts and keeping the host list (FR-BS-005, FR-BS-022)
 
@@ -150,6 +150,18 @@ It MUST answer:
 5. Session size: the stored session's length in bytes (R3).
 
 Results are recorded in this file under R11. Items 1 and 2 block Part B. Items 3 to 5 change only the details named in R3, R6, and R7.
+
+### R11 results
+
+Run on 2026-11-26 with two Bluesky-hosted test accounts.
+
+| # | Result | Detail |
+| --- | --- | --- |
+| 1 | PASS | Narrow scope: follow 200, block 403. |
+| 2 | FAIL | After `signOut()` the refresh token is refused ("Invalid refresh token"), but the access token still works (`getSession` answers 200). The run did not measure how long it keeps working. |
+| 3 | PASS | `get` and `put` of preferences work with `aud=did:web:api.bsky.app#bsky_appview` and with `aud=*`. The scopes in R6 stay as they are; the `aud=*` fallback is not needed. |
+| 4 | Not run | No account with the logged-out setting on was given (`--hidden`). |
+| 5 | NOTE | The stored session is 1,340 bytes, under the 2,000 split limit in R3. The script asked for the follow scope only, so a session with more scopes is larger. |
 
 ## R12. Client metadata and the redirect
 
