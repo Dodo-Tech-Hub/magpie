@@ -121,6 +121,29 @@ describe('the old account session', () => {
     expect(await s.hasSession(NEW)).toBe(false);
   });
 
+  it('saves a refresh of the new account that happens while the old account signs in, and never deletes it as old', async () => {
+    const s = stores();
+    const saved = await session(NEW, 'new');
+    await s.sessionStore.set(NEW, saved);
+    s.capture(true);
+    await s.sessionStore.set(NEW, { ...saved, tokenSet: { ...saved.tokenSet, access_token: 'access-refreshed' } });
+    s.capture(false);
+    expect(s.oldDids()).toEqual([]);
+    expect((await s.sessionStore.get(NEW))?.tokenSet.access_token).toBe('access-refreshed');
+  });
+
+  it('keeps the saved session when the same account signs in as the old one and is cancelled', async () => {
+    const s = stores();
+    await s.sessionStore.set(NEW, await session(NEW, 'new'));
+    s.capture(true);
+    await s.sessionStore.set(NEW, await session(NEW, 'stranger'));
+    s.capture(false);
+    await s.sessionStore.del(NEW);
+    await s.deleteSession(NEW);
+    s.clearOld(NEW);
+    expect((await s.sessionStore.get(NEW))?.tokenSet.access_token).toBe('access-new');
+  });
+
   it('is routed to the secure storage again once the mark is cleared', async () => {
     const s = stores();
     s.markOld(OLD);

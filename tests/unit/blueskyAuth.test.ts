@@ -208,6 +208,22 @@ describe('sign-in of the new account', () => {
   });
 });
 
+describe('an old-account sign-in that is refused', () => {
+  it.each([
+    ['the new account signs in by mistake', 'atproto', 'https://bsky.social'],
+    ['the sign-in server is not Bluesky', 'atproto', 'https://evil.example'],
+  ])('keeps the saved new account and drops the old mark when %s', async (_, scope, issuer) => {
+    await userSignsInAs(ALICE, scopesFor('new', ['person']));
+    await signIn('new', ['person'], 'alice.bsky.social');
+    const before = __dump();
+    const mistake = await userSignsInAs(ALICE, scope, issuer);
+    await signIn('old', ['mute'], 'older.bsky.social');
+    expect(mistake.signOut).toHaveBeenCalled();
+    expect(__dump()).toEqual(before);
+    expect(await blueskyStores.hasSession(ALICE)).toBe(true);
+  });
+});
+
 describe('a fresh sign-in over a saved new account', () => {
   it('cancels the saved one and saves the account that signed in', async () => {
     const first = await userSignsInAs(ALICE, scopesFor('new', ['person']));

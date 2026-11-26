@@ -40,7 +40,7 @@ const freeze = (session: Session) => JSON.stringify({ ...session, dpopKey: sessi
 export function createBlueskyStores(deps: { now?: () => number } = {}) {
   const now = deps.now ?? Date.now;
   const oldDids = new Set<string>();
-  // While the old account signs in, any session that comes back stays in memory, even one of another account.
+  // While the old account signs in, a new session that comes back stays in memory, even one of another account.
   let capturing = false;
   const oldSessions = new Map<string, Session>();
   const states = new Map<string, { value: State; at: number }>();
@@ -63,12 +63,18 @@ export function createBlueskyStores(deps: { now?: () => number } = {}) {
   };
   const deleteSecure = (did: string) => deleteParts(did, 1);
 
+  // A token refresh keeps the session's key, a new sign-in makes a new one. So the same key as the saved one means the saved session was refreshed, for example by a move that runs during an "Allow" sign-in.
+  const refreshesSaved = async (did: string, session: Session) => {
+    const saved = revive(await readSecure(did));
+    return saved !== undefined && saved.dpopKey.jwk.d === session.dpopKey.jwk.d;
+  };
+
   const sessionStore: SessionStore = {
     async get(did) {
       return oldDids.has(did) ? oldSessions.get(did) : revive(await readSecure(did));
     },
     async set(did, session) {
-      if (capturing || oldDids.has(did)) {
+      if ((capturing || oldDids.has(did)) && !(await refreshesSaved(did, session))) {
         oldDids.add(did);
         oldSessions.set(did, session);
         return;
@@ -123,9 +129,10 @@ export function createBlueskyStores(deps: { now?: () => number } = {}) {
     setNewDid: (did: string) => SecureStore.setItemAsync(NEW_KEY, did),
     clearNewDid: () => SecureStore.deleteItemAsync(NEW_KEY),
     // Delete the phone's copy even when nothing else works (sign-out, summary, Delete all).
+    // While the account is marked as old, only the memory copy goes: a saved session of the same account is the new account's.
     async deleteSession(did: string) {
       oldSessions.delete(did);
-      await deleteSecure(did);
+      if (!oldDids.has(did)) await deleteSecure(did);
     },
   };
 }

@@ -150,23 +150,24 @@ export async function signIn(role: 'old' | 'new', kinds: string[], typed: string
     if (page.type !== 'success') return { ok: false, reason: 'cancelled' };
     // The client checks the state, the issuer in the answer, and the key before it gives a session (FR-BS-016).
     const { session } = await getClient().callback(new URL(page.url).searchParams, { redirect_uri: REDIRECT_URI });
-    if (!DID.test(session.did) || session.serverMetadata.issuer !== ISSUER) {
+    // Cancel a session the app does not keep. An old-account one also loses its mark, so a saved session of that account is used again.
+    const refuse = async () => {
       await revokeSession(session);
+      if (role === 'old') blueskyStores.clearOld(session.did);
+    };
+    if (!DID.test(session.did) || session.serverMetadata.issuer !== ISSUER) {
+      await refuse();
       return failed;
     }
+    // Another account signed in as the old one: dropped before anything else, and the flow refuses the account.
+    const stranger = role === 'old' && session.did !== expected;
+    if (stranger) await refuse();
     const who = await lookup(session.did);
     if (!who.ok) {
-      await revokeSession(session);
+      if (!stranger) await refuse();
       return who;
     }
-    if (role === 'old') {
-      // Another account signed in: its session is revoked and dropped, and the flow refuses the account.
-      if (session.did !== expected) {
-        await revokeSession(session);
-        blueskyStores.clearOld(session.did);
-      }
-      return { ok: true, account: who.account, server: who.server };
-    }
+    if (role === 'old') return { ok: true, account: who.account, server: who.server };
     if (only && session.did !== only) {
       // An Allow sign-in with another account must not replace the saved one. The flow refuses the account.
       await revokeSession(session);
