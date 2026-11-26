@@ -40,7 +40,7 @@ All on the account's server, with the session. `repo` is the new account's DID. 
 | --- | --- |
 | person | `POST /xrpc/com.atproto.repo.createRecord` `{ repo, collection: "app.bsky.graph.follow", record: { $type, subject, createdAt } }` |
 | block | Same, `app.bsky.graph.block` |
-| list | `createRecord` `app.bsky.graph.list` `{ $type, purpose, name, description, createdAt }` (skipped when reused), then `createRecord` `app.bsky.graph.listitem` `{ $type, subject, list, createdAt }` per missing member, each after `pacer.beforeAdd()` |
+| list | `createRecord` `app.bsky.graph.list` `{ $type, purpose, name, description, createdAt }` (skipped when reused, which `listRecords` on the new account's server decides, without the proxy header), then `createRecord` `app.bsky.graph.listitem` `{ $type, subject, list, createdAt }` per missing member, each after `pacer.beforeAdd()` |
 | mute | `POST /xrpc/app.bsky.graph.muteActor` `{ actor }`, header `atproto-proxy: did:web:api.bsky.app#bsky_appview` |
 | feed | `GET /xrpc/app.bsky.actor.getPreferences`, then `POST /xrpc/app.bsky.actor.putPreferences` with the same list plus the feed in `savedFeedsPrefV2` |
 

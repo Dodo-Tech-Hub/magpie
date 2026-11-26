@@ -111,7 +111,7 @@ Blocks use the public record list on the account's server because `app.bsky.grap
 | --- | --- |
 | person | `com.atproto.repo.createRecord`, collection `app.bsky.graph.follow`, record `{ subject: did, createdAt: now }` |
 | block | same, collection `app.bsky.graph.block` |
-| list | `createRecord` `app.bsky.graph.list` `{ purpose, name, description, createdAt }` unless a list with the same name and purpose exists; then one `createRecord` `app.bsky.graph.listitem` `{ subject, list: uri, createdAt }` per missing member, each paced |
+| list | `createRecord` `app.bsky.graph.list` `{ purpose, name, description, createdAt }` unless a list with the same name and purpose exists (looked up with `listRecords` on the new account's server, because the app view lags behind a fresh write); then one `createRecord` `app.bsky.graph.listitem` `{ subject, list: uri, createdAt }` per missing member, each paced |
 | mute | `app.bsky.graph.muteActor` `{ actor: did }` with header `atproto-proxy: did:web:api.bsky.app#bsky_appview` |
 | feed | `getPreferences`, add the feed to `savedFeedsPrefV2.items` (same `type`, `value`, `pinned`, a new `id`), `putPreferences` with every other preference unchanged |
 

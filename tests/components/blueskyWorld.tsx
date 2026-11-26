@@ -56,6 +56,14 @@ export function blueskyWorld(extra: Parameters<typeof mockBluesky>[0] = {}) {
       return { json: { follows: all.map(person) } };
     },
     [`GET ${SERVER}/xrpc/com.atproto.repo.listRecords*`]: (r) => {
+      const owner = q(r, 'repo')!;
+      const collection = q(r, 'collection');
+      if (collection === 'app.bsky.graph.list') {
+        return { json: { records: sideOf(owner).lists.map((l, i) => ({ uri: listUri(owner, i), value: { name: l.name, purpose: `app.bsky.graph.defs#${l.purpose ?? 'curatelist'}` } })) } };
+      }
+      if (collection === 'app.bsky.graph.listitem') {
+        return { json: { records: sideOf(owner).lists.flatMap((l, i) => l.members.map((n) => ({ uri: `at://${owner}/app.bsky.graph.listitem/${i}-${n}`, value: { list: listUri(owner, i), subject: person(n).did } }))) } };
+      }
       const all = sideOf(q(r, 'repo')).blocks;
       all.forEach(remember);
       return { json: { records: all.map((n, i) => ({ uri: `at://x/app.bsky.graph.block/${i}`, value: { subject: person(n).did } })) } };

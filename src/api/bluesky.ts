@@ -171,10 +171,10 @@ export async function haveOnNew(did: string, server: string, signedIn?: { fetch:
 const PROXY = { 'atproto-proxy': 'did:web:api.bsky.app#bsky_appview' };
 
 // A read with a session. A dead sign-in is auth, no answer is retry, a limit is later.
-async function signedJson(f: Fetcher, path: string): Promise<Record<string, unknown>> {
+async function signedJson(f: Fetcher, path: string, headers: Record<string, string> = PROXY): Promise<Record<string, unknown>> {
   let res: Response;
   try {
-    res = await f(path, { headers: { Accept: 'application/json', ...PROXY } });
+    res = await f(path, { headers: { Accept: 'application/json', ...headers } });
   } catch (e) {
     throw new DriverError(e instanceof Error && /^Token(Refresh|Revoked|Invalid)Error$/.test(e.name) ? 'auth' : 'retry');
   }
@@ -330,22 +330,33 @@ function listData(raw: string | null): { purpose: keyof typeof PURPOSE_NAME; des
   }
 }
 
-// A list of the new account with the same name and purpose, and who is in it. Public reads.
-async function findList(repo: string, name: string, purpose: string): Promise<{ uri: string; members: Set<string> } | null> {
-  for await (const page of pages((c) => `${PUBLIC}/app.bsky.graph.getLists?actor=${repo}&limit=${PAGE}${c ? `&cursor=${encodeURIComponent(c)}` : ''}`)) {
-    for (const l of arrayOf(page.lists)) {
-      if (!isRecord(l) || l.name !== name || l.purpose !== purpose || typeof l.uri !== 'string' || !AT_URI.test(l.uri)) continue;
-      const members = new Set<string>();
-      for await (const inner of pages((c) => `${PUBLIC}/app.bsky.graph.getList?list=${encodeURIComponent(l.uri as string)}&limit=${PAGE}${c ? `&cursor=${encodeURIComponent(c)}` : ''}`)) {
-        for (const m of arrayOf(inner.items)) {
-          const p = isRecord(m) ? profileOf(m.subject) : null;
-          if (p) members.add(p.did);
-        }
-      }
-      return { uri: l.uri, members };
+// What a failed signed-in read means for a row.
+const outcomeOfRead = (e: unknown): Outcome => {
+  if (e instanceof DriverError) return e.kind === 'auth' ? { kind: 'auth' } : e.kind === 'later' ? { kind: 'later', resumeAt: Date.now() + HOUR } : { kind: 'retry' };
+  return { kind: 'couldnt_move', reason: GENERIC };
+};
+
+// A list of the new account with the same name and purpose, and who is in it. Read from the account's own server (no proxy header): the public app view lags behind, and a retry right after a write would make the list or a member twice.
+async function findList(f: Fetcher, repo: string, name: string, purpose: string): Promise<{ uri: string; members: Set<string> } | null> {
+  const records = async function* (collection: string) {
+    const path = (c?: string) => `/xrpc/com.atproto.repo.listRecords?repo=${repo}&collection=${collection}&limit=${PAGE}&reverse=true${c ? `&cursor=${encodeURIComponent(c)}` : ''}`;
+    for await (const page of pages(path, (p) => signedJson(f, p, {}))) {
+      for (const r of arrayOf(page.records)) if (isRecord(r) && isRecord(r.value)) yield { uri: r.uri, value: r.value };
+    }
+  };
+  let uri: string | null = null;
+  for await (const r of records('app.bsky.graph.list')) {
+    if (r.value.name === name && r.value.purpose === purpose && typeof r.uri === 'string' && r.uri.startsWith(`at://${repo}/`) && AT_URI.test(r.uri)) {
+      uri = r.uri;
+      break;
     }
   }
-  return null;
+  if (!uri) return null;
+  const members = new Set<string>();
+  for await (const r of records('app.bsky.graph.listitem')) {
+    if (r.value.list === uri && typeof r.value.subject === 'string') members.add(r.value.subject);
+  }
+  return { uri, members };
 }
 
 // Make a list like the old one, or use the one with the same name, and add the members that are not in it (FR-BS-018).
@@ -355,9 +366,10 @@ export async function addList(f: Fetcher, repo: string, item: StoredItem, pacer?
   if (!data) return { kind: 'couldnt_move', reason: GENERIC };
   let existing: Awaited<ReturnType<typeof findList>>;
   try {
-    existing = await findList(repo, item.title, PURPOSE_NAME[data.purpose]);
+    existing = await findList(f, repo, item.title, PURPOSE_NAME[data.purpose]);
   } catch (e) {
-    return e instanceof DriverError && e.kind === 'later' ? { kind: 'later', resumeAt: Date.now() + HOUR } : { kind: 'retry' };
+    // A wrong answer is tried again, as before; a dead sign-in and a rate limit keep their own meaning.
+    return e instanceof DriverError ? outcomeOfRead(e) : { kind: 'retry' };
   }
   let uri = existing?.uri ?? null;
   if (!uri) {
@@ -385,12 +397,6 @@ export async function addList(f: Fetcher, repo: string, item: StoredItem, pacer?
 export async function muteActor(f: Fetcher, subject: string): Promise<Outcome> {
   return (await send(f, '/xrpc/app.bsky.graph.muteActor', { actor: subject }, PROXY)).outcome;
 }
-
-// What a failed read of the settings means for a row.
-const outcomeOfRead = (e: unknown): Outcome => {
-  if (e instanceof DriverError) return e.kind === 'auth' ? { kind: 'auth' } : e.kind === 'later' ? { kind: 'later', resumeAt: Date.now() + HOUR } : { kind: 'retry' };
-  return { kind: 'couldnt_move', reason: GENERIC };
-};
 
 const feedData = (raw: string | null): { type: 'feed' | 'list'; value: string; pinned: boolean } | null => {
   try {

@@ -292,7 +292,7 @@ describe('adding a list', () => {
     const p = { calls: 0, async beforeAdd() { p.calls += 1; return answers.shift() ?? { wait: 0 }; } };
     return p;
   };
-  const empty = { [`GET ${PUBLIC}/app.bsky.graph.getLists*`]: json({ lists: [] }) };
+  const empty = { [`GET ${SERVER}/xrpc/com.atproto.repo.listRecords*`]: json({ records: [] }) };
   const items = (f: ReturnType<typeof mockBluesky>) => created(f).filter((c) => c.collection === 'app.bsky.graph.listitem');
 
   it('makes the list with the same name, description, and purpose, then one record per member, each after the pace', async () => {
@@ -313,9 +313,16 @@ describe('adding a list', () => {
 
   it('reuses a list with the same name and purpose, and adds only the members that are not in it', async () => {
     const mine = `at://${NEW_ME}/app.bsky.graph.list/9`;
+    const lists = [
+      { uri: `at://${NEW_ME}/app.bsky.graph.list/8`, value: { name: 'Cats', purpose: 'app.bsky.graph.defs#modlist' } },
+      { uri: mine, value: { name: 'Cats', purpose: 'app.bsky.graph.defs#curatelist' } },
+    ];
+    const listed = [
+      { uri: 'u1', value: { list: mine, subject: did(102) } },
+      { uri: 'u2', value: { list: `at://${NEW_ME}/app.bsky.graph.list/8`, subject: did(101) } },
+    ];
     const f = mockBluesky({
-      [`GET ${PUBLIC}/app.bsky.graph.getLists*`]: json({ lists: [{ uri: mine, name: 'Cats', purpose: 'app.bsky.graph.defs#curatelist' }, { uri: `at://${NEW_ME}/app.bsky.graph.list/8`, name: 'Cats', purpose: 'app.bsky.graph.defs#modlist' }] }),
-      [`GET ${PUBLIC}/app.bsky.graph.getList*`]: json({ items: [{ subject: person(2) }] }),
+      [`GET ${SERVER}/xrpc/com.atproto.repo.listRecords*`]: (r) => json({ records: q(r, 'collection') === 'app.bsky.graph.list' ? lists : listed }),
       [CREATE]: json({ uri: 'at://x' }),
     });
     expect(await addList(signedIn, NEW_ME, stored(members))).toEqual({ kind: 'moved' });
