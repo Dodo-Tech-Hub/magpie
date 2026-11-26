@@ -320,12 +320,18 @@ export async function togglePick(state: State, dispatch: D, ids: string[], picke
   await reload(state.progressId, driverOf(state), dispatch);
 }
 
-export async function startMove(state: State, dispatch: D): Promise<void> {
+// twoPane: To's sign-in is already on screen beside Pick, so the step does not change (spec 010).
+export async function startMove(state: State, dispatch: D, twoPane: boolean): Promise<void> {
   const driver = driverOf(state);
   const { progressId, newAccount } = state;
+  // With one step on screen, the user is taken to To. The message goes after the step change, which clears it.
+  const askForNew = () => {
+    if (!twoPane) dispatch({ type: 'setStep', step: 'to' });
+    dispatch({ type: 'setNotice', notice: strings.needNewAccount });
+  };
   dispatch({ type: 'setNotice', notice: null });
   if (!newAccount || !progressId) {
-    dispatch({ type: 'setNotice', notice: strings.needNewAccount });
+    askForNew();
     return;
   }
   const movable = state.items.filter((c) => isMovable(c) && hasAccess(state, c)).length;
@@ -341,7 +347,7 @@ export async function startMove(state: State, dispatch: D): Promise<void> {
   // A platform may hold one account. If it is not the new one, moving would use the wrong login.
   if (!(await driver.canAct('new', newAccount.id))) {
     dispatch({ type: 'setNew', account: null });
-    dispatch({ type: 'setNotice', notice: strings.needNewAccount });
+    askForNew();
     return;
   }
   // A move goes on when the user leaves the flow (Save in FR-GH-022). It reports only while its progress is open.

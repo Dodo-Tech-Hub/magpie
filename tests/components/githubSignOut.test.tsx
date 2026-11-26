@@ -161,5 +161,6 @@ describe('when the token runs out', () => {
     await setNew({ token: 'tok-new', accountId: '2', scopes: ['user'], expiresAt: Date.now() - 1 });
     await move('Move 1 item');
     expect(await screen.findByText('Sign in to your new account first')).toBeTruthy();
+    expect(screen.getByRole('tab', { name: 'To' }).props.accessibilityState.selected).toBe(true);
   });
 });

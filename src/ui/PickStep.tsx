@@ -10,7 +10,7 @@ import { needAccess, pickedCounter, strings, summary, timeLeftText } from '@/str
 import { useTheme, type Colors } from '@/theme/theme';
 import { AccessNote } from '@/ui/AccessNote';
 import { ItemRow, rowHeight } from '@/ui/ItemRow';
-import { TOUCH_TARGET } from '@/ui/layout';
+import { TOUCH_TARGET, useTwoPane } from '@/ui/layout';
 import { LimitNote } from '@/ui/LimitNote';
 
 type Row =
@@ -27,6 +27,7 @@ export function PickStep() {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   // Known heights that grow with the system text size (spec 010, FR-010).
   const { fontScale } = useWindowDimensions();
+  const twoPane = useTwoPane();
   const rowH = rowHeight(fontScale);
   const lockedH = LOCKED_HEIGHT * Math.max(1, fontScale);
   const heightOf = (r: Row) => ('item' in r || !r.locked ? rowH : lockedH);
@@ -215,7 +216,7 @@ export function PickStep() {
             accessibilityLabel={moveLabel}
             accessibilityState={{ disabled: moving || state.signingIn }}
             disabled={moving || state.signingIn}
-            onPress={() => void startMove(state, dispatch)}
+            onPress={() => void startMove(state, dispatch, twoPane)}
           >
             <Ionicons name="arrow-forward" size={18} color={colors.onPrimary} />
             <Text style={styles.moveText}>
