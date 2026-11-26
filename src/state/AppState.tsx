@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useMemo, useReducer } from 'react';
+import type { Role } from '@/platforms/driver';
 import type { PlatformId } from '@/platforms/platforms';
 import type { AccountInfo, StoredItem } from '@/store/progressStore';
 
@@ -24,10 +25,15 @@ export type State = {
   signInCode: { role: 'old' | 'new'; code: string; hint: string | null } | null;
   // Kinds the new account has access for, from the platform.
   granted: string[];
+  // Kinds that need an old-account sign-in and were read in this app run. ponytail: not saved, so after a restart an
+  // empty section of such a kind asks for "Allow" again; save it on the progress if users notice.
+  oldRead: string[];
   // The old list is being read.
   loading: boolean;
   // The new account's token was deleted from the phone (summary or Sign out), so the remove-access note shows.
   accessEnded: boolean;
+  // The new account's sign-in is running. The browser may be closed already while the app finishes it.
+  signingIn: Role | null;
 };
 
 export type Action =
@@ -38,6 +44,7 @@ export type Action =
   // A running move reports through this. It is dropped when its progress is no longer the open one.
   | { type: 'forProgress'; progressId: string; action: Action }
   | { type: 'setStep'; step: Step }
+  | { type: 'setSigningIn'; signingIn: Role | null }
   | { type: 'openSettings' }
   | { type: 'closeSettings' }
   | { type: 'setOld'; account: AccountInfo | null; items: StoredItem[] }
@@ -49,6 +56,7 @@ export type Action =
   | { type: 'setNotice'; notice: string | null }
   | { type: 'setSignInCode'; code: State['signInCode'] }
   | { type: 'setGranted'; kinds: string[] }
+  | { type: 'setOldRead'; kinds: string[] }
   | { type: 'setLoading'; loading: boolean }
   | { type: 'setAccessEnded'; ended: boolean }
   | { type: 'reset' };
@@ -67,8 +75,10 @@ export const initialState: State = {
   notice: null,
   signInCode: null,
   granted: [],
+  oldRead: [],
   loading: false,
   accessEnded: false,
+  signingIn: null,
 };
 
 export function reducer(state: State, action: Action): State {
@@ -95,6 +105,7 @@ export function reducer(state: State, action: Action): State {
         items: action.items,
         progressId: null,
         expectedNew: null,
+        oldRead: [],
         moveState: 'idle',
         notice: null,
       };
@@ -119,8 +130,12 @@ export function reducer(state: State, action: Action): State {
       return { ...state, signInCode: action.code };
     case 'setGranted':
       return { ...state, granted: action.kinds };
+    case 'setSigningIn':
+      return { ...state, signingIn: action.signingIn };
     case 'setAccessEnded':
       return { ...state, accessEnded: action.ended };
+    case 'setOldRead':
+      return { ...state, oldRead: action.kinds };
     case 'setLoading':
       return { ...state, loading: action.loading };
     case 'reset':

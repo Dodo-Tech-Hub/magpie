@@ -11,19 +11,22 @@ beforeEach(async () => {
 });
 
 describe('platform list', () => {
-  it('has YouTube first, ready, and GitHub after it in the Automatic section', () => {
-    expect(PLATFORMS.map((p) => p.id)).toEqual(['youtube', 'github']);
+  it('has YouTube first, ready, then GitHub and Bluesky in the Automatic section', () => {
+    expect(PLATFORMS.map((p) => p.id)).toEqual(['youtube', 'github', 'bluesky']);
     expect(PLATFORMS[0]).toMatchObject({ id: 'youtube', name: 'YouTube', section: 'automatic', ready: true });
     expect(PLATFORMS[1]).toMatchObject({ id: 'github', name: 'GitHub', section: 'automatic', ready: true });
+    expect(PLATFORMS[2]).toMatchObject({ id: 'bluesky', name: 'Bluesky', section: 'automatic', ready: true });
   });
 
-  it('shows GitHub on Home after YouTube', () => {
-    expect(readyBySection(PLATFORMS)[0].platforms.map((p) => p.name)).toEqual(['YouTube', 'GitHub']);
+  it('shows GitHub and Bluesky on Home after YouTube', () => {
+    expect(readyBySection(PLATFORMS)[0].platforms.map((p) => p.name)).toEqual(['YouTube', 'GitHub', 'Bluesky']);
   });
 
   it('gives GitHub a dark-look logo', () => {
     expect(PLATFORMS[1].logoDark).toBeDefined();
     expect(PLATFORMS[0].logoDark).toBeUndefined();
+    // The butterfly is blue and reads on both looks.
+    expect(PLATFORMS[2].logoDark).toBeUndefined();
   });
 });
 
@@ -38,6 +41,7 @@ describe('drivers', () => {
     expect(PLATFORMS.map((p) => p.driver.limitsUrl)).toEqual([
       'https://dodo-tech-hub.github.io/magpie/limits/youtube',
       'https://dodo-tech-hub.github.io/magpie/limits/github',
+      'https://dodo-tech-hub.github.io/magpie/limits/bluesky',
     ]);
   });
 

@@ -14,6 +14,8 @@ export type Outcome =
   | { kind: 'stop'; notice: string }; // the platform paused the account
 
 // Asked before each add. wait: sleep this long first (0 = go now). later: stop, go on at this time.
+// gapMs: least time between two adds. perHour and perDay: the most adds in that time (perDay is optional).
+export type Pace = { gapMs: number; perHour: number; perDay?: number };
 export type PaceAnswer = { wait: number } | { later: number };
 export type Pacer = {
   beforeAdd(): Promise<PaceAnswer>;
@@ -32,7 +34,8 @@ export type SignInCode = { code: string; url: string };
 
 export type SignInResult =
   | { ok: true; account: AccountInfo }
-  | { ok: false; reason: 'cancelled' | 'failed' };
+  // email: an email was typed where only a handle works. not_found: no such account. not_supported: the platform cannot serve this account (yet). unavailable: it cannot be read now.
+  | { ok: false; reason: 'cancelled' | 'failed' | 'email' | 'not_found' | 'not_supported' | 'unavailable' };
 
 export type Words = {
   signIn: string; // sign-in button label
@@ -48,9 +51,20 @@ export type Words = {
   moveButton: (n: number) => string;
   notAffiliated: string;
   accessNote?: string;
+  // The button under accessNote that opens the page where the user ends the access (needs removeAccessUrl).
+  accessButton?: string;
+  // For a platform with handleInput: the label and the placeholder of the handle box.
+  handleLabel?: string;
+  handlePlaceholder?: string;
+  // The same for the box on To, which may be left empty: the platform's own page then asks who it is.
+  newHandleLabel?: string;
+  newHandlePlaceholder?: string;
+  // The old account's button when the app holds no sign-in for it (nothing to sign out of). Default: Sign out or Switch.
+  changeOld?: string;
 };
 
-export type Kind = { id: string; heading: string; optional?: boolean };
+// optional: never asked on the first new-account sign-in. needsOld: read only after an old-account sign-in ("Allow" on Pick).
+export type Kind = { id: string; heading: string; optional?: boolean; needsOld?: boolean };
 
 export type Driver = {
   id: string;
@@ -59,24 +73,33 @@ export type Driver = {
   kinds: Kind[];
   // The order items move in, when it differs from the Pick order.
   moveOrder?: string[];
-  pace?: { perMinute: number; perHour: number; adds(items: StoredItem[]): number };
+  // The order items of one kind move in, for example oldest first. Default: the stored order.
+  itemOrder?: (a: StoredItem, b: StoredItem) => number;
+  pace?: Pace & { adds(items: StoredItem[]): number };
   // Page where the user removes the app's access.
   removeAccessUrl?: string;
   // Page that explains this platform's limits. Missing = no info button and no "Learn more".
   limitsUrl?: string;
   // The Switch button becomes Sign out.
   switchSignsOut?: boolean;
+  // From and To show a box where the user types the account's handle. signIn gets it as `handle`.
+  handleInput?: boolean;
   // The new account's sign-in is kept for an unfinished move, so Continue needs no new sign-in.
   resumesNew?: boolean;
 
   // kinds: what the new account needs access for. Abort = the user tapped Cancel.
+  // handle: with handleInput, the account the user typed. The old role with no kinds only looks the account up.
+  // only: for "Allow" on the new account, its ID. A sign-in to another account must not replace the saved sign-in.
   signIn(
     role: Role,
     kinds: string[],
     onCode: (code: SignInCode | null) => void,
     signal?: AbortSignal,
+    handle?: string,
+    only?: string,
   ): Promise<SignInResult>;
-  signOut(role?: Role): Promise<void>;
+  // false: the platform could not cancel the access. The phone's copy is gone anyway.
+  signOut(role?: Role): Promise<void | false>;
   // Kinds the new account has access for.
   granted(): Promise<string[]>;
   // Is there a usable sign-in for this account?
@@ -87,5 +110,5 @@ export type Driver = {
   checkNew(items: StoredItem[], granted: string[]): Promise<string[]>;
   add(item: StoredItem, items: StoredItem[], pacer?: Pacer): Promise<Outcome>;
   // A move finished with nothing left to move.
-  endMove?(): Promise<void>;
+  endMove?(): Promise<void | false>;
 };

@@ -54,11 +54,11 @@ async function seedV0(db: Db) {
 }
 
 describe('migrate', () => {
-  it('moves a version 0 database to version 2 with the same data', async () => {
+  it('moves a version 0 database to version 3 with the same data', async () => {
     const db = await open();
     await seedV0(db);
     await migrate(db);
-    expect(await version(db)).toBe(2);
+    expect(await version(db)).toBe(3);
 
     const p = await db.getFirstAsync<Record<string, unknown>>('SELECT * FROM progress');
     expect(p).toMatchObject({
@@ -96,10 +96,10 @@ describe('migrate', () => {
     expect((await db.getAllAsync('SELECT * FROM progress_item')).length).toBe(4);
   });
 
-  it('goes straight to version 2 on an empty database', async () => {
+  it('goes straight to version 3 on an empty database', async () => {
     const db = await open();
     await migrate(db);
-    expect(await version(db)).toBe(2);
+    expect(await version(db)).toBe(3);
     expect(await db.getAllAsync('SELECT * FROM progress')).toEqual([]);
   });
 
@@ -122,7 +122,7 @@ describe('migrate', () => {
     expect(await db.getAllAsync('SELECT * FROM progress_item')).toEqual([]);
   });
 
-  it('moves a version 1 database to version 2 and keeps every row and its items', async () => {
+  it('moves a version 1 database to version 3 and keeps every row and its items', async () => {
     const db = await open();
     await db.execAsync(`
       PRAGMA foreign_keys = ON;
@@ -143,7 +143,7 @@ describe('migrate', () => {
       INSERT INTO progress_item VALUES ('p1','repo:1','repo','R',NULL,'{}',1,'moved',NULL,5);
       PRAGMA user_version = 1;`);
     await migrate(db);
-    expect(await version(db)).toBe(2);
+    expect(await version(db)).toBe(3);
     expect(await db.getFirstAsync('SELECT id, new_account_id, resume_at FROM progress')).toEqual({
       id: 'p1',
       new_account_id: 'n',
@@ -155,6 +155,28 @@ describe('migrate', () => {
     // The items still follow their progress.
     await db.runAsync("DELETE FROM progress WHERE id = 'p1'");
     expect(await db.getAllAsync('SELECT * FROM progress_item')).toEqual([]);
+  });
+
+  it('moves a version 2 database to version 3 and keeps each add for 1 hour', async () => {
+    const db = await open();
+    await db.execAsync(`
+      CREATE TABLE add_log (account_key TEXT NOT NULL, at INTEGER NOT NULL);
+      INSERT INTO add_log VALUES ('github:1', 1000), ('github:1', 5000), ('github:2', 9000);
+      PRAGMA user_version = 2;`);
+    await migrate(db);
+    expect(await version(db)).toBe(3);
+    expect(await db.getAllAsync('SELECT at, keep_until FROM add_log ORDER BY at')).toEqual([
+      { at: 1000, keep_until: 3_601_000 },
+      { at: 5000, keep_until: 3_605_000 },
+      { at: 9000, keep_until: 3_609_000 },
+    ]);
+  });
+
+  it('gives a new add log row no keep time until the pacer sets one', async () => {
+    const db = await open();
+    await migrate(db);
+    await db.runAsync("INSERT INTO add_log (account_key, at) VALUES ('x', 1)");
+    expect(await db.getFirstAsync('SELECT keep_until FROM add_log')).toEqual({ keep_until: 0 });
   });
 
   it('allows one progress with no new account per old account and platform', async () => {

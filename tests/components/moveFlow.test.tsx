@@ -56,13 +56,15 @@ describe('moving channels', () => {
     expect(screen.getByText("Couldn't move")).toBeTruthy();
   });
 
-  it('explains what is missing when the new account is not signed in', async () => {
+  it('goes to To and explains what is missing when the new account is not signed in', async () => {
     listMock.mockResolvedValueOnce([ch('a', 'Alpha')]);
     await renderApp();
     nextSignIn('old');
     await fireEvent.press(screen.getByLabelText('Sign in with Google: Old account'));
     await fireEvent.press(await screen.findByLabelText('Move 1 channel'));
     expect(await screen.findByText('Sign in to your new account first')).toBeTruthy();
+    expect(screen.getByRole('tab', { name: 'To' }).props.accessibilityState.selected).toBe(true);
+    expect(screen.getByLabelText('Sign in with Google: New account')).toBeTruthy();
     expect(subMock).not.toHaveBeenCalled();
   });
 

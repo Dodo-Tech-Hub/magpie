@@ -11,17 +11,23 @@ export const strings = {
   signOut: 'Sign out',
   allow: 'Allow',
   allowOtherAccount: 'Use your new account here too.',
-  openAccessPage: 'Open GitHub settings',
   loading: 'Loading your list…',
   loadPartial: "Some items couldn't load. The rest can still move.",
   copyCode: 'Copy code',
   waitingForYou: 'Waiting for you to allow it in the browser…',
   signInFailed: "Sign-in didn't finish. Try again.",
+  needsOldLine: 'Sign in to your old account to move these.',
+  allowOldOther: 'Use your old account here.',
+  notFound: "We can't find that account. Check the name.",
+  notEmail: 'Type your username, not your email.',
+  notSupported: 'Magpie works only with accounts hosted by Bluesky for now.',
+  unavailable: "This account can't be read right now.",
   sameAsOld: 'This is your old account. Pick a different one.',
   sameAsNew: 'This is your new account. Pick a different one.',
   pickLocked: 'Sign in to your old account first',
   all: 'All',
   needNewAccount: 'Sign in to your new account first',
+  signingIn: 'Signing in…',
   moving: 'Moving…',
   moved: 'Moved',
   couldntMove: "Couldn't move",
@@ -49,6 +55,7 @@ export const strings = {
   sectionGuided: 'Guided',
   platformYoutube: 'YouTube',
   platformGithub: 'GitHub',
+  platformBluesky: 'Bluesky',
   look: 'Look',
   light: 'Light',
   dark: 'Dark',
@@ -64,8 +71,9 @@ export const learnMoreLabel = (name: string) => `Learn more about ${name} limits
 export const signInTo = (handle: string) => `Sign in to ${handle} to keep going.`;
 export const wrongAccount = (handle: string) => `This one needs ${handle}. Pick that account.`;
 // How long the picked adds take at the pace of the platform (FR-GH-011).
-export const timeLeftText = (seconds: number, adds: number) => {
-  if (adds > 300) return 'More than one session';
+// perHour: the most adds a platform allows in an hour. More than that takes more than one session.
+export const timeLeftText = (seconds: number, adds: number, perHour: number) => {
+  if (adds > perHour) return 'More than one session';
   const minutes = Math.ceil(seconds / 60);
   return seconds < 60 ? 'Less than a minute' : `About ${minutes} minute${minutes === 1 ? '' : 's'}`;
 };
@@ -118,6 +126,28 @@ export const githubWords: Words = {
   moveButton: (n) => `Move ${n} item${n === 1 ? '' : 's'}`,
   notAffiliated: 'Magpie is not made by or linked with GitHub. GitHub is a trademark of GitHub, Inc.',
   accessNote: "Magpie's access ends on its own within 8 hours. To end it now, open GitHub settings.",
+  accessButton: 'Open GitHub settings',
+};
+
+export const blueskyWords: Words = {
+  signIn: 'Sign in with Bluesky',
+  signInIcon: 'log-in-outline',
+  oldHint: 'Where your follows are now',
+  newHint: 'Where your follows should go',
+  searchPlaceholder: 'Search',
+  noItems: "This account doesn't follow anything yet",
+  needPick: 'Pick at least 1 item',
+  later: 'Later',
+  limitReached: 'Bluesky lets Magpie move only some items each hour and each day. Magpie must wait a little.',
+  reminderBody: 'You can move the rest now.',
+  moveButton: (n) => `Move ${n} item${n === 1 ? '' : 's'}`,
+  notAffiliated: 'Magpie is not made by or linked with Bluesky. Bluesky and the butterfly logo belong to Bluesky Social PBC.',
+  accessNote: "Magpie's access ends on its own within an hour.",
+  handleLabel: 'Bluesky username',
+  handlePlaceholder: 'name.bsky.social',
+  newHandleLabel: 'Username or email',
+  newHandlePlaceholder: 'Username or email (optional)',
+  changeOld: 'Change',
 };
 
 // The sign-in code panel. The hint is for the second sign-in, when the browser may remember the first account.

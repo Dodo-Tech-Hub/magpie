@@ -2,28 +2,31 @@ import React, { useMemo } from 'react';
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Driver } from '@/platforms/driver';
-import { strings } from '@/strings';
 import { useTheme, type Colors } from '@/theme/theme';
 import { TOUCH_TARGET } from '@/ui/layout';
 
-// The token is deleted on the phone but runs out on its own. This points to the page that ends it now (FR-GH-019).
+// The platform could not cancel the access, so it ends on its own. The line says so. With a page where the user
+// can end it now, a button opens it (FR-GH-019, FR-BS-013).
 export function AccessNote({ driver }: { driver: Driver }) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { accessNote, accessButton } = driver.words;
   const url = driver.removeAccessUrl;
-  if (!url || !driver.words.accessNote) return null;
+  if (!accessNote) return null;
   return (
     <View style={styles.box}>
-      <Text style={styles.text}>{driver.words.accessNote}</Text>
-      <Pressable
-        style={styles.button}
-        accessibilityRole="button"
-        accessibilityLabel={strings.openAccessPage}
-        onPress={() => void Linking.openURL(url)}
-      >
-        <Ionicons name="open-outline" size={18} color={colors.text} />
-        <Text style={styles.buttonText}>{strings.openAccessPage}</Text>
-      </Pressable>
+      <Text style={styles.text}>{accessNote}</Text>
+      {url && accessButton && (
+        <Pressable
+          style={styles.button}
+          accessibilityRole="button"
+          accessibilityLabel={accessButton}
+          onPress={() => void Linking.openURL(url)}
+        >
+          <Ionicons name="open-outline" size={18} color={colors.text} />
+          <Text style={styles.buttonText}>{accessButton}</Text>
+        </Pressable>
+      )}
     </View>
   );
 }

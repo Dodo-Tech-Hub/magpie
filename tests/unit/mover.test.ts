@@ -125,6 +125,23 @@ describe('runMove', () => {
     await run({ kindOrder: ['person', 'channel'] });
     expect(ids()).toEqual(['z', 'a', 'b', 'c']);
   });
+
+  it('moves the items of one kind in the order the driver gives, and keeps the kind order', async () => {
+    const seq = (id: string, n: number, kind: string) => ({ ...item(id, kind), data: JSON.stringify({ seq: n }) });
+    // saveItems drops waiting rows that are gone, so only these five are left.
+    await saveItems(pid, [
+      seq('p2', 2, 'person'),
+      seq('p0', 0, 'person'),
+      seq('p1', 1, 'person'),
+      seq('b1', 1, 'block'),
+      seq('b0', 0, 'block'),
+    ]);
+    add.mockResolvedValue({ kind: 'moved' });
+    const bySeq = (x: StoredItem, y: StoredItem) =>
+      (JSON.parse(x.data ?? '{}').seq ?? 0) - (JSON.parse(y.data ?? '{}').seq ?? 0);
+    await run({ kindOrder: ['person', 'block'], itemOrder: bySeq });
+    expect(ids()).toEqual(['p0', 'p1', 'p2', 'b0', 'b1']);
+  });
 });
 
 describe('waits, stops, and the pace', () => {

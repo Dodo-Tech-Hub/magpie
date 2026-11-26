@@ -55,7 +55,7 @@ let waiting: AbortController | null = null;
 export const cancelSignIn = () => waiting?.abort();
 
 // One sign-in. A code (device sign-in) shows in place, is copied, and opens the browser.
-async function signInAs(state: State, dispatch: D, role: Role, kinds: string[]): Promise<SignInResult> {
+async function signInAs(state: State, dispatch: D, role: Role, kinds: string[], handle?: string, only?: string): Promise<SignInResult> {
   const driver = driverOf(state);
   const ctl = new AbortController();
   waiting = ctl;
@@ -75,10 +75,22 @@ async function signInAs(state: State, dispatch: D, role: Role, kinds: string[]):
         }
       },
       ctl.signal,
+      handle,
+      only,
     );
   } finally {
     if (waiting === ctl) waiting = null;
   }
+}
+
+// The line to show when a sign-in did not end with an account. A cancel shows nothing.
+function failNotice(reason: Extract<SignInResult, { ok: false }>['reason']): string | null {
+  if (reason === 'cancelled') return null;
+  if (reason === 'email') return strings.notEmail;
+  if (reason === 'not_found') return strings.notFound;
+  if (reason === 'not_supported') return strings.notSupported;
+  if (reason === 'unavailable') return strings.unavailable;
+  return strings.signInFailed;
 }
 
 // The kinds the new account is asked for: the picked ones, never an optional one (FR-GH-020).
@@ -86,16 +98,20 @@ function kindsToAsk(state: State, driver: Driver): string[] {
   const optional = new Set(driver.kinds.filter((k) => k.optional).map((k) => k.id));
   const picked = new Set(state.items.filter((c) => c.picked).map((c) => c.kind));
   const all = driver.kinds.map((k) => k.id);
-  return (state.items.length ? all.filter((k) => picked.has(k)) : all).filter((k) => !optional.has(k));
+  // Kinds that need the old account (mutes, feeds) are asked only once they were read and picked (FR-BS-008).
+  const needsOld = new Set(driver.kinds.filter((k) => k.needsOld).map((k) => k.id));
+  return (state.items.length ? all.filter((k) => picked.has(k)) : all).filter(
+    (k) => !optional.has(k) && (state.items.length > 0 || !needsOld.has(k)),
+  );
 }
 
 // Old account: read-only. Its list is loaded once and kept (research R2).
-export async function signInOld(state: State, dispatch: D): Promise<void> {
+export async function signInOld(state: State, dispatch: D, handle?: string): Promise<void> {
   const driver = driverOf(state);
   dispatch({ type: 'setNotice', notice: null });
-  const res = await signInAs(state, dispatch, 'old', []);
+  const res = await whileSigningIn(dispatch, 'old', () => signInAs(state, dispatch, 'old', [], handle));
   if (!res.ok) {
-    if (res.reason === 'failed') dispatch({ type: 'setNotice', notice: strings.signInFailed });
+    dispatch({ type: 'setNotice', notice: failNotice(res.reason) });
     return;
   }
   if (state.newAccount && res.account.id === state.newAccount.id) {
@@ -125,13 +141,26 @@ export async function signInOld(state: State, dispatch: D): Promise<void> {
   }
 }
 
+// While an account signs in, the screen says so, and Move and Sign in are held back: the account is not ready yet.
+async function whileSigningIn<T>(dispatch: D, role: Role, run: () => Promise<T>): Promise<T> {
+  dispatch({ type: 'setSigningIn', signingIn: role });
+  try {
+    return await run();
+  } finally {
+    dispatch({ type: 'setSigningIn', signingIn: null });
+  }
+}
+
 // New account: needs add access. Creates or opens the progress for the pair.
-export async function signInNew(state: State, dispatch: D): Promise<void> {
+export const signInNew = (state: State, dispatch: D, handle?: string) =>
+  whileSigningIn(dispatch, 'new', () => runSignInNew(state, dispatch, handle));
+
+async function runSignInNew(state: State, dispatch: D, handle?: string): Promise<void> {
   const driver = driverOf(state);
   dispatch({ type: 'setNotice', notice: null });
-  const res = await signInAs(state, dispatch, 'new', kindsToAsk(state, driver));
+  const res = await signInAs(state, dispatch, 'new', kindsToAsk(state, driver), handle);
   if (!res.ok) {
-    if (res.reason === 'failed') dispatch({ type: 'setNotice', notice: strings.signInFailed });
+    dispatch({ type: 'setNotice', notice: failNotice(res.reason) });
     return;
   }
   if (state.expectedNew && res.account.id !== state.expectedNew.id) {
@@ -190,8 +219,9 @@ async function checkNew(progressId: string, driver: Driver, items: StoredItem[])
 // A move ended with nothing left: the platform drops what it holds for the new account.
 async function endMove(driver: Driver, dispatch: D) {
   if (!driver.endMove) return;
-  await driver.endMove();
-  dispatch({ type: 'setAccessEnded', ended: true });
+  // false: the platform could not cancel the access, so the screen says it ends on its own.
+  const cancelled = await driver.endMove();
+  dispatch({ type: 'setAccessEnded', ended: cancelled === false });
 }
 
 // The Switch button. A platform whose sign-in cannot be switched in place signs out instead (US4).
@@ -201,25 +231,63 @@ export async function switchAccount(state: State, dispatch: D, role: Role): Prom
     await (role === 'old' ? signInOld(state, dispatch) : signInNew(state, dispatch));
     return;
   }
-  await driver.signOut(role);
+  const cancelled = await driver.signOut(role);
   if (role === 'new') {
     dispatch({ type: 'setNew', account: null });
     dispatch({ type: 'setGranted', kinds: [] });
-    dispatch({ type: 'setAccessEnded', ended: true });
+    dispatch({ type: 'setAccessEnded', ended: cancelled === false });
   } else {
     dispatch({ type: 'setOld', account: null, items: [] });
   }
 }
 
+// "Allow" on a kind that needs the old account (FR-BS-020): sign in to the old account for every such kind not read yet,
+// read it, and add its rows. Rows already on the list stay, with their picks.
+export async function allowOld(state: State, dispatch: D): Promise<void> {
+  const driver = driverOf(state);
+  const { progressId, oldAccount } = state;
+  if (!oldAccount || !progressId) return;
+  const kinds = driver.kinds.filter((k) => k.needsOld && !state.oldRead.includes(k.id)).map((k) => k.id);
+  dispatch({ type: 'setNotice', notice: null });
+  const res = await signInAs(state, dispatch, 'old', kinds, oldAccount.handle);
+  if (!res.ok) {
+    dispatch({ type: 'setNotice', notice: failNotice(res.reason) });
+    return;
+  }
+  if (res.account.id !== oldAccount.id) {
+    await driver.signOut('old');
+    dispatch({ type: 'setNotice', notice: strings.allowOldOther });
+    return;
+  }
+  dispatch({ type: 'setLoading', loading: true });
+  try {
+    const { items, missing } = await driver.listOld();
+    // Saving the rows on the list too keeps the rows of kinds this read did not return.
+    await saveItems(progressId, [...state.items, ...items]);
+    dispatch({ type: 'setOldRead', kinds: [...state.oldRead, ...kinds.filter((k) => !missing.includes(k))] });
+    if (state.newAccount) await openPair(driver, dispatch, progressId);
+    else await reload(progressId, driver, dispatch);
+    if (missing.length > 0) dispatch({ type: 'setNotice', notice: strings.loadPartial });
+  } catch (e) {
+    dispatch({ type: 'setNotice', notice: noticeFor(e, driver) });
+  } finally {
+    dispatch({ type: 'setLoading', loading: false });
+  }
+}
+
 // "Allow" on a kind the new account has no access for: sign in again, asking for what it had plus this kind (FR-GH-020).
-export async function allowKind(state: State, dispatch: D, kind: string): Promise<void> {
+export const allowKind = (state: State, dispatch: D, kind: string) =>
+  whileSigningIn(dispatch, 'new', () => runAllowKind(state, dispatch, kind));
+
+async function runAllowKind(state: State, dispatch: D, kind: string): Promise<void> {
   const driver = driverOf(state);
   const { progressId, newAccount } = state;
   if (!newAccount || !progressId) return;
   dispatch({ type: 'setNotice', notice: null });
-  const res = await signInAs(state, dispatch, 'new', [...state.granted, kind]);
+  // The handle is passed for a platform where the user types it, so Allow signs in to the same account.
+  const res = await signInAs(state, dispatch, 'new', [...state.granted, kind], newAccount.handle, newAccount.id);
   if (!res.ok) {
-    if (res.reason === 'failed') dispatch({ type: 'setNotice', notice: strings.signInFailed });
+    dispatch({ type: 'setNotice', notice: failNotice(res.reason) });
     return;
   }
   // The driver kept the old token for a different account, so there is nothing to undo.
@@ -252,12 +320,18 @@ export async function togglePick(state: State, dispatch: D, ids: string[], picke
   await reload(state.progressId, driverOf(state), dispatch);
 }
 
-export async function startMove(state: State, dispatch: D): Promise<void> {
+// twoPane: To's sign-in is already on screen beside Pick, so the step does not change (spec 010).
+export async function startMove(state: State, dispatch: D, twoPane: boolean): Promise<void> {
   const driver = driverOf(state);
   const { progressId, newAccount } = state;
+  // With one step on screen, the user is taken to To. The message goes after the step change, which clears it.
+  const askForNew = () => {
+    if (!twoPane) dispatch({ type: 'setStep', step: 'to' });
+    dispatch({ type: 'setNotice', notice: strings.needNewAccount });
+  };
   dispatch({ type: 'setNotice', notice: null });
   if (!newAccount || !progressId) {
-    dispatch({ type: 'setNotice', notice: strings.needNewAccount });
+    askForNew();
     return;
   }
   const movable = state.items.filter((c) => isMovable(c) && hasAccess(state, c)).length;
@@ -273,7 +347,7 @@ export async function startMove(state: State, dispatch: D): Promise<void> {
   // A platform may hold one account. If it is not the new one, moving would use the wrong login.
   if (!(await driver.canAct('new', newAccount.id))) {
     dispatch({ type: 'setNew', account: null });
-    dispatch({ type: 'setNotice', notice: strings.needNewAccount });
+    askForNew();
     return;
   }
   // A move goes on when the user leaves the flow (Save in FR-GH-022). It reports only while its progress is open.
@@ -285,8 +359,9 @@ export async function startMove(state: State, dispatch: D): Promise<void> {
   let stopNotice: string | null = null;
   const done = runMove(progressId, {
     add: (item, all, pacer) => driver.add(item, all, pacer),
-    pacer: driver.pace ? createPacer(`${driver.id}:${newAccount.id}`) : undefined,
+    pacer: driver.pace ? createPacer(`${driver.id}:${newAccount.id}`, driver.pace) : undefined,
     kindOrder: driver.moveOrder ?? pickOrder(driver),
+    itemOrder: driver.itemOrder,
     onUpdate: () => void reload(progressId, driver, d),
     onStop: (notice) => (stopNotice = notice),
     signal: ctl.signal,

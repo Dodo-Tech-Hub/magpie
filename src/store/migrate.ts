@@ -2,7 +2,8 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 
 // Tables and rules: specs/008-github-platform/data-model.md
 // Version 0 is the YouTube-only schema. Version 1 holds any platform. Version 2 lets a progress
-// have no new account yet (FR-GH-021).
+// have no new account yet (FR-GH-021). Version 3 gives each add a keep time, so one platform keeps adds
+// for an hour and another for a day (specs/013-bluesky-platform/data-model.md).
 const progressTable = (name: string) => `
 CREATE TABLE ${name} (
   id TEXT PRIMARY KEY NOT NULL,
@@ -38,9 +39,9 @@ CREATE TABLE IF NOT EXISTS progress_item (
   PRIMARY KEY (progress_id, item_id)
 );
 CREATE TABLE IF NOT EXISTS setting (key TEXT PRIMARY KEY NOT NULL, value TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS add_log (account_key TEXT NOT NULL, at INTEGER NOT NULL);`;
+CREATE TABLE IF NOT EXISTS add_log (account_key TEXT NOT NULL, at INTEGER NOT NULL, keep_until INTEGER NOT NULL DEFAULT 0);`;
 
-const V0_TO_V2 = `
+const V0_TO_V3 = `
 ALTER TABLE progress RENAME TO progress_v0;
 ALTER TABLE progress_channel RENAME TO progress_channel_v0;
 ${SCHEMA}
@@ -55,7 +56,7 @@ INSERT INTO progress_item (progress_id, item_id, kind, title, thumbnail_url, pic
   FROM progress_channel_v0;
 DROP TABLE progress_channel_v0;
 DROP TABLE progress_v0;
-PRAGMA user_version = 2;`;
+PRAGMA user_version = 3;`;
 
 // Rebuild with foreign keys off (migrate does that), so dropping the old table does not delete the items.
 const V1_TO_V2 = `
@@ -70,16 +71,24 @@ ALTER TABLE progress_v2 RENAME TO progress;
 ${NO_NEW_INDEX}
 PRAGMA user_version = 2;`;
 
+// Every add in the log so far is GitHub's, which keeps adds for 1 hour.
+const V2_TO_V3 = `
+ALTER TABLE add_log ADD COLUMN keep_until INTEGER NOT NULL DEFAULT 0;
+UPDATE add_log SET keep_until = at + 3600000;
+PRAGMA user_version = 3;`;
+
 export async function migrate(db: SQLiteDatabase): Promise<void> {
   const v = (await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version'))?.user_version ?? 0;
   // Foreign keys cannot change inside a transaction, so this comes first.
   await db.execAsync(`PRAGMA foreign_keys = ${v >= 2 ? 'ON' : 'OFF'};`);
-  if (v >= 2) return;
+  if (v >= 3) return;
   try {
     const old = await db.getFirstAsync("SELECT name FROM sqlite_master WHERE name = 'progress_channel'");
     // One transaction: a failed copy leaves the old version untouched.
     await db.withTransactionAsync(async () => {
-      await db.execAsync(v === 1 ? V1_TO_V2 : old ? V0_TO_V2 : `${SCHEMA}\nPRAGMA user_version = 2;`);
+      if (v === 2) await db.execAsync(V2_TO_V3);
+      else if (v === 1) await db.execAsync(`${V1_TO_V2}\n${V2_TO_V3}`);
+      else await db.execAsync(old ? V0_TO_V3 : `${SCHEMA}\nPRAGMA user_version = 3;`);
     });
   } finally {
     await db.execAsync('PRAGMA foreign_keys = ON;');

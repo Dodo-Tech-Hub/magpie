@@ -4,13 +4,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { driverFor, PLATFORMS } from '@/platforms/platforms';
 import { useApp } from '@/state/AppState';
 import type { StoredItem } from '@/store/progressStore';
-import { allowKind, isMovable, openLimits, startMove, togglePick } from '@/state/flows';
+import { allowKind, allowOld, isMovable, openLimits, startMove, togglePick } from '@/state/flows';
 import { timeLeft } from '@/move/pacer';
 import { needAccess, pickedCounter, strings, summary, timeLeftText } from '@/strings';
 import { useTheme, type Colors } from '@/theme/theme';
 import { AccessNote } from '@/ui/AccessNote';
 import { ItemRow, rowHeight } from '@/ui/ItemRow';
-import { TOUCH_TARGET } from '@/ui/layout';
+import { TOUCH_TARGET, useTwoPane } from '@/ui/layout';
 import { LimitNote } from '@/ui/LimitNote';
 
 type Row =
@@ -27,6 +27,7 @@ export function PickStep() {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   // Known heights that grow with the system text size (spec 010, FR-010).
   const { fontScale } = useWindowDimensions();
+  const twoPane = useTwoPane();
   const rowH = rowHeight(fontScale);
   const lockedH = LOCKED_HEIGHT * Math.max(1, fontScale);
   const heightOf = (r: Row) => ('item' in r || !r.locked ? rowH : lockedH);
@@ -62,6 +63,7 @@ export function PickStep() {
     waiting: items.filter(isMovable).length,
   };
   const showSummary = moveState === 'done' || resume;
+  const moveLabel = state.signingIn ? strings.signingIn : moving ? strings.moving : resume ? strings.continueMove : words.moveButton(movable);
   const pickable = items.filter((c) => c.status !== 'already_there');
   const shown = query
     ? items.filter((c) => c.title.toLowerCase().includes(query.toLowerCase()))
@@ -69,9 +71,15 @@ export function PickStep() {
   // One section per kind when there is more than one kind. A kind with no items has none (FR-GH-003).
   // A kind the new account has no access for is greyed out with an Allow button (FR-GH-020).
   const noAccess = (kind: string) => !!state.newAccount && !state.granted.includes(kind);
-  const kinds = driver.kinds.filter((k) => shown.some((c) => c.kind === k.id));
+  // A kind that needs the old account and was not read yet has no rows. It shows greyed with its own Allow (FR-BS-020).
+  const oldLocked = (kind: string) =>
+    !query &&
+    !!driver.kinds.find((k) => k.id === kind)?.needsOld &&
+    !state.oldRead.includes(kind) &&
+    !items.some((c) => c.kind === kind);
+  const kinds = driver.kinds.filter((k) => shown.some((c) => c.kind === k.id) || oldLocked(k.id));
   const rows: Row[] =
-    kinds.length < 2 && !kinds.some((k) => noAccess(k.id))
+    kinds.length < 2 && !kinds.some((k) => noAccess(k.id) || oldLocked(k.id))
       ? shown.map((item) => ({ item }))
       : kinds.flatMap((k) => {
           const inKind = shown.filter((c) => c.kind === k.id);
@@ -84,7 +92,7 @@ export function PickStep() {
               heading: k.heading,
               key: `h:${k.id}`,
               kind: k.id,
-              locked: noAccess(k.id),
+              locked: noAccess(k.id) || oldLocked(k.id),
               count: inKind.length,
               pickable: canPick.map((c) => c.itemId),
               allPicked: canPick.length > 0 && canPick.every((c) => c.picked),
@@ -138,6 +146,8 @@ export function PickStep() {
           </Text>
         </View>
       </View>
+      {/* Only greyed sections are left to show: say that the public list is empty. */}
+      {items.length === 0 && rows.length > 0 && <Text style={styles.empty}>{words.noItems}</Text>}
       <FlatList
         data={rows}
         keyExtractor={(r) => ('item' in r ? r.item.itemId : r.key)}
@@ -151,13 +161,13 @@ export function PickStep() {
                 <Pressable
                   style={styles.sectionRow}
                   accessibilityRole="button"
-                  accessibilityLabel={`${r.heading}, ${r.count}`}
+                  accessibilityLabel={r.count > 0 ? `${r.heading}, ${r.count}` : r.heading}
                   accessibilityState={{ expanded: isOpen(r.kind) }}
                   onPress={() => toggleKind(r.kind)}
                 >
                   <Ionicons name={isOpen(r.kind) ? 'chevron-down' : 'chevron-forward'} size={20} color={colors.text} />
                   <Text style={styles.section}>{r.heading}</Text>
-                  <Text style={styles.sectionCount}>{r.count}</Text>
+                  {r.count > 0 && <Text style={styles.sectionCount}>{r.count}</Text>}
                 </Pressable>
                 {!r.locked && r.pickable.length > 0 && (
                   <Pressable
@@ -174,12 +184,12 @@ export function PickStep() {
               </View>
               {r.locked && (
                 <>
-                  <Text style={styles.lockedText}>{needAccess(r.heading)}</Text>
+                  <Text style={styles.lockedText}>{oldLocked(r.kind) ? strings.needsOldLine : needAccess(r.heading)}</Text>
                   <Pressable
                     style={styles.allow}
                     accessibilityRole="button"
                     accessibilityLabel={`${strings.allow} ${r.heading}`}
-                    onPress={() => void allowKind(state, dispatch, r.kind)}
+                    onPress={() => void (oldLocked(r.kind) ? allowOld(state, dispatch) : allowKind(state, dispatch, r.kind))}
                   >
                     <Ionicons name="key-outline" size={18} color={colors.text} />
                     <Text style={styles.allowText}>{strings.allow}</Text>
@@ -193,23 +203,24 @@ export function PickStep() {
       />
       <View style={styles.bar}>
         {driver.pace && !moving && !showSummary && movable > 0 && (
-          <Text style={styles.timeLeft}>{timeLeftText(timeLeft(adds), adds)}</Text>
+          <Text style={styles.timeLeft}>{timeLeftText(timeLeft(adds, driver.pace), adds, driver.pace.perHour)}</Text>
         )}
         {showSummary && <Text style={styles.summary}>{summary(counts)}</Text>}
         {moveState === 'limit' && <LimitNote driver={driver} name={platformName} onLearnMore={learnMore} />}
-        {moveState === 'done' && <AccessNote driver={driver} />}
+        {moveState === 'done' && state.accessEnded && <AccessNote driver={driver} />}
         {state.notice && state.step === 'pick' && <Text style={styles.error}>{state.notice}</Text>}
         {!(moveState === 'done' && movable === 0) && items.length > 0 && (
           <Pressable
-            style={[styles.move, moving && styles.off]}
+            style={[styles.move, (moving || !!state.signingIn) && styles.off]}
             accessibilityRole="button"
-            accessibilityLabel={moving ? strings.moving : resume ? strings.continueMove : words.moveButton(movable)}
-            disabled={moving}
-            onPress={() => void startMove(state, dispatch)}
+            accessibilityLabel={moveLabel}
+            accessibilityState={{ disabled: moving || !!state.signingIn }}
+            disabled={moving || !!state.signingIn}
+            onPress={() => void startMove(state, dispatch, twoPane)}
           >
             <Ionicons name="arrow-forward" size={18} color={colors.onPrimary} />
             <Text style={styles.moveText}>
-              {moving ? strings.moving : resume ? strings.continueMove : words.moveButton(movable)}
+              {moveLabel}
             </Text>
           </Pressable>
         )}
