@@ -26,6 +26,10 @@ These are the YouTube constraints (the first platform). They come from the YouTu
 - The flow involves two accounts: sign in to the source account, export its subscription list, sign out, sign in to the target account, then subscribe in batches. Native Google sign-in SDKs hold one signed-in account at a time.
 - Never commit OAuth client secrets, tokens, or API keys.
 
+## Releases
+
+To make a release, follow `.agents/skills/release/SKILL.md` (also linked as a skill in `.claude/skills/` and `.cursor/skills/`). Edit only that file; the other paths are symlinks.
+
 ## Local tools
 
 - Install missing tools with Homebrew (`brew`) or npm. Prefer project-local npm dependencies over global installs.
