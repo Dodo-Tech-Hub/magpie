@@ -1,6 +1,6 @@
 # Magpie
 
-Magpie moves what you follow from one account to another account on the same platform.
+Magpie transfers what you follow from one account to another account on the same platform.
 It works with YouTube subscriptions; with GitHub stars, star lists, starred gists, and the people you follow; and with Bluesky follows, blocks, mutes, lists, and saved feeds.
 
 ## Get the app
