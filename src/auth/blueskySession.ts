@@ -11,6 +11,8 @@ const PREFIX = 'bluesky.session.';
 const NEW_KEY = 'bluesky.new';
 const PART = 2000; // iOS secure storage may refuse a value over about 2 KB, so a longer session is split in parts.
 const STATE_MINUTES = 10;
+// iOS: never in a backup or on another device. Reads and deletes need no option.
+const DEVICE_ONLY = { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY };
 
 type Session = NonNullable<Awaited<ReturnType<SessionStore['get']>>>;
 type State = NonNullable<Awaited<ReturnType<StateStore['get']>>>;
@@ -81,7 +83,7 @@ export function createBlueskyStores(deps: { now?: () => number } = {}) {
       }
       const text = freeze(session);
       const count = Math.max(1, Math.ceil(text.length / PART));
-      for (let n = 1; n <= count; n += 1) await SecureStore.setItemAsync(partKey(did, n), text.slice((n - 1) * PART, n * PART));
+      for (let n = 1; n <= count; n += 1) await SecureStore.setItemAsync(partKey(did, n), text.slice((n - 1) * PART, n * PART), DEVICE_ONLY);
       // A shorter session than before must not leave its old parts behind.
       await deleteParts(did, count + 1);
     },
@@ -126,7 +128,7 @@ export function createBlueskyStores(deps: { now?: () => number } = {}) {
     // Every account that signed in as the old account and still holds a session in memory.
     oldDids: () => [...oldSessions.keys()],
     getNewDid: () => SecureStore.getItemAsync(NEW_KEY),
-    setNewDid: (did: string) => SecureStore.setItemAsync(NEW_KEY, did),
+    setNewDid: (did: string) => SecureStore.setItemAsync(NEW_KEY, did, DEVICE_ONLY),
     clearNewDid: () => SecureStore.deleteItemAsync(NEW_KEY),
     // Delete the phone's copy even when nothing else works (sign-out, summary, Delete all).
     // While the account is marked as old, only the memory copy goes: a saved session of the same account is the new account's.

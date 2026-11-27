@@ -8,6 +8,7 @@ export const setItemAsync = jest.fn(async (key: string, value: string) => {
 export const deleteItemAsync = jest.fn(async (key: string) => {
   store.delete(key);
 });
+export const WHEN_UNLOCKED_THIS_DEVICE_ONLY = 6;
 export const __reset = () => {
   store = new Map();
 };

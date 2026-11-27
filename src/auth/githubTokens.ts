@@ -3,6 +3,8 @@ import * as SecureStore from 'expo-secure-store';
 // Where GitHub tokens live (specs/008-github-platform/data-model.md, "Tokens").
 // Old account: memory only. New account: the phone's secure storage, under one key.
 const KEY = 'github.new';
+// iOS: never in a backup or on another device. Reads and deletes need no option.
+const DEVICE_ONLY = { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY };
 
 export type NewToken = { token: string; accountId: string; scopes: string[]; expiresAt: number };
 
@@ -17,7 +19,7 @@ export const dropOld = () => {
 
 // Saved on purpose field by field: a refresh token handed in by mistake is never stored.
 export async function setNew({ token, accountId, scopes, expiresAt }: NewToken): Promise<void> {
-  await SecureStore.setItemAsync(KEY, JSON.stringify({ token, accountId, scopes, expiresAt }));
+  await SecureStore.setItemAsync(KEY, JSON.stringify({ token, accountId, scopes, expiresAt }), DEVICE_ONLY);
 }
 
 export async function dropNew(): Promise<void> {

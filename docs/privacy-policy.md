@@ -46,7 +46,7 @@ On your phone only. Magpie keeps:
 | Bluesky sign-in keys | Your phone's secure storage | Until you sign out or delete your data. Bluesky ends Magpie's access within an hour if Magpie cannot cancel it |
 | Google sign-in | Kept by Google's own sign-in tool on your phone, not by Magpie | Until you sign out, delete your data, or remove Magpie's access in your Google account |
 
-On Android, Magpie turns off phone backup for its data, so it is not copied to a cloud backup.
+On Android and iOS, Magpie keeps its data out of phone backups, so it is not copied to a cloud backup.
 
 ## Who receives it?
 
