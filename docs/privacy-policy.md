@@ -94,7 +94,7 @@ When we change this policy, we update the date at the top and publish the new ve
 
 ## Contact
 
-Questions or complaints about privacy: open an issue at https://github.com/Dodo-Tech-Hub/magpie/issues. Please don't post personal information there.
+Questions or complaints about privacy: email kemdanhrang@gmail.com. For questions that are not private, you can also open an issue at https://github.com/Dodo-Tech-Hub/magpie/issues. Please don't post personal information there.
 
 ## Platform details
 
