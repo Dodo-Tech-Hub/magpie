@@ -1,0 +1,7 @@
+version: 2
+updates:
+  # App Store Compliance Playbook (.agents/vendor/app-store-compliance), used by the app-store-audit skill.
+  - package-ecosystem: gitsubmodule
+    directory: /
+    schedule:
+      interval: weekly
