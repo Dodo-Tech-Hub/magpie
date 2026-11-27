@@ -1,7 +1,5 @@
-import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
-import App from '../../App';
-import { ch, listMock, nextSignIn, resetWorld, subMock } from './helpers';
+import { fireEvent, screen, waitFor } from '@testing-library/react-native';
+import { ch, listMock, nextSignIn, renderApp, resetWorld, subMock } from './helpers';
 
 jest.mock('@/api/youtube', () => ({
   ...jest.requireActual('@/api/youtube'),
@@ -13,7 +11,7 @@ beforeEach(resetWorld);
 
 async function signInBoth(oldList = [ch('a', 'Alpha'), ch('b', 'Beta'), ch('c', 'Gamma')], newList = [] as ReturnType<typeof ch>[]) {
   listMock.mockResolvedValueOnce(oldList).mockResolvedValueOnce(newList);
-  await render(<App />);
+  await renderApp();
   nextSignIn('old');
   await fireEvent.press(screen.getByLabelText('Sign in with Google: Old account'));
   await screen.findByLabelText('Alpha');
@@ -25,7 +23,7 @@ async function signInBoth(oldList = [ch('a', 'Alpha'), ch('b', 'Beta'), ch('c', 
 describe('moving channels', () => {
   it('shows the old account channels, all picked, with a Move button', async () => {
     listMock.mockResolvedValueOnce([ch('a', 'Alpha'), ch('b', 'Beta')]);
-    await render(<App />);
+    await renderApp();
     nextSignIn('old');
     await fireEvent.press(screen.getByLabelText('Sign in with Google: Old account'));
     expect(await screen.findByLabelText('Alpha')).toBeTruthy();
@@ -58,13 +56,15 @@ describe('moving channels', () => {
     expect(screen.getByText("Couldn't move")).toBeTruthy();
   });
 
-  it('explains what is missing when the new account is not signed in', async () => {
+  it('goes to To and explains what is missing when the new account is not signed in', async () => {
     listMock.mockResolvedValueOnce([ch('a', 'Alpha')]);
-    await render(<App />);
+    await renderApp();
     nextSignIn('old');
     await fireEvent.press(screen.getByLabelText('Sign in with Google: Old account'));
     await fireEvent.press(await screen.findByLabelText('Move 1 channel'));
     expect(await screen.findByText('Sign in to your new account first')).toBeTruthy();
+    expect(screen.getByRole('tab', { name: 'To' }).props.accessibilityState.selected).toBe(true);
+    expect(screen.getByLabelText('Sign in with Google: New account')).toBeTruthy();
     expect(subMock).not.toHaveBeenCalled();
   });
 

@@ -1,4 +1,4 @@
-# YouTube Subscriptions Migrator Constitution
+# Magpie Constitution
 
 ## Core Principles
 
@@ -7,7 +7,7 @@
 The app MUST let a user finish a migration with as few screens, transitions, and taps as possible.
 
 - Option sets of 5 or fewer items MUST use inline choices (segmented control, chips, or radio list).
-- Option sets of more than 5 items MUST use a combo box (dropdown, searchable when the list can grow).
+- Option sets of more than 5 items MUST use a combo box (dropdown, searchable when the list can grow). Exception, approved by the project owner: the platform picker is a grid of cards in two sections (Automatic and Guided), because users need to see how each platform works before choosing it. Each card MUST show the logo, the name, and a one-line label.
 - Every new screen MUST be justified in the plan. Prefer showing the next step in place on the same
   screen over navigating to a new one.
 - Confirmation dialogs MUST only appear for destructive or irreversible actions.
@@ -30,7 +30,8 @@ Every feature and every bug fix MUST include tests that cover its behavior.
   have unit tests.
 - User flows changed by a feature MUST have component tests that check what the user sees and taps.
 - Every bug fix MUST add a test that fails without the fix.
-- Tests MUST NOT call real Google APIs or use real accounts. Mock network and auth at the boundary.
+- Every test MUST check behavior that matters to the user or the business logic. Tests written only to raise coverage, or tests that only check that mocks were called, MUST NOT be added, and a reviewer MAY reject them. A test that checks a call at the mocked boundary is allowed when that call is itself the behavior the user or the security baseline needs (for example the browser opens, or a token is deleted).
+- Tests MUST NOT call real platform APIs or use real accounts. Mock network and auth at the boundary.
 - All tests MUST pass before a change is merged.
 
 Rationale: tests are the proof that a feature works and stays working. Relevance matters more than a
@@ -41,27 +42,17 @@ coverage number.
 Every feature MUST comply with this baseline. A plan or change that breaks a rule MUST NOT be merged
 until the rule is met or the constitution is amended.
 
-1. **Least privilege scopes**: request `https://www.googleapis.com/auth/youtube.readonly` for the
-   source account and `https://www.googleapis.com/auth/youtube` only for the target account. Request
-   no other scopes.
-2. **Secure sign-in**: use OAuth 2.0 Authorization Code with PKCE through the system browser or the
-   native Google Sign-In SDK. Never collect Google passwords and never sign in through an embedded
-   WebView. Validate the OAuth `state` and redirect URI.
+1. **Least privilege scopes**: for each platform, request only the minimum scopes it needs: read-only scopes for the source account and write scopes only for the target account. The spec MUST list the scopes per platform. For Google, request `https://www.googleapis.com/auth/youtube.readonly` for the source account and `https://www.googleapis.com/auth/youtube` only for the target account. Request no other scopes.
+2. **Secure sign-in**: for each platform, use the most secure sign-in flow that platform offers to a public client (an app that cannot keep a secret), in this order of preference: the platform's native sign-in SDK, OAuth 2.0 Authorization Code with PKCE, then OAuth 2.0 Device Authorization Grant (device code flow). Sign-in MUST happen in the native SDK or the system browser, never in an embedded WebView. Never collect platform passwords. Validate every value the flow returns (for example the OAuth `state` and redirect URI, or the device code response) before use. The spec or plan of each platform MUST name the flow it uses and why no higher one in the list is available.
 3. **Token storage**: store tokens only in `expo-secure-store` (iOS Keychain, Android Keystore).
    Never store tokens in AsyncStorage, files, or app state that is persisted elsewhere. Revoke tokens
    and delete them on sign-out.
 4. **No secrets in the app**: the app is a public OAuth client. Never ship client secrets, API keys
    with write access, or private credentials. Everything in `app.json`, `app.config.*`, and
    `EXPO_PUBLIC_*` variables is public. Never commit `.env` files with secrets.
-5. **Network**: HTTPS only. Keep iOS App Transport Security on and Android cleartext traffic off.
-   The app talks only to Google endpoints (`accounts.google.com`, `oauth2.googleapis.com`,
-   `www.googleapis.com`). No own backend, analytics, ads, or crash-reporting SDKs without a
-   constitution amendment.
-6. **Data minimization**: keep only the data the migration needs (channel IDs, titles, thumbnails,
-   progress). User data never leaves the device except to Google APIs. The user MUST be able to
-   delete all local data from inside the app.
-7. **Logging**: never log tokens, authorization codes, email addresses, or subscription lists.
-   Production builds MUST NOT include debug logging of API payloads.
+5. **Network**: HTTPS only. Keep iOS App Transport Security on and Android cleartext traffic off. The app talks only to an allowlist of hosts: the OAuth and API hosts of each supported platform (for Google: `accounts.google.com`, `oauth2.googleapis.com`, `www.googleapis.com`), plus one static host for guide content (`guides.json` and images). The guide host is read-only: the app sends it no user data and no identifiers. Every host MUST be listed in the spec or plan of the feature that adds it. When a platform serves accounts from many hosts that cannot be listed one by one, the spec MAY list a host range as a domain suffix (for example `*.host.bsky.network`). The app MUST check every host against the range before it sends a request there, and MUST refuse any host outside it. No own backend, analytics, ads, or crash-reporting SDKs without a constitution amendment.
+6. **Data minimization**: keep only the data the migration needs (account IDs, names, thumbnails, progress). User data never leaves the device except to the APIs of the platforms being migrated between. User data exports (such as JSON or zip files from a platform) MUST be parsed on the device only and never uploaded. The user MUST be able to delete all local data from inside the app.
+7. **Logging**: never log tokens, authorization codes, email addresses, usernames, follow lists, or export contents. Production builds MUST NOT include debug logging of API payloads.
 8. **Untrusted input**: treat API responses and deep link parameters as untrusted. Validate their
    shape before use and handle only expected deep link routes.
 9. **Device permissions**: request no device permissions unless a spec requires one and explains why.
@@ -72,8 +63,7 @@ until the rule is met or the constitution is amended.
     release.
 12. **Over-the-air updates**: if EAS Update is used, updates MUST be code-signed.
 
-Rationale: the app holds access to two Google accounts. One leaked token or over-broad scope can
-harm the user, and failing Google's OAuth verification blocks public release.
+Rationale: the app holds access to two accounts on each platform. One leaked token or over-broad scope can harm the user, and failing a platform's OAuth verification blocks public release.
 
 ### IV. Consistent, Modular Code Structure
 
@@ -85,23 +75,75 @@ New features MUST fit the existing structure. They MUST NOT be bolted onto unrel
 - **Extend, do not patch**: a separate capability SHOULD be a new function, component, or module, plugged in at a clear integration point (for example a step list, a settings section, or a route). Growing existing code is fine when the change belongs to that code's own job (for example a new field on a form that already edits that data). Existing code MUST NOT grow flags, boolean parameters, or `if (newFeature)` branches to carry a capability that is not its job. Bug fixes may edit existing code directly. Agents use their judgment; the plan explains the choice when it is not obvious.
 - **Flat logic**: avoid deeply nested `if` statements (more than two levels). Use early returns, or a mapping or lookup table (for example an object keyed by status or step) when it fits the actual case. Prefer whichever is clearer for the situation; do not force a table onto a single simple condition.
 - **Reuse first**: before writing code, search for an existing function that does the job and use it. When the same logic is needed in two or more places, extract it into one shared module and use it from both. Business logic MUST stay separate from UI and network code so it can be reused and unit tested on its own. Do not build abstractions for a single, hypothetical use.
+- **Simplest solution first**: before writing code, check in this order and stop at the first step that works: (1) is it needed at all, (2) does code in the repo already do it (see "Reuse first"), (3) does a TypeScript or JavaScript built-in do it, (4) does an Expo SDK module or a native platform feature do it, (5) does an installed dependency do it, (6) only then write the minimum new code. A deliberate shortcut with a known limit MUST carry a comment in the form `// ponytail: <limit>, <when and how to upgrade>`. Shortcuts without such a comment are not allowed. `ponytail:` is only a searchable tag: use it whether or not the ponytail plugin is installed.
+- **Constitution wins over tool rules**: when the ruleset of an agent tool or plugin (for example ponytail) conflicts with this constitution, the constitution wins. For example, Principle II tests stay required, "one job per file" stays, and specs stay detailed as described in Specification Style.
 - **Restructure instead of forcing it**: if a feature cannot fit without reshaping many existing modules, or needs new architecture (for example a navigation library or a backend), the plan MUST stop and propose a restructure or a new project setup to the project owner. An approved restructure is its own change, done and tested before the feature work starts. It MUST NOT be mixed into the feature.
 
 Rationale: features will be added over time, often by AI agents. Clear homes, one pattern per job, and new modules instead of patches keep the codebase easy to read and keep each change small and safe to review.
 
+### V. No UI Automation, Respect Platform Rules
+
+The app MUST follow each platform's terms with no exceptions.
+
+- The app MUST NOT script taps, drive a WebView bot, use an accessibility service, or scrape pages to follow or subscribe on a platform. This applies to every platform that has no official follow API or whose terms forbid automation.
+- Platforms without an official follow API (for example Facebook, Instagram, Threads, TikTok, X, and Twitch) MUST use a guided manual flow: the app shows the list and opens each profile, and the user taps Follow. The app MUST NOT ask for or store the user's password for these platforms.
+- A platform's automatic flow MUST use only that platform's official API, within its quota, rate limits, and terms.
+- Before the app adds payment, ads, or collection of extra user data anywhere, check each supported platform's terms. Some platforms (for example Apple Music) forbid charging for, or monetizing, access to their service.
+- Platform logos MUST be official and unmodified, follow each brand's guidelines, and be used only to name the platform. They MUST NOT appear in the app icon or the app name.
+
+Rationale: automation breaks platform terms and gets users' accounts banned. A guided flow is slower but safe, and it keeps the user in control.
+
+### VI. Adaptive Layout
+
+Every screen MUST fit the window the app actually has, from a small phone to an open foldable, a phone in landscape, or a split-screen window. [010 Adaptive Layout](../../specs/010-adaptive-layout/spec.md) is the reference design; new UI MUST follow these rules without restating them.
+
+- **Size by window, not device**: layout MUST be chosen from the current window width using the shared size classes: Compact (below 600 points), Medium (600 to 839), Expanded (840 and above). Layout MUST NOT depend on device model or device type. All sizes are density-independent points.
+- **Readable width**: in Medium and Expanded windows, content MUST sit in a centered column no wider than the shared maximum content width. Backgrounds and bars MAY fill the full window. Screens MUST use the shared size class and maximum width values, not their own breakpoints.
+- **New layouts per size class**: a screen that needs a different layout for a size class (for example two panes on Expanded) MUST say so in its spec. Otherwise the centered single column applies.
+- **Keep the user's place**: a window change (fold, unfold, rotate, split-screen resize, display size change) MUST NOT lose the current screen, user input, selections, scroll position where practical, or running work, and MUST NOT start, stop, or repeat any action.
+- **Both orientations**: screens MUST work in portrait and landscape. No screen may lock orientation without an approved exception in the plan.
+- **Small screens and large text**: every screen MUST stay usable at a 320-point-wide window and at the largest system font and display size: all controls visible or reachable by scrolling, no overlapping text, long labels wrap or end with an ellipsis without pushing controls off screen. Primary actions (for example a bottom action button) MUST stay visible on short windows.
+- **Safe areas**: no text or control may be drawn under camera cutouts, rounded corners, status bars, or system navigation areas.
+- **Touch targets**: at least 44 by 44 points on iOS and 48 by 48 points on Android.
+- **Specs and tests**: every spec that adds or changes a screen MUST state how it behaves in each size class and orientation, or state that the default column applies. Component tests for a changed screen MUST cover at least one Compact and one Medium or wider window.
+
+Rationale: users run the app on many screen sizes, and foldables change size while the app is open. One shared set of rules keeps every screen readable and keeps a fold or rotation from losing the user's work.
+
 ## Platform & Technology Constraints
 
-- Stack: Expo (React Native) with TypeScript in strict mode. Builds use EAS Build.
+- Stack: Expo (React Native) with TypeScript in strict mode. Builds are made locally on the project owner's machine, not with EAS cloud builds (see `AGENTS.md`).
 - Specs MUST cover both Android and iOS. Android ships first. Any platform-specific behavior MUST be
   called out in the spec.
-- Data source: YouTube Data API v3. Designs MUST respect the API quota (for example,
-  `subscriptions.insert` costs 50 units against a shared daily project quota): batch work, save
-  progress, resume after interruption, and tell the user clearly when the daily limit is reached.
+- Data source: each supported platform's official API, or the user's own data export for guided flows. Designs MUST respect each platform's API quota and terms. For example, on YouTube `subscriptions.insert` costs 50 units against a shared daily project quota. Batch work, save progress, resume after interruption, and tell the user clearly when a limit is reached.
+- Guide content (steps and screenshots) MAY be served from the static guide host so it can be fixed without an app release. The app MUST ship a default copy so guides work offline.
+
+## Specification Style (Encouraged)
+
+These are SHOULD guidelines, not gates. A spec without a diagram is not blocked in review. Describe behavior in detail and use diagrams and tables where they make a spec easier to read. Diagrams add to the text and do not replace it: every requirement MUST still be written in text. Android and iOS are both covered, so mark any platform-specific branch in a diagram or table. Do not name one platform in a guideline or example when the idea applies to all supported platforms.
+
+Use Mermaid for diagrams. GitHub renders it natively in Markdown files, pull requests, and issues. Suggest another text-based syntax only if it also renders on GitHub without a build step.
+
+| What to describe | Use | Notes |
+| --- | --- | --- |
+| Flow or branching logic | Mermaid `flowchart` | Label each edge with its condition, such as `quota left?` or `yes` and `no`. |
+| Interaction between actors | Mermaid `sequenceDiagram` | Actors are the user, the app, the platform sign-in, and the platform API. |
+| Anything with states and transitions (migration job, batch, sign-in session) | Mermaid `stateDiagram-v2` | A good fit for resumable progress and quota pauses. |
+| Screens of a feature and how the user moves between them | Mermaid `flowchart` as a screen map | Show the path of the main task first. |
+| Entities and how they relate | Mermaid `erDiagram` | See the data model rule below. |
+| Mapping or lookup (for example status to label, error to message) | Markdown table | One row per input. |
+| Rule that depends on more than one condition | Markdown decision table | One column per condition, one column for the outcome. |
+
+- **Data model**: `spec.md` SHOULD show a conceptual `erDiagram` with entities and relations only (for example, an Account has many Subscriptions), with no field types, IDs, or storage details. The full fields, types, and constraints belong in `data-model.md`, which the plan creates.
+- **Place diagrams next to the text they explain**, so a reader does not have to jump around the file.
+- **Split a diagram when it becomes hard to read on GitHub.** There is no fixed size limit.
+- **No real data in diagrams or tables**: no real emails, tokens, or account IDs.
+
+Rationale: a spec is read by people who are new to the feature. A flow, a state machine, or a table shows the logic faster than paragraphs and exposes gaps early.
 
 ## Development Workflow & Quality Gates
 
 - Features follow the Spec Kit flow: specify, clarify (optional), plan, tasks, implement.
-- Every plan MUST include a Constitution Check that confirms compliance with Principles I to IV.
+- Every plan MUST include a Constitution Check that confirms compliance with Principles I to VI.
 - A change is ready to merge only when: tests pass, TypeScript and lint report no errors, and the
   security baseline is met.
 - Git, commit, and approval rules are defined in `AGENTS.md` and apply to all contributors and agents.
@@ -117,4 +159,4 @@ Rationale: features will be added over time, often by AI agents. Clear homes, on
 - Reviews of every spec, plan, and pull request MUST check compliance. Any exception MUST be written
   in the plan with its reason and approved by the project owner.
 
-**Version**: 1.1.0 | **Ratified**: 2026-11-08 | **Last Amended**: 2026-11-10
+**Version**: 1.8.0 | **Ratified**: 2026-11-08 | **Last Amended**: 2026-11-24

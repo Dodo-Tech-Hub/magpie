@@ -1,182 +1,486 @@
 import type { Dispatch } from 'react';
-import { ApiError, listMySubscriptions } from '@/api/youtube';
-import { getAccessToken, signedInAccountId, signIn, signOut } from '@/auth/google';
+import { Alert, Linking } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
+import { DriverError, type Driver, type Role, type SignInResult } from '@/platforms/driver';
+import { driverFor, PLATFORMS, type PlatformId } from '@/platforms/platforms';
 import { recoverInterrupted, runMove } from '@/move/mover';
-import { nextQuotaReset } from '@/move/quotaReset';
+import { createPacer } from '@/move/pacer';
 import { askOnce, cancelReminder, scheduleReminder } from '@/reminders/reminder';
 import {
+  attachNew,
+  deleteProgress,
   findProgressForPair,
-  getChannels,
+  getItems,
   getOrCreateProgress,
   getProgress,
   markAlreadyThere,
-  releaseTomorrow,
-  saveChannels,
+  releaseLater,
+  saveItems,
   setPicked,
-  type StoredChannel,
+  type StoredItem,
 } from '@/store/progressStore';
-import { signInTo, strings, wrongAccount } from '@/strings';
+import { dontSave, signInCodeHint, signInTo, strings, wrongAccount } from '@/strings';
 import type { Action, State } from '@/state/AppState';
 
 type D = Dispatch<Action>;
 
-export const isMovable = (c: StoredChannel) =>
-  c.picked && (c.status === 'waiting' || c.status === 'tomorrow');
+export const isMovable = (c: StoredItem) =>
+  c.picked && (c.status === 'waiting' || c.status === 'later');
 
-function noticeFor(e: unknown): string {
-  if (e instanceof ApiError) {
+// A kind the new account has no access for is not moved and not counted (FR-GH-020).
+// Before the new account signs in, nothing is known, so nothing is held back.
+export const hasAccess = (state: State, c: StoredItem) =>
+  !state.newAccount || state.granted.includes(c.kind);
+
+const driverOf = (state: State): Driver => driverFor(state.platform!);
+const pickOrder = (driver: Driver) => driver.kinds.map((k) => k.id);
+
+function noticeFor(e: unknown, driver: Driver): string {
+  if (e instanceof DriverError) {
     if (e.kind === 'retry') return strings.offline;
-    if (e.kind === 'tomorrow') return strings.limitReached;
+    if (e.kind === 'later') return driver.words.limitReached;
   }
   return strings.signInFailed;
 }
 
-async function reload(progressId: string, dispatch: D) {
-  dispatch({ type: 'setChannels', channels: await getChannels(progressId) });
+async function reload(progressId: string, driver: Driver, dispatch: D) {
+  dispatch({ type: 'setItems', items: await getItems(progressId, pickOrder(driver)) });
+}
+
+// The move that is running, so "Don't save" can stop it and a second Move cannot start beside it.
+let running: { progressId: string; abort: AbortController; done: Promise<unknown> } | null = null;
+
+// The sign-in that is waiting for the user, so Cancel can stop it.
+let waiting: AbortController | null = null;
+export const cancelSignIn = () => waiting?.abort();
+
+// One sign-in. A code (device sign-in) shows in place, is copied, and opens the browser.
+async function signInAs(state: State, dispatch: D, role: Role, kinds: string[], handle?: string, only?: string): Promise<SignInResult> {
+  const driver = driverOf(state);
+  const ctl = new AbortController();
+  waiting = ctl;
+  const other = role === 'old' ? state.newAccount : state.oldAccount;
+  try {
+    return await driver.signIn(
+      role,
+      kinds,
+      (c) => {
+        dispatch({
+          type: 'setSignInCode',
+          code: c ? { role, code: c.code, hint: other ? signInCodeHint(role) : null } : null,
+        });
+        if (c) {
+          void Clipboard.setStringAsync(c.code);
+          void Linking.openURL(c.url);
+        }
+      },
+      ctl.signal,
+      handle,
+      only,
+    );
+  } finally {
+    if (waiting === ctl) waiting = null;
+  }
+}
+
+// The line to show when a sign-in did not end with an account. A cancel shows nothing.
+function failNotice(reason: Extract<SignInResult, { ok: false }>['reason']): string | null {
+  if (reason === 'cancelled') return null;
+  if (reason === 'email') return strings.notEmail;
+  if (reason === 'not_found') return strings.notFound;
+  if (reason === 'not_supported') return strings.notSupported;
+  if (reason === 'unavailable') return strings.unavailable;
+  return strings.signInFailed;
+}
+
+// The kinds the new account is asked for: the picked ones, never an optional one (FR-GH-020).
+function kindsToAsk(state: State, driver: Driver): string[] {
+  const optional = new Set(driver.kinds.filter((k) => k.optional).map((k) => k.id));
+  const picked = new Set(state.items.filter((c) => c.picked).map((c) => c.kind));
+  const all = driver.kinds.map((k) => k.id);
+  // Kinds that need the old account (mutes, feeds) are asked only once they were read and picked (FR-BS-008).
+  const needsOld = new Set(driver.kinds.filter((k) => k.needsOld).map((k) => k.id));
+  return (state.items.length ? all.filter((k) => picked.has(k)) : all).filter(
+    (k) => !optional.has(k) && (state.items.length > 0 || !needsOld.has(k)),
+  );
 }
 
 // Old account: read-only. Its list is loaded once and kept (research R2).
-export async function signInOld(state: State, dispatch: D): Promise<void> {
+export async function signInOld(state: State, dispatch: D, handle?: string): Promise<void> {
+  const driver = driverOf(state);
   dispatch({ type: 'setNotice', notice: null });
-  const res = await signIn('old');
+  const res = await whileSigningIn(dispatch, 'old', () => signInAs(state, dispatch, 'old', [], handle));
   if (!res.ok) {
-    if (res.reason === 'failed') dispatch({ type: 'setNotice', notice: strings.signInFailed });
+    dispatch({ type: 'setNotice', notice: failNotice(res.reason) });
     return;
   }
   if (state.newAccount && res.account.id === state.newAccount.id) {
-    await signOut();
+    await driver.signOut('old');
     dispatch({ type: 'setNotice', notice: strings.sameAsNew });
     return;
   }
+  dispatch({ type: 'setLoading', loading: true });
   try {
-    const list = await listMySubscriptions(await getAccessToken());
-    const channels: StoredChannel[] = list.map((c) => ({ ...c, picked: true, status: 'waiting' }));
-    dispatch({ type: 'setOld', account: res.account, channels });
-    // The SDK now holds the old account, so the new account must sign in again before moving.
-    dispatch({ type: 'setNew', account: null });
+    const { items, missing } = await driver.listOld();
+    const stored: StoredItem[] = items.map((c) => ({ ...c, picked: true, status: 'waiting', reason: null }));
+    // A platform may hold only one account at a time. Then the new account signs in again.
+    const keepNew = state.newAccount && (await driver.canAct('new', state.newAccount.id)) ? state.newAccount : null;
+    // The progress starts here, with or without a new account (FR-GH-021). Old picks stay, new items are picked.
+    const progressId = await getOrCreateProgress(driver.id, res.account, keepNew);
+    await saveItems(progressId, stored);
+    dispatch({ type: 'setOld', account: res.account, items: stored });
+    if (state.newAccount && !keepNew) dispatch({ type: 'setNew', account: null });
+    if (keepNew) await openPair(driver, dispatch, progressId);
+    else dispatch({ type: 'setProgress', progressId, items: await getItems(progressId, pickOrder(driver)) });
     dispatch({ type: 'setStep', step: 'pick' });
+    if (missing.length > 0) dispatch({ type: 'setNotice', notice: strings.loadPartial });
   } catch (e) {
-    dispatch({ type: 'setNotice', notice: noticeFor(e) });
+    dispatch({ type: 'setNotice', notice: noticeFor(e, driver) });
+  } finally {
+    dispatch({ type: 'setLoading', loading: false });
   }
 }
 
-// New account: needs subscribe access. Creates or opens the progress for the pair.
-export async function signInNew(state: State, dispatch: D): Promise<void> {
+// While an account signs in, the screen says so, and Move and Sign in are held back: the account is not ready yet.
+async function whileSigningIn<T>(dispatch: D, role: Role, run: () => Promise<T>): Promise<T> {
+  dispatch({ type: 'setSigningIn', signingIn: role });
+  try {
+    return await run();
+  } finally {
+    dispatch({ type: 'setSigningIn', signingIn: null });
+  }
+}
+
+// New account: needs add access. Creates or opens the progress for the pair.
+export const signInNew = (state: State, dispatch: D, handle?: string) =>
+  whileSigningIn(dispatch, 'new', () => runSignInNew(state, dispatch, handle));
+
+async function runSignInNew(state: State, dispatch: D, handle?: string): Promise<void> {
+  const driver = driverOf(state);
   dispatch({ type: 'setNotice', notice: null });
-  const res = await signIn('new');
+  const res = await signInAs(state, dispatch, 'new', kindsToAsk(state, driver), handle);
   if (!res.ok) {
-    if (res.reason === 'failed') dispatch({ type: 'setNotice', notice: strings.signInFailed });
+    dispatch({ type: 'setNotice', notice: failNotice(res.reason) });
     return;
   }
   if (state.expectedNew && res.account.id !== state.expectedNew.id) {
-    await signOut();
-    dispatch({ type: 'setNotice', notice: wrongAccount(state.expectedNew.email) });
+    await driver.signOut('new');
+    dispatch({ type: 'setNotice', notice: wrongAccount(state.expectedNew.handle) });
     return;
   }
   const old = state.oldAccount;
   if (old && res.account.id === old.id) {
-    await signOut();
+    await driver.signOut('new');
     dispatch({ type: 'setNotice', notice: strings.sameAsOld });
     return;
   }
+  const granted = await driver.granted();
   dispatch({ type: 'setNew', account: res.account });
+  dispatch({ type: 'setGranted', kinds: granted });
   dispatch({ type: 'setExpectedNew', account: null });
   if (!old) return;
   try {
-    const existed = (await findProgressForPair(old.id, res.account.id)) !== null;
-    const progressId = await getOrCreateProgress(old, res.account);
-    await saveChannels(progressId, state.channels);
+    const existed = (await findProgressForPair(driver.id, old.id, res.account.id)) !== null;
+    // The open progress gets its new account. If this pair already has a progress, that one opens instead (FR-GH-021).
+    const open = state.progressId ? await getProgress(state.progressId) : null;
+    const progressId =
+      open && open.newAccount === null
+        ? await attachNew(open.id, res.account)
+        : await getOrCreateProgress(driver.id, old, res.account);
+    await saveItems(progressId, state.items);
     if (!existed) {
-      const unpicked = state.channels.filter((c) => !c.picked).map((c) => c.channelId);
+      const unpicked = state.items.filter((c) => !c.picked).map((c) => c.itemId);
       await setPicked(progressId, unpicked, false);
     }
-    await markFollowed(progressId);
-    dispatch({ type: 'setProgress', progressId, channels: await getChannels(progressId) });
+    await openPair(driver, dispatch, progressId);
     dispatch({ type: 'setStep', step: 'pick' });
   } catch (e) {
-    dispatch({ type: 'setNotice', notice: noticeFor(e) });
+    dispatch({ type: 'setNotice', notice: noticeFor(e, driver) });
   }
 }
 
-// "Already there": channels the new account follows already (research R6).
-async function markFollowed(progressId: string) {
-  const followed = new Set((await listMySubscriptions(await getAccessToken())).map((c) => c.channelId));
-  await recoverInterrupted(progressId, followed);
-  await markAlreadyThere(progressId, [...followed]);
+// Both accounts are known: hold back kinds without access and mark what the new account already has.
+async function openPair(driver: Driver, dispatch: D, progressId: string) {
+  // A kind without access is not picked, so it is never moved and never counted (FR-GH-020).
+  const granted = await driver.granted();
+  const items = await getItems(progressId, pickOrder(driver));
+  await setPicked(progressId, items.filter((c) => !granted.includes(c.kind)).map((c) => c.itemId), false);
+  await markAlreadyThere(progressId, await checkNew(progressId, driver, items));
+  dispatch({ type: 'setProgress', progressId, items: await getItems(progressId, pickOrder(driver)) });
+}
+
+// "Already there": items the new account has already (research R6, R7).
+async function checkNew(progressId: string, driver: Driver, items: StoredItem[]): Promise<string[]> {
+  const have = await driver.checkNew(items, await driver.granted());
+  await recoverInterrupted(progressId, new Set(have));
+  return have;
+}
+
+// A move ended with nothing left: the platform drops what it holds for the new account.
+async function endMove(driver: Driver, dispatch: D) {
+  if (!driver.endMove) return;
+  // false: the platform could not cancel the access, so the screen says it ends on its own.
+  const cancelled = await driver.endMove();
+  dispatch({ type: 'setAccessEnded', ended: cancelled === false });
+}
+
+// The Switch button. A platform whose sign-in cannot be switched in place signs out instead (US4).
+export async function switchAccount(state: State, dispatch: D, role: Role): Promise<void> {
+  const driver = driverOf(state);
+  if (!driver.switchSignsOut) {
+    await (role === 'old' ? signInOld(state, dispatch) : signInNew(state, dispatch));
+    return;
+  }
+  const cancelled = await driver.signOut(role);
+  if (role === 'new') {
+    dispatch({ type: 'setNew', account: null });
+    dispatch({ type: 'setGranted', kinds: [] });
+    dispatch({ type: 'setAccessEnded', ended: cancelled === false });
+  } else {
+    dispatch({ type: 'setOld', account: null, items: [] });
+  }
+}
+
+// "Allow" on a kind that needs the old account (FR-BS-020): sign in to the old account for every such kind not read yet,
+// read it, and add its rows. Rows already on the list stay, with their picks.
+export async function allowOld(state: State, dispatch: D): Promise<void> {
+  const driver = driverOf(state);
+  const { progressId, oldAccount } = state;
+  if (!oldAccount || !progressId) return;
+  const kinds = driver.kinds.filter((k) => k.needsOld && !state.oldRead.includes(k.id)).map((k) => k.id);
+  dispatch({ type: 'setNotice', notice: null });
+  const res = await signInAs(state, dispatch, 'old', kinds, oldAccount.handle);
+  if (!res.ok) {
+    dispatch({ type: 'setNotice', notice: failNotice(res.reason) });
+    return;
+  }
+  if (res.account.id !== oldAccount.id) {
+    await driver.signOut('old');
+    dispatch({ type: 'setNotice', notice: strings.allowOldOther });
+    return;
+  }
+  dispatch({ type: 'setLoading', loading: true });
+  try {
+    const { items, missing } = await driver.listOld();
+    // Saving the rows on the list too keeps the rows of kinds this read did not return.
+    await saveItems(progressId, [...state.items, ...items]);
+    dispatch({ type: 'setOldRead', kinds: [...state.oldRead, ...kinds.filter((k) => !missing.includes(k))] });
+    if (state.newAccount) await openPair(driver, dispatch, progressId);
+    else await reload(progressId, driver, dispatch);
+    if (missing.length > 0) dispatch({ type: 'setNotice', notice: strings.loadPartial });
+  } catch (e) {
+    dispatch({ type: 'setNotice', notice: noticeFor(e, driver) });
+  } finally {
+    dispatch({ type: 'setLoading', loading: false });
+  }
+}
+
+// "Allow" on a kind the new account has no access for: sign in again, asking for what it had plus this kind (FR-GH-020).
+export const allowKind = (state: State, dispatch: D, kind: string) =>
+  whileSigningIn(dispatch, 'new', () => runAllowKind(state, dispatch, kind));
+
+async function runAllowKind(state: State, dispatch: D, kind: string): Promise<void> {
+  const driver = driverOf(state);
+  const { progressId, newAccount } = state;
+  if (!newAccount || !progressId) return;
+  dispatch({ type: 'setNotice', notice: null });
+  // The handle is passed for a platform where the user types it, so Allow signs in to the same account.
+  const res = await signInAs(state, dispatch, 'new', [...state.granted, kind], newAccount.handle, newAccount.id);
+  if (!res.ok) {
+    dispatch({ type: 'setNotice', notice: failNotice(res.reason) });
+    return;
+  }
+  // The driver kept the old token for a different account, so there is nothing to undo.
+  if (res.account.id !== newAccount.id) {
+    dispatch({ type: 'setNotice', notice: strings.allowOtherAccount });
+    return;
+  }
+  const granted = await driver.granted();
+  dispatch({ type: 'setGranted', kinds: granted });
+  try {
+    const items = await getItems(progressId, pickOrder(driver));
+    await markAlreadyThere(progressId, await checkNew(progressId, driver, items));
+    // Rows of a kind that now has access become pickable, all picked.
+    const fresh = await getItems(progressId, pickOrder(driver));
+    await setPicked(progressId, fresh.filter((c) => c.kind === kind && granted.includes(kind)).map((c) => c.itemId), true);
+    await reload(progressId, driver, dispatch);
+  } catch (e) {
+    dispatch({ type: 'setNotice', notice: noticeFor(e, driver) });
+  }
 }
 
 export async function togglePick(state: State, dispatch: D, ids: string[], picked: boolean) {
   const movable = new Set(
-    state.channels.filter((c) => c.status !== 'already_there').map((c) => c.channelId),
+    state.items.filter((c) => c.status !== 'already_there' && hasAccess(state, c)).map((c) => c.itemId),
   );
   const target = ids.filter((id) => movable.has(id));
-  if (state.progressId) {
-    await setPicked(state.progressId, target, picked);
-    await reload(state.progressId, dispatch);
-  } else {
-    const set = new Set(target);
-    dispatch({
-      type: 'setChannels',
-      channels: state.channels.map((c) => (set.has(c.channelId) ? { ...c, picked } : c)),
-    });
-  }
+  // Picks are always saved, from the old sign-in on (FR-GH-021).
+  if (!state.progressId) return;
+  await setPicked(state.progressId, target, picked);
+  await reload(state.progressId, driverOf(state), dispatch);
 }
 
-export async function startMove(state: State, dispatch: D): Promise<void> {
+// twoPane: To's sign-in is already on screen beside Pick, so the step does not change (spec 010).
+export async function startMove(state: State, dispatch: D, twoPane: boolean): Promise<void> {
+  const driver = driverOf(state);
   const { progressId, newAccount } = state;
+  // With one step on screen, the user is taken to To. The message goes after the step change, which clears it.
+  const askForNew = () => {
+    if (!twoPane) dispatch({ type: 'setStep', step: 'to' });
+    dispatch({ type: 'setNotice', notice: strings.needNewAccount });
+  };
   dispatch({ type: 'setNotice', notice: null });
   if (!newAccount || !progressId) {
-    dispatch({ type: 'setNotice', notice: strings.needNewAccount });
+    askForNew();
     return;
   }
-  const movable = state.channels.filter(isMovable).length;
+  const movable = state.items.filter((c) => isMovable(c) && hasAccess(state, c)).length;
   if (movable === 0) {
-    if (state.channels.some((c) => c.status === 'already_there')) {
+    if (state.items.some((c) => c.status === 'already_there')) {
+      await endMove(driver, dispatch);
       dispatch({ type: 'setMoveState', moveState: 'done' });
     } else {
-      dispatch({ type: 'setNotice', notice: strings.needPick });
+      dispatch({ type: 'setNotice', notice: driver.words.needPick });
     }
     return;
   }
-  // The SDK holds one account. If it is not the new one, moving would use the wrong login.
-  if (signedInAccountId() !== newAccount.id) {
+  // A platform may hold one account. If it is not the new one, moving would use the wrong login.
+  if (!(await driver.canAct('new', newAccount.id))) {
     dispatch({ type: 'setNew', account: null });
-    dispatch({ type: 'setNotice', notice: strings.needNewAccount });
+    askForNew();
     return;
   }
-  dispatch({ type: 'setMoveState', moveState: 'moving' });
-  await releaseTomorrow(progressId);
-  const result = await runMove(progressId, {
-    getToken: getAccessToken,
-    onUpdate: () => void reload(progressId, dispatch),
+  // A move goes on when the user leaves the flow (Save in FR-GH-022). It reports only while its progress is open.
+  if (running?.progressId === progressId) return;
+  const d: D = (action) => dispatch({ type: 'forProgress', progressId, action });
+  const ctl = new AbortController();
+  d({ type: 'setMoveState', moveState: 'moving' });
+  await releaseLater(progressId);
+  let stopNotice: string | null = null;
+  const done = runMove(progressId, {
+    add: (item, all, pacer) => driver.add(item, all, pacer),
+    pacer: driver.pace ? createPacer(`${driver.id}:${newAccount.id}`, driver.pace) : undefined,
+    kindOrder: driver.moveOrder ?? pickOrder(driver),
+    itemOrder: driver.itemOrder,
+    onUpdate: () => void reload(progressId, driver, d),
+    onStop: (notice) => (stopNotice = notice),
+    signal: ctl.signal,
   });
-  await reload(progressId, dispatch);
-  if (result === 'auth') {
-    dispatch({ type: 'setNew', account: null });
-    dispatch({ type: 'setNotice', notice: strings.signInAgain });
+  running = { progressId, abort: ctl, done };
+  let result: Awaited<typeof done>;
+  try {
+    result = await done;
+  } finally {
+    running = null;
   }
-  if (result === 'offline') dispatch({ type: 'setNotice', notice: strings.offline });
+  if (ctl.signal.aborted) return;
+  await reload(progressId, driver, d);
+  if (result === 'auth') {
+    d({ type: 'setNew', account: null });
+    d({ type: 'setNotice', notice: strings.signInAgain });
+  }
+  if (result === 'offline') d({ type: 'setNotice', notice: strings.offline });
+  if (result === 'stopped') d({ type: 'setNotice', notice: stopNotice });
   if (result === 'limit') {
-    if (await askOnce()) await scheduleReminder(progressId, nextQuotaReset(new Date()));
+    if (await askOnce(driver.words.limitReached)) {
+      const resumeAt = (await getProgress(progressId))?.resumeAt ?? Date.now() + 3_600_000;
+      await scheduleReminder(progressId, new Date(resumeAt), driver.words.reminderBody);
+    }
   } else if (result === 'done') {
     await cancelReminder(progressId);
+    await endMove(driver, d);
   }
-  dispatch({
-    type: 'setMoveState',
-    moveState: result === 'done' ? 'done' : result === 'limit' ? 'limit' : result,
-  });
+  d({ type: 'setMoveState', moveState: result === 'done' ? 'done' : result });
 }
 
-// Open a saved progress. The old account and its channels come from the phone.
+// Open a saved progress. The old account and its items come from the phone.
 // The new account must sign in again if it is signed out (FR-033).
 export async function openProgress(dispatch: D, progressId: string): Promise<void> {
   const saved = await getProgress(progressId);
-  if (!saved) return;
-  const channels = await getChannels(progressId);
-  dispatch({ type: 'setOld', account: saved.oldAccount, channels });
-  dispatch({ type: 'setProgress', progressId, channels });
+  const platform = PLATFORMS.find((p) => p.id === saved?.platform);
+  if (!saved || !platform) return;
+  const items = await getItems(progressId, pickOrder(platform.driver));
+  // A reminder or the Continue note opens the flow from Home or Settings (FR-009).
+  dispatch({ type: 'startFlow', platform: platform.id as PlatformId });
+  dispatch({ type: 'setOld', account: saved.oldAccount, items });
+  dispatch({ type: 'setProgress', progressId, items });
+  // A move kept running by Save is still moving (FR-GH-022).
+  if (running?.progressId === progressId) dispatch({ type: 'setMoveState', moveState: 'moving' });
+  const driver = platform.driver;
+  // No new account yet: the user picks and signs in to the new account when ready (FR-GH-021).
+  if (!saved.newAccount) {
+    dispatch({ type: 'setNew', account: null });
+    dispatch({ type: 'setExpectedNew', account: null });
+    dispatch({ type: 'setStep', step: 'pick' });
+    return;
+  }
+  // A paused move keeps its sign-in on the phone (FR-GH-019), so it can go on at once.
+  if (driver.resumesNew && (await driver.canAct('new', saved.newAccount.id))) {
+    const granted = await driver.granted();
+    dispatch({ type: 'setNew', account: saved.newAccount });
+    dispatch({ type: 'setGranted', kinds: granted });
+    dispatch({ type: 'setExpectedNew', account: null });
+    dispatch({ type: 'setStep', step: 'pick' });
+    return;
+  }
   dispatch({ type: 'setNew', account: null });
   dispatch({ type: 'setExpectedNew', account: saved.newAccount });
   dispatch({ type: 'setStep', step: 'to' });
-  dispatch({ type: 'setNotice', notice: signInTo(saved.newAccount.email) });
+  dispatch({ type: 'setNotice', notice: signInTo(saved.newAccount.handle) });
+}
+
+const askToSave = (name: string) =>
+  new Promise<'save' | 'discard' | 'cancel'>((resolve) =>
+    Alert.alert(
+      strings.saveProgressTitle(name),
+      undefined,
+      [
+        { text: strings.save, onPress: () => resolve('save') },
+        { text: dontSave, style: 'destructive', onPress: () => resolve('discard') },
+        { text: strings.cancel, style: 'cancel', onPress: () => resolve('cancel') },
+      ],
+      { cancelable: true, onDismiss: () => resolve('cancel') },
+    ),
+  );
+
+// Call before opening a platform's flow from Home. The same platform resumes where the user left. Another
+// platform starts fresh, after asking whether to save an unfinished progress (FR-GH-022).
+// Returns false when the user cancels.
+export async function leaveFlowFor(state: State, dispatch: D, platform: PlatformId): Promise<boolean> {
+  const from = state.flowPlatform;
+  if (!from || from === platform) return true;
+  const left = state.progressId ? ((await getProgress(state.progressId))?.left ?? 0) : 0;
+  if (left > 0) {
+    const name = PLATFORMS.find((p) => p.id === from)?.name ?? '';
+    const choice = await askToSave(name);
+    if (choice === 'cancel') return false;
+    if (choice === 'discard') await discardFlow(state, from);
+  }
+  dispatch({ type: 'startFlow', platform });
+  return true;
+}
+
+// "Don't save": stop the move, delete the progress and the platform's sign-ins. Moved items stay moved.
+async function discardFlow(state: State, platform: PlatformId) {
+  const progressId = state.progressId!;
+  if (running?.progressId === progressId) {
+    running.abort.abort();
+    await running.done.catch(() => undefined);
+  }
+  await cancelReminder(progressId);
+  await deleteProgress(progressId);
+  const driver = driverFor(platform);
+  await driver.signOut('old');
+  await driver.signOut('new');
+}
+
+// Opens a platform's limits page in the system browser. false = it could not open; the screen says so (research R3, R6).
+// No canOpenURL: on Android 11+ it answers false unless the app lists the links it asks about.
+export async function openLimits(url: string): Promise<boolean> {
+  try {
+    await Linking.openURL(url);
+    return true;
+  } catch {
+    return false;
+  }
 }

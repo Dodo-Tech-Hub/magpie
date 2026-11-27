@@ -1,9 +1,7 @@
-import React from 'react';
 import { Alert } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import { fireEvent, render, screen } from '@testing-library/react-native';
-import App from '../../App';
-import { answerAlert, ch, listMock, nextSignIn, resetWorld, subMock } from './helpers';
+import { fireEvent, screen } from '@testing-library/react-native';
+import { answerAlert, ch, listMock, nextSignIn, renderApp, resetWorld, subMock } from './helpers';
 
 jest.mock('@/api/youtube', () => ({
   ...jest.requireActual('@/api/youtube'),
@@ -36,7 +34,7 @@ async function hitLimitAfterOne() {
   listMock
     .mockResolvedValueOnce([ch('a', 'Alpha'), ch('b', 'Beta'), ch('c', 'Gamma')])
     .mockResolvedValueOnce([]);
-  await render(<App />);
+  await renderApp();
   nextSignIn('old');
   await fireEvent.press(screen.getByLabelText('Sign in with Google: Old account'));
   await screen.findByLabelText('Alpha');
@@ -44,13 +42,13 @@ async function hitLimitAfterOne() {
   nextSignIn('new');
   await fireEvent.press(screen.getByLabelText('Sign in with Google: New account'));
   await fireEvent.press(await screen.findByLabelText('Move 3 channels'));
-  await screen.findByText(/Daily limit reached/);
+  await screen.findByText("YouTube lets Magpie move only some channels each day. Today's limit is reached.");
 }
 
 describe('daily limit', () => {
   it('turns the rest into Tomorrow and shows the limit message and Continue', async () => {
     await hitLimitAfterOne();
-    expect(screen.getByText("Daily limit reached. We'll remind you when you can move the rest.")).toBeTruthy();
+    expect(screen.getByText("YouTube lets Magpie move only some channels each day. Today's limit is reached.")).toBeTruthy();
     expect(screen.getAllByText('Tomorrow')).toHaveLength(2);
     expect(screen.getByText('1 moved · 2 waiting')).toBeTruthy();
     expect(screen.getByLabelText('Continue')).toBeTruthy();
@@ -64,6 +62,11 @@ describe('daily limit', () => {
     const arg = scheduled.mock.calls[0][0];
     expect(Object.keys(arg.content.data)).toEqual(['progressId']);
     expect(arg.trigger.date.getTime()).toBeGreaterThan(Date.now());
+  });
+
+  it('titles the reminder Magpie', async () => {
+    await hitLimitAfterOne();
+    expect(scheduled.mock.calls[0][0].content.title).toBe('Magpie');
   });
 
   it('does not schedule a reminder when the user says no, and Continue still works', async () => {

@@ -1,21 +1,30 @@
 {
-  "name": "youtube-subs-migrator",
-  "version": "1.0.0",
+  "name": "magpie",
+  "version": "0.2.0",
   "main": "index.ts",
   "dependencies": {
+    "@atproto/oauth-client": "^0.9.7",
     "@expo/vector-icons": "^15.0.2",
+    "@noble/curves": "^2.4.0",
+    "@noble/hashes": "^2.4.0",
     "@react-native-google-signin/google-signin": "^17.0.0",
     "expo": "~58.0.23",
     "expo-asset": "~58.0.20",
+    "expo-clipboard": "~58.0.4",
+    "expo-crypto": "~58.0.7",
     "expo-dev-client": "~58.0.18",
     "expo-font": "~58.0.11",
     "expo-notifications": "~58.1.8",
+    "expo-secure-store": "~58.0.2",
+    "expo-splash-screen": "~58.0.13",
     "expo-sqlite": "~58.0.15",
     "expo-status-bar": "~58.0.4",
     "expo-system-ui": "~58.0.7",
+    "expo-web-browser": "~58.0.7",
     "react": "19.3.0",
     "react-native": "0.88.1",
-    "react-native-safe-area-context": "~5.11.1"
+    "react-native-safe-area-context": "~5.11.1",
+    "react-native-url-polyfill": "^4.0.0"
   },
   "devDependencies": {
     "@testing-library/react-native": "^14.1.0",
@@ -43,10 +52,19 @@
       "<rootDir>/jest.setup.ts"
     ],
     "moduleNameMapper": {
-      "^@/(.*)$": "<rootDir>/src/$1"
+      "^@/(.*)$": "<rootDir>/src/$1",
+      "^multiformats/(.*)$": "<rootDir>/node_modules/multiformats/dist/src/$1.js"
     },
     "testMatch": [
       "<rootDir>/tests/**/*.test.ts?(x)"
+    ],
+    "transformIgnorePatterns": [
+      "/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@sentry/react-native|native-base|standard-navigation|@noble|@atproto|@atproto-labs|multiformats))",
+      "/node_modules/react-native-reanimated/plugin/",
+      "/node_modules/@react-native/babel-preset/"
     ]
+  },
+  "overrides": {
+    "zod": "^4.6.6"
   }
 }

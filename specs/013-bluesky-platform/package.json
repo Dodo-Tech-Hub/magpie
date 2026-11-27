@@ -1,0 +1,11 @@
+{
+  "name": "magpie-bluesky-check",
+  "private": true,
+  "type": "module",
+  "description": "Owner-run check before the Bluesky sign-in work (research R11). Not part of the app.",
+  "scripts": { "check": "node check-access.mjs" },
+  "dependencies": {
+    "@atproto/oauth-client-node": "^0.5.20",
+    "@atproto/oauth-types": "^0.8.0"
+  }
+}

@@ -1,7 +1,5 @@
-import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react-native';
-import App from '../../App';
-import { ch, listMock, nextSignIn, resetWorld } from './helpers';
+import { fireEvent, screen } from '@testing-library/react-native';
+import { ch, listMock, nextSignIn, renderApp, resetWorld } from './helpers';
 
 jest.mock('@/api/youtube', () => ({
   ...jest.requireActual('@/api/youtube'),
@@ -18,7 +16,7 @@ async function openList() {
     ch('c', 'Gamma'),
     ch('d', 'Alphabet Soup'),
   ]);
-  await render(<App />);
+  await renderApp();
   nextSignIn('old');
   await fireEvent.press(screen.getByLabelText('Sign in with Google: Old account'));
   await screen.findByLabelText('Alpha');

@@ -1,12 +1,14 @@
 import React, { useMemo } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { signOut } from '@/auth/google';
 import { cancelReminder } from '@/reminders/reminder';
+import { PLATFORMS } from '@/platforms/platforms';
 import { useApp } from '@/state/AppState';
 import { deleteAll, listUnfinished } from '@/store/progressStore';
 import { strings } from '@/strings';
+import { AccessNote } from '@/ui/AccessNote';
 import { useTheme, type Colors, type ThemeChoice } from '@/theme/theme';
+import { TOUCH_TARGET } from '@/ui/layout';
 
 type Icon = keyof typeof Ionicons.glyphMap;
 
@@ -31,7 +33,7 @@ export function SettingsView() {
         onPress: async () => {
           for (const p of await listUnfinished()) await cancelReminder(p.id);
           await deleteAll();
-          await signOut();
+          for (const p of PLATFORMS) await p.driver.signOut();
           resetChoice();
           dispatch({ type: 'reset' });
         },
@@ -39,7 +41,7 @@ export function SettingsView() {
     ]);
 
   return (
-    <View style={styles.flex}>
+    <ScrollView>
       <Text style={styles.heading}>{strings.settings}</Text>
       <View style={styles.block}>
         <Text style={styles.label}>{strings.look}</Text>
@@ -74,20 +76,32 @@ export function SettingsView() {
           <Text style={styles.deleteText}>{strings.deleteAll}</Text>
         </Pressable>
       </View>
-    </View>
+      {PLATFORMS.filter((p) => p.ready && p.driver.removeAccessUrl).map((p) => (
+        <View key={p.id} style={styles.block}>
+          <AccessNote driver={p.driver} />
+        </View>
+      ))}
+      <View style={styles.block}>
+        {PLATFORMS.filter((p) => p.ready).map((p) => (
+          <Text key={p.id} style={styles.notice}>
+            {p.driver.words.notAffiliated}
+          </Text>
+        ))}
+      </View>
+    </ScrollView>
   );
 }
 
 const makeStyles = (c: Colors) =>
   StyleSheet.create({
-    flex: { flex: 1 },
     heading: { fontSize: 18, fontWeight: '500', color: c.text, padding: 14 },
     block: { padding: 14, borderTopWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     label: { fontSize: 13, color: c.muted, marginBottom: 8 },
     choices: { flexDirection: 'row', gap: 8 },
-    choice: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 44, borderRadius: 8, borderWidth: 1, borderColor: c.border },
+    choice: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: TOUCH_TARGET, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: c.border },
     chosen: { backgroundColor: c.primary, borderColor: c.primary },
     choiceText: { fontSize: 14 },
-    deleteAll: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    deleteAll: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: TOUCH_TARGET },
+    notice: { fontSize: 13, color: c.muted },
     deleteText: { color: c.danger, fontSize: 14 },
   });

@@ -1,0 +1,12 @@
+{
+  "client_id": "https://dodo-tech-hub.github.io/magpie/oauth/bluesky-client-metadata.json",
+  "client_name": "Magpie",
+  "client_uri": "https://dodo-tech-hub.github.io/magpie/",
+  "redirect_uris": ["io.github.dodo-tech-hub:/oauth/bluesky"],
+  "scope": "atproto repo:app.bsky.graph.follow?action=create repo:app.bsky.graph.block?action=create repo:app.bsky.graph.list?action=create repo:app.bsky.graph.listitem?action=create rpc:app.bsky.graph.muteActor?aud=did:web:api.bsky.app%23bsky_appview rpc:app.bsky.graph.getMutes?aud=did:web:api.bsky.app%23bsky_appview rpc:app.bsky.actor.getPreferences?aud=did:web:api.bsky.app%23bsky_appview rpc:app.bsky.actor.putPreferences?aud=did:web:api.bsky.app%23bsky_appview",
+  "grant_types": ["authorization_code", "refresh_token"],
+  "response_types": ["code"],
+  "token_endpoint_auth_method": "none",
+  "application_type": "native",
+  "dpop_bound_access_tokens": true
+}

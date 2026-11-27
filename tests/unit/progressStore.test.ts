@@ -1,27 +1,30 @@
 import {
+  addsSince,
+  attachNew,
+  recordAdd,
   closeStore,
   deleteAll,
   deleteProgress,
   findProgressForPair,
-  getChannels,
+  getItems,
   getOrCreateProgress,
   initStore,
   listUnfinished,
   markAlreadyThere,
-  markWaitingAsTomorrow,
-  releaseTomorrow,
-  saveChannels,
+  markWaitingAsLater,
+  releaseLater,
+  saveItems,
   setLimitHit,
   setPicked,
   setStatus,
 } from '@/store/progressStore';
 
-const acct = (id: string) => ({ id, email: `${id}@x.com`, name: id, photoUrl: null });
-const ch = (id: string) => ({ channelId: id, title: `T-${id}`, thumbnailUrl: null });
+const acct = (id: string) => ({ id, handle: `${id}@x.com`, name: id, photoUrl: null });
+const ch = (id: string) => ({ itemId: id, kind: 'channel', title: `T-${id}`, thumbnailUrl: null, data: null });
 
 async function seed(oldId = 'o1', newId = 'n1', ids = ['a', 'b', 'c']) {
-  const pid = await getOrCreateProgress(acct(oldId), acct(newId));
-  await saveChannels(pid, ids.map(ch));
+  const pid = await getOrCreateProgress('youtube', acct(oldId), acct(newId));
+  await saveItems(pid, ids.map(ch));
   return pid;
 }
 
@@ -32,20 +35,20 @@ beforeEach(async () => {
 
 describe('progress per account pair', () => {
   it('returns the same progress for the same pair and a new one for another pair', async () => {
-    const p1 = await getOrCreateProgress(acct('o1'), acct('n1'));
-    const p1again = await getOrCreateProgress(acct('o1'), acct('n1'));
-    const p2 = await getOrCreateProgress(acct('o2'), acct('n1'));
+    const p1 = await getOrCreateProgress('youtube', acct('o1'), acct('n1'));
+    const p1again = await getOrCreateProgress('youtube', acct('o1'), acct('n1'));
+    const p2 = await getOrCreateProgress('youtube', acct('o2'), acct('n1'));
     expect(p1again).toBe(p1);
     expect(p2).not.toBe(p1);
-    expect(await findProgressForPair('o1', 'n1')).toBe(p1);
-    expect(await findProgressForPair('o9', 'n9')).toBeNull();
+    expect(await findProgressForPair('youtube', 'o1', 'n1')).toBe(p1);
+    expect(await findProgressForPair('youtube', 'o9', 'n9')).toBeNull();
   });
 });
 
 describe('channels', () => {
   it('saves channels picked and waiting by default', async () => {
     const pid = await seed();
-    const rows = await getChannels(pid);
+    const rows = await getItems(pid);
     expect(rows).toHaveLength(3);
     expect(rows.every((r) => r.picked && r.status === 'waiting')).toBe(true);
   });
@@ -54,8 +57,8 @@ describe('channels', () => {
     const pid = await seed();
     await setPicked(pid, ['a'], false);
     await setStatus(pid, 'b', 'moved');
-    await saveChannels(pid, ['a', 'b', 'c', 'd'].map(ch));
-    const rows = Object.fromEntries((await getChannels(pid)).map((r) => [r.channelId, r]));
+    await saveItems(pid, ['a', 'b', 'c', 'd'].map(ch));
+    const rows = Object.fromEntries((await getItems(pid)).map((r) => [r.itemId, r]));
     expect(rows.a.picked).toBe(false);
     expect(rows.b.status).toBe('moved');
     expect(rows.d.status).toBe('waiting');
@@ -64,7 +67,7 @@ describe('channels', () => {
   it('marks already-followed channels and unpicks them', async () => {
     const pid = await seed();
     await markAlreadyThere(pid, ['a', 'zzz']);
-    const a = (await getChannels(pid)).find((r) => r.channelId === 'a')!;
+    const a = (await getItems(pid)).find((r) => r.itemId === 'a')!;
     expect(a.status).toBe('already_there');
     expect(a.picked).toBe(false);
   });
@@ -73,19 +76,65 @@ describe('channels', () => {
     const pid = await seed();
     await setStatus(pid, 'a', 'moved');
     await markAlreadyThere(pid, ['a']);
-    expect((await getChannels(pid)).find((r) => r.channelId === 'a')!.status).toBe('moved');
+    expect((await getItems(pid)).find((r) => r.itemId === 'a')!.status).toBe('moved');
   });
 
   it('turns picked waiting channels into tomorrow and back', async () => {
     const pid = await seed();
     await setPicked(pid, ['c'], false);
     await setStatus(pid, 'a', 'moved');
-    await markWaitingAsTomorrow(pid);
-    let s = Object.fromEntries((await getChannels(pid)).map((r) => [r.channelId, r.status]));
-    expect(s).toEqual({ a: 'moved', b: 'tomorrow', c: 'waiting' });
-    await releaseTomorrow(pid);
-    s = Object.fromEntries((await getChannels(pid)).map((r) => [r.channelId, r.status]));
+    await markWaitingAsLater(pid);
+    let s = Object.fromEntries((await getItems(pid)).map((r) => [r.itemId, r.status]));
+    expect(s).toEqual({ a: 'moved', b: 'later', c: 'waiting' });
+    await releaseLater(pid);
+    s = Object.fromEntries((await getItems(pid)).map((r) => [r.itemId, r.status]));
     expect(s).toEqual({ a: 'moved', b: 'waiting', c: 'waiting' });
+  });
+});
+
+describe('platforms, reasons, and order', () => {
+  it('keeps the same two accounts on two platforms as two progresses', async () => {
+    const a = await getOrCreateProgress('youtube', acct('o'), acct('n'));
+    const b = await getOrCreateProgress('github', acct('o'), acct('n'));
+    expect(b).not.toBe(a);
+    await saveItems(a, [ch('x')]);
+    await saveItems(b, [ch('y')]);
+    expect((await listUnfinished('github')).map((p) => p.id)).toEqual([b]);
+    expect((await listUnfinished('youtube')).map((p) => p.id)).toEqual([a]);
+    expect(await listUnfinished()).toHaveLength(2);
+  });
+
+  it('saves the reason with a status and clears it with the next status', async () => {
+    const pid = await seed();
+    await setStatus(pid, 'a', 'couldnt_move', 'Account was deleted.');
+    expect((await getItems(pid)).find((r) => r.itemId === 'a')!.reason).toBe('Account was deleted.');
+    await setStatus(pid, 'a', 'waiting');
+    expect((await getItems(pid)).find((r) => r.itemId === 'a')!.reason).toBeNull();
+  });
+
+  it('saves when the limit was hit and when the move can go on', async () => {
+    const pid = await seed();
+    await setLimitHit(pid, 1, 2);
+    expect(await listUnfinished()).toMatchObject([{ limitHitAt: 1, resumeAt: 2 }]);
+  });
+
+  it('reads an unknown status as waiting', async () => {
+    const pid = await seed();
+    const db = await initStore();
+    await db.runAsync("UPDATE progress_item SET status = 'from_the_future' WHERE item_id = 'a'");
+    expect((await getItems(pid)).find((r) => r.itemId === 'a')!.status).toBe('waiting');
+  });
+
+  it('sorts by the position of the kind, then by title ignoring case', async () => {
+    const pid = await getOrCreateProgress('github', acct('o'), acct('n'));
+    await saveItems(pid, [
+      { itemId: '1', kind: 'person', title: 'bob', thumbnailUrl: null, data: null },
+      { itemId: '2', kind: 'repo', title: 'Zed', thumbnailUrl: null, data: null },
+      { itemId: '3', kind: 'repo', title: 'apple', thumbnailUrl: null, data: null },
+      { itemId: '4', kind: 'person', title: 'Amy', thumbnailUrl: null, data: null },
+    ]);
+    expect((await getItems(pid, ['repo', 'person'])).map((r) => r.title)).toEqual(['apple', 'Zed', 'Amy', 'bob']);
+    expect((await getItems(pid, ['person', 'repo'])).map((r) => r.title)).toEqual(['Amy', 'bob', 'apple', 'Zed']);
   });
 });
 
@@ -99,13 +148,13 @@ describe('unfinished list', () => {
     const list = await listUnfinished();
     expect(list).toHaveLength(1);
     expect(list[0]).toMatchObject({ id: p1, left: 1 });
-    expect(list[0].oldAccount.email).toBe('o1@x.com');
-    expect(list[0].newAccount.email).toBe('n1@x.com');
+    expect(list[0].oldAccount.handle).toBe('o1@x.com');
+    expect(list[0].newAccount?.handle).toBe('n1@x.com');
   });
 
   it('records when the daily limit was hit', async () => {
     const pid = await seed();
-    await setLimitHit(pid, 123);
+    await setLimitHit(pid, 123, 456);
     expect((await listUnfinished())[0].limitHitAt).toBe(123);
   });
 });
@@ -114,7 +163,7 @@ describe('deleting', () => {
   it('deleting a progress removes its channels too', async () => {
     const pid = await seed();
     await deleteProgress(pid);
-    expect(await getChannels(pid)).toEqual([]);
+    expect(await getItems(pid)).toEqual([]);
     expect(await listUnfinished()).toEqual([]);
   });
 
@@ -123,5 +172,78 @@ describe('deleting', () => {
     await seed('o2', 'n2');
     await deleteAll();
     expect(await listUnfinished()).toEqual([]);
+  });
+});
+
+describe('pace log', () => {
+  it('stores adds per account key and returns those since a time, in order', async () => {
+    const t = Date.now();
+    await recordAdd('github:1', t + 20);
+    await recordAdd('github:1', t + 10);
+    await recordAdd('github:2', t + 15);
+    expect(await addsSince('github:1', t)).toEqual([t + 10, t + 20]);
+    expect(await addsSince('github:1', t + 15)).toEqual([t + 20]);
+    expect(await addsSince('github:2', t)).toEqual([t + 15]);
+  });
+
+  it('deletes rows older than 1 hour on each write', async () => {
+    await recordAdd('github:1', Date.now() - 2 * 3_600_000);
+    await recordAdd('github:1', Date.now());
+    expect(await addsSince('github:1', 0)).toHaveLength(1);
+  });
+
+  it('is emptied by delete all', async () => {
+    await recordAdd('github:1', Date.now());
+    await deleteAll();
+    expect(await addsSince('github:1', 0)).toEqual([]);
+  });
+});
+
+describe('progress with no new account (FR-GH-021)', () => {
+  it('returns the same progress for the same old account and platform', async () => {
+    const a = await getOrCreateProgress('github', acct('o1'), null);
+    expect(await getOrCreateProgress('github', acct('o1'), null)).toBe(a);
+    expect(await getOrCreateProgress('github', acct('o2'), null)).not.toBe(a);
+    expect(await getOrCreateProgress('youtube', acct('o1'), null)).not.toBe(a);
+  });
+
+  it('shows in the unfinished list with no new account', async () => {
+    const pid = await getOrCreateProgress('github', acct('o1'), null);
+    await saveItems(pid, [ch('a'), ch('b')]);
+    const [p] = await listUnfinished('github');
+    expect(p).toMatchObject({ id: pid, left: 2, newAccount: null });
+  });
+
+  it('attachNew sets the new account on the same progress', async () => {
+    const pid = await getOrCreateProgress('github', acct('o1'), null);
+    await saveItems(pid, [ch('a')]);
+    expect(await attachNew(pid, acct('n1'))).toBe(pid);
+    expect(await findProgressForPair('github', 'o1', 'n1')).toBe(pid);
+    expect((await listUnfinished('github'))[0].newAccount?.id).toBe('n1');
+  });
+
+  it('attachNew keeps the pair progress and deletes the one with no new account', async () => {
+    const pair = await seed('o1', 'n1', ['a']);
+    await setStatus(pair, 'a', 'moved');
+    const draft = await getOrCreateProgress('youtube', acct('o1'), null);
+    await saveItems(draft, [ch('a'), ch('b')]);
+    expect(await attachNew(draft, acct('n1'))).toBe(pair);
+    expect(await getItems(draft)).toEqual([]);
+    expect((await getItems(pair)).map((c) => [c.itemId, c.status])).toEqual([['a', 'moved']]);
+    expect(await listUnfinished('youtube')).toEqual([]);
+  });
+
+  it('saveItems drops waiting rows the old account no longer has and keeps finished ones', async () => {
+    const pid = await seed('o1', 'n1', ['a', 'b', 'c', 'd']);
+    await setStatus(pid, 'b', 'moved');
+    await setStatus(pid, 'c', 'already_there');
+    await setPicked(pid, ['d'], false);
+    await saveItems(pid, [ch('e')]);
+    const rows = await getItems(pid);
+    expect(rows.map((c) => [c.itemId, c.status]).sort()).toEqual([
+      ['b', 'moved'],
+      ['c', 'already_there'],
+      ['e', 'waiting'],
+    ]);
   });
 });
