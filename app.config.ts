@@ -36,6 +36,8 @@ const config: ExpoConfig = {
       ? ['@react-native-google-signin/google-signin', { iosUrlScheme }]
       : '@react-native-google-signin/google-signin',
     'expo-sqlite',
+    // R8 in release builds, kept across prebuild --clean (Google Play requires it).
+    ['expo-build-properties', { android: { enableMinifyInReleaseBuilds: true, enableShrinkResourcesInReleaseBuilds: true } }],
     ['expo-splash-screen', { image: './assets/splash-icon.png', backgroundColor: '#1F1F1F', resizeMode: 'contain' }],
     ['expo-notifications', { icon: './assets/notification-icon.png' }],
   ],
