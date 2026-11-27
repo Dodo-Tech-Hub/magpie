@@ -40,6 +40,9 @@ export const strings = {
   deleteAll: 'Delete all my data',
   privacyPolicy: 'Privacy policy',
   privacyPolicyUrl: 'https://dodo-tech-hub.github.io/magpie/privacy-policy',
+  agreeStart: 'By signing in, you agree to the',
+  agreeAnd: "and Magpie's",
+  privacyPolicyName: 'Privacy Policy',
   deleteAllAsk: 'This removes everything the app saved on this phone. It cannot be undone.',
   cancel: 'Cancel',
   save: 'Save',
@@ -112,6 +115,7 @@ export const youtubeWords: Words = {
   reminderBody: 'You can move the rest of your channels now.',
   moveButton: (n) => `Move ${n} channel${n === 1 ? '' : 's'}`,
   notAffiliated: 'Magpie is not made by or linked with YouTube or Google. YouTube is a trademark of Google LLC.',
+  terms: { name: 'YouTube Terms of Service', url: 'https://www.youtube.com/t/terms' },
 };
 
 export const githubWords: Words = {

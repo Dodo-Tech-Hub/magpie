@@ -61,6 +61,8 @@ export type Words = {
   newHandlePlaceholder?: string;
   // The old account's button when the app holds no sign-in for it (nothing to sign out of). Default: Sign out or Switch.
   changeOld?: string;
+  // Platform terms the user agrees to by signing in, linked under the sign-in button with the privacy policy.
+  terms?: { name: string; url: string };
 };
 
 // optional: never asked on the first new-account sign-in. needsOld: read only after an old-account sign-in ("Allow" on Pick).

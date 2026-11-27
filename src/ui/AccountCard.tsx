@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, Linking, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Words } from '@/platforms/driver';
 import type { AccountInfo } from '@/store/progressStore';
@@ -132,8 +132,24 @@ export function AccountCard({ title, words, hint, account, onSignIn, handleInput
           <Ionicons name={words.signInIcon as IconName} size={18} color={colors.onPrimary} />
           <Text style={styles.signInText}>{words.signIn}</Text>
         </Pressable>
+        {words.terms && (
+          <View style={styles.agree}>
+            <Text style={styles.agreeText}>{strings.agreeStart}</Text>
+            <Link label={words.terms.name} url={words.terms.url} style={styles.link} />
+            <Text style={styles.agreeText}>{strings.agreeAnd}</Text>
+            <Link label={strings.privacyPolicyName} url={strings.privacyPolicyUrl} style={styles.link} />
+          </View>
+        )}
       </View>
     </View>
+  );
+}
+
+function Link({ label, url, style }: { label: string; url: string; style: object }) {
+  return (
+    <Pressable accessibilityRole="link" accessibilityLabel={label} onPress={() => void Linking.openURL(url)} style={{ minHeight: TOUCH_TARGET, justifyContent: 'center' }}>
+      <Text style={style}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -153,5 +169,8 @@ const makeStyles = (c: Colors) =>
     off: { opacity: 0.4 },
     input: { marginTop: 10, minHeight: TOUCH_TARGET, paddingHorizontal: 10, borderWidth: 1, borderColor: c.border, borderRadius: 8, fontSize: 15, color: c.text },
     code: { fontSize: 32, fontWeight: '600', letterSpacing: 2, color: c.text, marginTop: 8 },
+    agree: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 4, marginTop: 4 },
+    agreeText: { fontSize: 12, color: c.muted },
+    link: { fontSize: 12, color: c.text, textDecorationLine: 'underline' },
     codeButtons: { flexDirection: 'row', gap: 8, marginTop: 10 },
   });
