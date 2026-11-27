@@ -38,6 +38,8 @@ export const strings = {
   unfinished: 'Unfinished',
   deleteProgress: 'Delete',
   deleteAll: 'Delete all my data',
+  privacyPolicy: 'Privacy policy',
+  privacyPolicyUrl: 'https://dodo-tech-hub.github.io/magpie/privacy-policy',
   deleteAllAsk: 'This removes everything the app saved on this phone. It cannot be undone.',
   cancel: 'Cancel',
   save: 'Save',
