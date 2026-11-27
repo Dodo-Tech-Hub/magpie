@@ -30,6 +30,8 @@ These are the YouTube constraints (the first platform). They come from the YouTu
 
 To make a release, follow `.agents/skills/release-github-android/SKILL.md` (also linked as a skill in `.claude/skills/` and `.cursor/skills/`). Edit only that file; the other paths are symlinks.
 
+Before a release or a store submission, follow `.agents/skills/app-store-audit/SKILL.md` (same symlinks). It checks the app against Google Play and App Store rejection rules with the App Store Compliance Playbook, a git submodule in `.agents/vendor/app-store-compliance` that Dependabot keeps up to date. The audit warns; the developer decides whether to continue.
+
 ## Local tools
 
 - Install missing tools with Homebrew (`brew`) or npm. Prefer project-local npm dependencies over global installs.

@@ -1,0 +1,4 @@
+[submodule ".agents/vendor/app-store-compliance"]
+	path = .agents/vendor/app-store-compliance
+	url = https://github.com/mjmirza/app-store-compliance
+	shallow = true
