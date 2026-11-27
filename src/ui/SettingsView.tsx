@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { cancelReminder } from '@/reminders/reminder';
 import { PLATFORMS } from '@/platforms/platforms';
@@ -76,6 +76,17 @@ export function SettingsView() {
           <Text style={styles.deleteText}>{strings.deleteAll}</Text>
         </Pressable>
       </View>
+      <View style={styles.block}>
+        <Pressable
+          style={styles.deleteAll}
+          accessibilityRole="link"
+          accessibilityLabel={strings.privacyPolicy}
+          onPress={() => void Linking.openURL(strings.privacyPolicyUrl)}
+        >
+          <Ionicons name="shield-checkmark-outline" size={18} color={colors.text} />
+          <Text style={styles.linkText}>{strings.privacyPolicy}</Text>
+        </Pressable>
+      </View>
       {PLATFORMS.filter((p) => p.ready && p.driver.removeAccessUrl).map((p) => (
         <View key={p.id} style={styles.block}>
           <AccessNote driver={p.driver} />
@@ -104,4 +115,5 @@ const makeStyles = (c: Colors) =>
     deleteAll: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: TOUCH_TARGET },
     notice: { fontSize: 13, color: c.muted },
     deleteText: { color: c.danger, fontSize: 14 },
+    linkText: { color: c.text, fontSize: 14 },
   });
